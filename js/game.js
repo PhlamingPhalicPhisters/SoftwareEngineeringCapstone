@@ -1,6 +1,7 @@
-var game = new Phaser.Game(16*32, 600, Phaser.AUTO, document.getElementById('game'));
-game.state.add('Game',game);
-game.state.start('Game');
+/*var game = new Phaser.Game(16*32, 600, Phaser.AUTO, document.getElementById('game'));
+game.state.add('Game',Game);
+game.state.start('Game');*/
+
 var Game = {};
 
 Game.init = function(){
@@ -25,3 +26,15 @@ Game.create = function(){
     Client.askNewPlayer();
 };
 
+Client.askNewPlayer = function(){
+    Client.socket.emit('newplayer');
+}
+
+Game.addNewPlayer = function(id,x,y){
+    Game.playerMap[id] = game.add.sprite(x,y,'sprite');
+};
+
+Game.removePlayer = function(id){
+    Game.playerMap[id].destroy();
+    delete Game.playerMap[id];
+};

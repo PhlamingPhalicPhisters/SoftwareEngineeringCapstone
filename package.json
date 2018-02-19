@@ -1,0 +1,25 @@
+{
+  "name": "softwareengineeringcapstone",
+  "version": "1.0.0",
+  "description": "\"# SE_Capstone_Project\"",
+  "main": "circle.js",
+  "dependencies": {
+    "express": "^4.16.2",
+    "socket.io": "^2.0.4"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PhlamingPhalicPhisters/SoftwareEngineeringCapstone.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/PhlamingPhalicPhisters/SoftwareEngineeringCapstone/issues"
+  },
+  "homepage": "https://github.com/PhlamingPhalicPhisters/SoftwareEngineeringCapstone#readme"
+}
