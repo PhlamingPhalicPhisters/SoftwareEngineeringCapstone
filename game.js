@@ -2,8 +2,8 @@ Game = function(game) {}
 Game.prototype = {
     preload: function() {
         // load assets
-        this.game.load.image('circle', 'asset/circle.png');
-        this.game.load.image('background', 'asset/tile.png');
+        this.game.load.image('sprite', 'assets/sprites/sprite.png');
+        this.game.load.image('background', 'assets/map/tilesheet.png');
     },
     create: function() {
         var width = this.game.width;
