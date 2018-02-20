@@ -28,7 +28,7 @@ Game.create = function(){
 
 Client.askNewPlayer = function(){
     Client.socket.emit('newplayer');
-}
+};
 
 Game.addNewPlayer = function(id,x,y){
     Game.playerMap[id] = game.add.sprite(x,y,'sprite');

@@ -3,7 +3,7 @@ Client.socket = io.connect();
 
 Client.askNewPlayer = function(){
     Client.socket.emit('newplayer');
-}
+};
 
 Client.socket.on('newplayer',function(data){
     Game.addNewPlayer(data.id,data.x,data.y);
