@@ -46,7 +46,9 @@ Game.movePlayer = function(id, x, y) {
     var player = Game.playerMap[id];
     var distance = Phaser.Math.distance(player.x, player.y, x, y);
     var duration = distance * 10 ;
+    game.tweens.remove(player.tween);
     var tween = game.add.tween(player);
+    player.tween = tween;
     tween.to({x: x, y: y}, duration);
     tween.start();
 };
@@ -57,6 +59,7 @@ Game.addNewPlayer = function(id,x,y){
     Game.playerMap[id] = game.add.sprite(x,y,'sprite');
     Game.physics.arcade.enable(Game.playerMap[id]);
     Game.playerMap[id].enableBody = true;
+    //Game.playerMap[id].tween;
     //Game.playerMap[id].body.immovable = true;
     //Game.someGroup.add(Game.playerMap[id]);
     //Game.physics.arcade.collide(Game.playerMap[id], Game.someGroup);
