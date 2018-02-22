@@ -11,7 +11,8 @@ Game.init = function(){
 Game.preload = function() {
     game.load.tilemap('map', 'assets/map/example_map.json', null, Phaser.Tilemap.TILED_JSON);
     game.load.spritesheet('tileset', 'assets/map/tilesheet.png',32,32);
-    game.load.image('sprite','assets/sprites/sprite.png'); // this will be the sprite of the players
+    //game.load.image('sprite','assets/sprites/sprite.png'); // this will be the sprite of the players
+    game.load.image('sprite', 'assets/sprites/knuck.gif');
 };
 
 Game.create = function(){
@@ -22,6 +23,9 @@ Game.create = function(){
     for(var i = 0; i < map.layers.length; i++) {
         layer = map.createLayer(i);
     }
+    //Game.physics.enable(p);
+
+    //Game.physics.arcade.gravity.y = 250;
     layer.inputEnabled = true; // Allows clicking on the map
     Client.askNewPlayer();
     layer.events.onInputUp.add(Game.getCoordinates, this);
@@ -45,7 +49,7 @@ Game.movePlayer = function(id, x, y) {
     y = y - 32;
     var player = Game.playerMap[id];
     var distance = Phaser.Math.distance(player.x, player.y, x, y);
-    var duration = distance * 10 ;
+    var duration = distance * 1;
     game.tweens.remove(player.tween);
     var tween = game.add.tween(player);
     player.tween = tween;

@@ -22,6 +22,7 @@ Client.socket.on('remove',function(id){
 
 Client.sendClick = function(x, y) {
     Client.socket.emit('click', {x: x, y: y});
+    console.log('sent');
 }
 
 Client.socket.on('move', function(data) {
