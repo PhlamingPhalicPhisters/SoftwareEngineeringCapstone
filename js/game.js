@@ -31,10 +31,6 @@ Game.create = function(){
     layer.events.onInputUp.add(Game.getCoordinates, this);
 };
 
-/*Game.addNewPlayer = function(id,x,y){
-    Game.playerMap[id] = game.add.sprite(x-32,y-32,'sprite');
-};*/
-
 Game.removePlayer = function(id){
     Game.playerMap[id].destroy();
     delete Game.playerMap[id];
@@ -56,8 +52,6 @@ Game.movePlayer = function(id, x, y) {
     tween.to({x: x, y: y}, duration);
     tween.start();
 };
-
-//Game.someGroup = Game.add.group();
 
 Game.addNewPlayer = function(id,x,y){
     Game.playerMap[id] = game.add.sprite(x,y,'sprite');
