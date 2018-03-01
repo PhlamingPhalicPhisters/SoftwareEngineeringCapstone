@@ -11,7 +11,8 @@ app.get('/',function(req,res){
     res.sendFile(__dirname+'/index.html');
 });
 
-server.lastPlayderID = 0;
+
+server.lastPlayerId = 0;
 
 server.listen(process.env.PORT || 8081,function(){
     console.log('Listening on '+server.address().port);
