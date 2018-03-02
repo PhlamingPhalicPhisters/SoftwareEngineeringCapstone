@@ -29,8 +29,7 @@ io.on('connection',function(socket){
         socket.broadcast.emit('newplayer',socket.player);
 
         socket.on('click',function(data){
-            console.log('click to '+data.x+', '+data.y);
-            console.log('received');
+            console.log('player.id '+socket.player.id+' clicked to '+data.x+', '+data.y);
             socket.player.x = data.x;
             socket.player.y = data.y;
             io.emit('move',socket.player);
