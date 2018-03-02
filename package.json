@@ -1,7 +1,7 @@
 {
-  "name": "basic-mmo-phaser",
+  "name": "andromeda.io",
   "version": "1.0.0",
-  "description": " Very basic multiplayer online game example made with Phaser, Node.js and Socket.io ",
+  "description": "Multiplayer online game space shooter made with Phaser, Node.js and Socket.io ",
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -9,7 +9,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Jerenaux/basic-mmo-phaser.git"
+    "url": "git+https://github.com/PhlamingPhalicPhisters/SoftwareEngineeringCapstone.git"
   },
   "keywords": [
     "Phaser",
@@ -18,12 +18,12 @@
     "Node.js",
     "socket.io"
   ],
-  "author": "Jerome Renaux",
-  "license": "MIT",
+  "author": "CS475 Software Engineering Capstone Group",
+  "license": "Elmhurst College",
   "bugs": {
-    "url": "https://github.com/Jerenaux/basic-mmo-phaser/issues"
+    "url": "https://github.com/PhlamingPhalicPhisters/SoftwareEngineeringCapstone/issues"
   },
-  "homepage": "https://github.com/Jerenaux/basic-mmo-phaser#readme",
+  "homepage": "https://github.com/PhlamingPhalicPhisters/SoftwareEngineeringCapstone#readme",
   "dependencies": {
     "express": "^4.15.2",
     "socket.io": "^1.7.3"
