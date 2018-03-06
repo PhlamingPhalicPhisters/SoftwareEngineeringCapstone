@@ -35,6 +35,10 @@ io.on('connection',function(socket){
             io.emit('move',socket.player);
         });
 
+        // socket.on('move', function(data){
+        //     console.log('player')
+        // }
+
         socket.on('disconnect',function(){
             io.emit('remove',socket.player.id);
         });
