@@ -118,7 +118,7 @@ Game.addNewPlayer = function(id,x,y){
 
     this.game.physics.enable(Game.playerMap[id], Phaser.Physics.ARCADE);
     Game.playerMap[id].enableBody = true;
-
+    this.game.camera.follow(Game.playerMap[id]);
     //Game.playerMap[id].tween;
     //Game.playerMap[id].body.immovable = true;
     //Game.someGroup.add(Game.playerMap[id]);
