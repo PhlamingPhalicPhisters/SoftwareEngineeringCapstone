@@ -1,13 +1,8 @@
 {
-  "name": "softwareengineeringcapstone",
+  "name": "andromeda.io",
   "version": "1.0.0",
-  "description": "\"# SE_Capstone_Project\"",
-  "main": "circle.js",
-  "dependencies": {
-    "express": "^4.16.2",
-    "socket.io": "^2.0.4"
-  },
-  "devDependencies": {},
+  "description": "Multiplayer online game space shooter made with Phaser, Node.js and Socket.io ",
+  "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
@@ -16,10 +11,21 @@
     "type": "git",
     "url": "git+https://github.com/PhlamingPhalicPhisters/SoftwareEngineeringCapstone.git"
   },
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "Phaser",
+    "Multiplayer",
+    "game",
+    "Node.js",
+    "socket.io"
+  ],
+  "author": "CS475 Software Engineering Capstone Group",
+  "license": "Elmhurst College",
   "bugs": {
     "url": "https://github.com/PhlamingPhalicPhisters/SoftwareEngineeringCapstone/issues"
   },
-  "homepage": "https://github.com/PhlamingPhalicPhisters/SoftwareEngineeringCapstone#readme"
+  "homepage": "https://github.com/PhlamingPhalicPhisters/SoftwareEngineeringCapstone#readme",
+  "dependencies": {
+    "express": "^4.15.2",
+    "socket.io": "^1.7.3"
+  }
 }
