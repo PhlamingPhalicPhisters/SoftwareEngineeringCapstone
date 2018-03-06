@@ -1,3 +1,3 @@
-var game = new Phaser.Game(24*64, 17*64, Phaser.AUTO, document.getElementById('game'));
+var game = new Phaser.Game(24*32, 17*32, Phaser.CANVAS, document.getElementById('game'));
 game.state.add('Game',Game);
 game.state.start('Game');
