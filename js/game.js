@@ -13,6 +13,7 @@ Game.init = function(){
     this.game.stage.disableVisibilityChange = true;
 };
 
+
 Game.preload = function() {
     console.log('Game.preload');
     this.game.load.tilemap('map', 'assets/map/example_map.json', null, Phaser.Tilemap.TILED_JSON);
