@@ -3,8 +3,11 @@ game.state.add('Game',Game);
 game.state.start('Game');*/
 
 var Game = {};
-var layer;
+var layer = {};
 var map;
+var lilBoiCollisionGroup;
+var tilesCollisionGroup;
+
 Game.init = function(){
     console.log('Game.init');
     // Disable scroll bars
@@ -19,9 +22,9 @@ Game.preload = function() {
     console.log('Game.preload');
     this.game.load.tilemap('map', 'assets/map/example_map.json', null, Phaser.Tilemap.TILED_JSON);
     this.game.load.spritesheet('tileset', 'assets/map/tilesheet.png',32,32);
-    //this.game.load.image('sprite','assets/sprites/sprite.png'); // this will be the sprite of the players
+    this.game.load.image('sprite','assets/sprites/sprite.png'); // this will be the sprite of the players
     this.game.load.image('background','assets/map/dark-space.png');
-    this.game.load.image('sprite', 'assets/sprites/knuck.gif');
+    //this.game.load.image('sprite', 'assets/sprites/knuck.gif');
 };
 
 Game.create = function(){
@@ -30,32 +33,44 @@ Game.create = function(){
     console.log('Game.create');
     Game.playerMap = {};
 
-    //game.world.setBounds(-width,-height,width*2,height*2);
     var background = this.game.add.tileSprite(0,0,
         this.game.world.width,this.game.world.height,'background');
     game.world.setBounds(0,0,1920,1920);
     this.game.stage.backgroundColor = '#000';
 
     this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
-    //game.camera.width = window.width * 0.5;
-    //game.camera.height = window.height * 0.5;
+
 
     map = this.game.add.tilemap('map');
     map.addTilesetImage('tilesheet', 'tileset'); // tilesheet is the key of the tileset in map's JSON file
+    this.game.physics.startSystem(Phaser.Physics.P2JS);
 
+    map.setCollisionBetween(0, 17);
+
+    Game.physics.p2.setBoundsToWorld(true, true, true, true, true);
     for(var i = 0; i < map.layers.length; i++) {
-        layer = map.createLayer(i);
+        layer[i] = map.createLayer(i);
+        layer[i].inputEnabled = true; // Allows clicking on the map
+        layer[i].events.onInputUp.add(Game.getCoordinates, this);
+        Game.physics.p2.convertTilemap(map, layer[i]);
     }
-    layer.inputEnabled = true; // Allows clicking on the map
 
-    this.game.physics.startSystem(Phaser.Physics.ARCADE);
-    //this.game.physics.applyGravity = true;
+
+
+    tilesCollisionGroup = this.physics.p2.createCollisionGroup();
+    lilBoiCollisionGroup = this.physics.p2.createCollisionGroup();
+
+    for (var bodyIndex = 0; bodyIndex < map.layer.bodies.length; bodyIndex++) {
+        var tileBody = map.layer.bodies[bodyIndex];
+        tileBody.setCollisionGroup(tilesCollisionGroup);
+        tileBody.collides([lilBoiCollisionGroup]);
+    }
+
+
     Game.cursors = this.game.input.keyboard.createCursorKeys();
 
     Client.askNewPlayer();
-    //this.game.camera.follow(Game.playerMap[Game.playerMap.length-1]);
-    //this.game.camera.follow(Game.localPlayer);
-    layer.events.onInputUp.add(Game.getCoordinates, this);
+
 };
 
 Game.update = function()
@@ -63,7 +78,7 @@ Game.update = function()
     //console.log('Game.update');
     //playerMap[Client.id].body.setZeroVelocity();
 
-    Game.physics.arcade.collide(Game.playerMap[Client.id], Game.playerMap, Game.collisionHandler, null, this);
+   // Game.physics.arcade.collide(Game.playerMap[Client.id], layer[6]);
 
     /*if (Game.cursors.up.isDown)
     {
@@ -131,5 +146,13 @@ Game.addNewPlayer = function(id,x,y){
     //Game.playerMap[id].tween;
     Game.playerMap[Client.id].body.immovable = true;
     Game.playerMap[Client.id].body.collideWorldBounds = true;
+
+
+    Game.physics.p2.enable(Game.playerMap[Client.id]);
+    Game.playerMap[Client.id].body.setCollisionGroup(lilBoiCollisionGroup);
+    Game.playerMap[Client.id].body.collides([tilesCollisionGroup]);
+
+    //Game.playerMap[Client.id].body.setCollisionGroup(lilBoiCollisionGroup);
+    //Game.playerMap[Client.id].body.collides([tileCollisionGroup]);
     //Game.someGroup.add(Game.playerMap[id]);
 };
