@@ -31,7 +31,7 @@ Game.create = function(){
 
     //game.world.setBounds(-width,-height,width*2,height*2);
     var background = this.game.add.tileSprite(0,0,
-        this.game.world.width,this.game.world.height,'background');
+        1920,1920,'background');
     game.world.setBounds(0,0,1920,1920);
     this.game.stage.backgroundColor = '#000';
 
@@ -143,7 +143,7 @@ Game.addNewPlayer = function(id,x,y){
     Game.playerMap[id].enableBody = true;
     Game.playerMap[Client.id].body.collideWorldBounds = true;
     //console.log('id: ' + id);
-    this.game.camera.follow(Game.playerMap[Client.id]/*, Phaser.Camera.FOLLOW_LOCKON*/);
+    this.game.camera.follow(Game.playerMap[Client.id], Phaser.Camera.FOLLOW_LOCKON);
     this.game.camera.bounds = new Phaser.Rectangle(-this.game.world.width,-this.game.world.height,
         this.game.world.width*3, this.game.world.height*3);
 
