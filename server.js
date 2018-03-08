@@ -22,12 +22,14 @@ io.on('connection',function(socket){
 
     socket.on('newplayer',function(){
         socket.player = {
-            id: server.lastPlayderID++,
+            id: server.lastPlayerId++,
             x: randomInt(100,400),
             y: randomInt(100,400)
         };
-        socket.emit('allplayers',getAllPlayers());
         socket.broadcast.emit('newplayer',socket.player);
+        socket./*broadcast.*/emit('newplayer',socket.player);
+        socket.emit('allplayers',getAllPlayers());
+
 
         socket.on('click',function(data){
             console.log('player.id '+socket.player.id+' clicked to '+data.x+', '+data.y);
