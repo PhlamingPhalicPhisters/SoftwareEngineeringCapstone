@@ -56,10 +56,12 @@ Game.create = function(){
     layer.events.onInputUp.add(Game.getCoordinates, this);
 };
 
-Game.update = function()
+Game.update = function(id)
 {
     console.log('Game.update');
     //player.body.setZeroVelocity();
+
+    //game.physics.arcade.overlap(Game.playerMap[id], Game.playerMap, collisionHandler, null, this);
 
     if (Game.cursors.up.isDown)
     {
@@ -79,6 +81,10 @@ Game.update = function()
     }
 }
 
+Game.collisionHandler = function(id) {
+    Game.playerMap[id].destroy();
+    delete Game.playerMap[id];
+}
 /*Game.addNewPlayer = function(id,x,y){
     Game.playerMap[id] = game.add.sprite(x-32,y-32,'sprite');
 };*/
@@ -122,5 +128,4 @@ Game.addNewPlayer = function(id,x,y){
     //Game.playerMap[id].tween;
     //Game.playerMap[id].body.immovable = true;
     //Game.someGroup.add(Game.playerMap[id]);
-    //Game.physics.arcade.collide(Game.playerMap[id], Game.someGroup);
 };
