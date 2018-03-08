@@ -36,7 +36,8 @@ Game.create = function(){
     this.game.stage.backgroundColor = '#000';
 
     this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
-
+    //game.camera.width = window.width * 0.5;
+    //game.camera.height = window.height * 0.5;
 
     var map = this.game.add.tilemap('map');
     map.addTilesetImage('tilesheet', 'tileset'); // tilesheet is the key of the tileset in map's JSON file
@@ -52,13 +53,13 @@ Game.create = function(){
 
     Client.askNewPlayer();
     //this.game.camera.follow(Game.playerMap[Game.playerMap.length-1]);
-    this.game.camera.follow(Game.localPlayer);
+    //this.game.camera.follow(Game.localPlayer);
     layer.events.onInputUp.add(Game.getCoordinates, this);
 };
 
 Game.update = function(id)
 {
-    console.log('Game.update');
+    //console.log('Game.update');
     //player.body.setZeroVelocity();
 
     //game.physics.arcade.overlap(Game.playerMap[id], Game.playerMap, collisionHandler, null, this);
@@ -117,14 +118,17 @@ Game.movePlayer = function(id, x, y) {
 Game.addNewPlayer = function(id,x,y){
     Game.playerMap[id] = this.game.add.sprite(x,y,'sprite');
 
-    if (Game.localPlayer === null)
+    /*if (Game.localPlayer == null)
     {
         Game.localPlayer = Game.playerMap[id];
-    }
+        this.game.camera.follow(Game.playerMap[id]);
+    }*/
 
     this.game.physics.enable(Game.playerMap[id], Phaser.Physics.ARCADE);
     Game.playerMap[id].enableBody = true;
-    this.game.camera.follow(Game.playerMap[id]);
+    //console.log('id: ' + id);
+    this.game.camera.follow(Game.playerMap[Client.id]);
+
     //Game.playerMap[id].tween;
     //Game.playerMap[id].body.immovable = true;
     //Game.someGroup.add(Game.playerMap[id]);
