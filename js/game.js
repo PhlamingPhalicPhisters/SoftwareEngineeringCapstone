@@ -3,7 +3,8 @@ game.state.add('Game',Game);
 game.state.start('Game');*/
 
 var Game = {};
-
+var layer;
+var map;
 Game.init = function(){
     console.log('Game.init');
     // Disable scroll bars
@@ -39,9 +40,9 @@ Game.create = function(){
     //game.camera.width = window.width * 0.5;
     //game.camera.height = window.height * 0.5;
 
-    var map = this.game.add.tilemap('map');
+    map = this.game.add.tilemap('map');
     map.addTilesetImage('tilesheet', 'tileset'); // tilesheet is the key of the tileset in map's JSON file
-    var layer;
+
     for(var i = 0; i < map.layers.length; i++) {
         layer = map.createLayer(i);
     }
@@ -57,38 +58,36 @@ Game.create = function(){
     layer.events.onInputUp.add(Game.getCoordinates, this);
 };
 
-Game.update = function(id)
+Game.update = function()
 {
     //console.log('Game.update');
-    //player.body.setZeroVelocity();
+    //playerMap[Client.id].body.setZeroVelocity();
 
-    //game.physics.arcade.overlap(Game.playerMap[id], Game.playerMap, collisionHandler, null, this);
+    Game.physics.arcade.collide(Game.playerMap[Client.id], Game.playerMap, Game.collisionHandler, null, this);
 
-    if (Game.cursors.up.isDown)
+    /*if (Game.cursors.up.isDown)
     {
-        Game.localPlayer.body.moveUp(300);
+        Game.playerMap[Client.id].body.moveUp(300);
     }
     else if (Game.cursors.down.isDown)
     {
-        Game.localPlayer.body.moveDown(300);
+        Game.playerMap[Client.id].body.moveDown(300);
     }
     if (Game.cursors.left.isDown)
     {
-        Game.localPlayer.body.velocity.x = -300;
+        Game.playerMap[Client.id].body.velocity.x = -300;
     }
     else if (Game.cursors.right.isDown)
     {
-        Game.localPlayer.body.moveRight(300);
-    }
+        Game.playerMap[Client.id].body.moveRight(300);
+    }*/
 }
 
-Game.collisionHandler = function(id) {
-    Game.playerMap[id].destroy();
-    delete Game.playerMap[id];
+Game.collisionHandler = function() {
+    Game.playerMap[Client.id].destroy();
+    delete Game.playerMap[Client.id];
 }
-/*Game.addNewPlayer = function(id,x,y){
-    Game.playerMap[id] = game.add.sprite(x-32,y-32,'sprite');
-};*/
+
 
 Game.removePlayer = function(id){
     console.log('Game.removePlayer');
@@ -125,11 +124,12 @@ Game.addNewPlayer = function(id,x,y){
     }*/
 
     this.game.physics.enable(Game.playerMap[id], Phaser.Physics.ARCADE);
-    Game.playerMap[id].enableBody = true;
+    Game.playerMap[Client.id].enableBody = true;
     //console.log('id: ' + id);
     this.game.camera.follow(Game.playerMap[Client.id]);
 
     //Game.playerMap[id].tween;
-    //Game.playerMap[id].body.immovable = true;
+    Game.playerMap[Client.id].body.immovable = true;
+    Game.playerMap[Client.id].body.collideWorldBounds = true;
     //Game.someGroup.add(Game.playerMap[id]);
 };
