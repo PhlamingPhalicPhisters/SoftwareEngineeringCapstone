@@ -18,9 +18,9 @@ Game.preload = function() {
     console.log('Game.preload');
     this.game.load.tilemap('map', 'assets/map/example_map.json', null, Phaser.Tilemap.TILED_JSON);
     this.game.load.spritesheet('tileset', 'assets/map/tilesheet.png',32,32);
-    //this.game.load.image('sprite','assets/sprites/sprite.png'); // this will be the sprite of the players
+    this.game.load.image('sprite','assets/sprites/sprite.png'); // this will be the sprite of the players
     this.game.load.image('background','assets/map/dark-space.png');
-    this.game.load.image('sprite', 'assets/sprites/knuck.gif');
+    //this.game.load.image('sprite', 'assets/sprites/knuck.gif');
 };
 
 Game.create = function(){
@@ -35,7 +35,10 @@ Game.create = function(){
     game.world.setBounds(0,0,1920,1920);
     this.game.stage.backgroundColor = '#000';
 
-    this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+    //this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
+    //this.scale.pageAlignHorizontally = true;
+    //this.scale.pageAlignVertically = true;
+    //this.scale.setScreenSize(true);
     //game.camera.width = window.width * 0.5;
     //game.camera.height = window.height * 0.5;
 
@@ -97,6 +100,24 @@ Game.getCoordinates = function(layer, pointer) {
 Game.movePlayer = function(id, x, y) {
     x = x - Game.playerMap[id].width/2;
     y = y - Game.playerMap[id].height/2;
+    /*if (x < 0 && y < 0) {
+        return;
+    }
+    else if (x < 0) {
+        x = 0;
+    }
+    else if (y < 0) {
+        y = 0;
+    }
+    if (x > this.game.world.width && y > this.game.world.height) {
+        return;
+    }
+    else if (x > this.game.world.width) {
+        x = this.game.world.width;
+    }
+    else if (y > this.game.world.height) {
+        y = this.game.world.height;
+    }*/
     var player = Game.playerMap[id];
     var distance = Phaser.Math.distance(player.x, player.y, x, y);
     var duration = distance * 1;
@@ -120,8 +141,11 @@ Game.addNewPlayer = function(id,x,y){
 
     this.game.physics.enable(Game.playerMap[id], Phaser.Physics.ARCADE);
     Game.playerMap[id].enableBody = true;
+    Game.playerMap[Client.id].body.collideWorldBounds = true;
     //console.log('id: ' + id);
-    this.game.camera.follow(Game.playerMap[Client.id]);
+    this.game.camera.follow(Game.playerMap[Client.id]/*, Phaser.Camera.FOLLOW_LOCKON*/);
+    this.game.camera.bounds = new Phaser.Rectangle(-this.game.world.width,-this.game.world.height,
+        this.game.world.width*3, this.game.world.height*3);
 
     //Game.playerMap[id].tween;
     //Game.playerMap[id].body.immovable = true;
