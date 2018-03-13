@@ -1,19 +1,31 @@
 var Client = {};
 Client.socket = io.connect();
+//Client.player;
 Client.id = -1;
 
 Client.askNewPlayer = function(){
     Client.socket.emit('newplayer');
+};
+
+Client.getPlayerID = function(){
+    return Client.id;
 }
 
+Client.getPlayer = function(){
+    Client.socket.emit('getplayer');
+};
+
+Client.socket.on('setplayer',function(data){
+    Client.player = data;
+});
+
 Client.socket.on('newplayer',function(data){
-    console.log('id: ');
+    //console.log('id: ');
     if (Client.id == -1) {
         Client.id = data.id;
-        console.log('id: ' + data.id);
+        console.log('Client.id: ' + data.id);
     }
     Game.addNewPlayer(data.id,data.x,data.y);
-
 });
 
 Client.socket.on('allplayers',function(data){
@@ -32,9 +44,41 @@ Client.socket.on('remove',function(id){
 
 Client.sendClick = function(x, y) {
     Client.socket.emit('click', {x: x, y: y});
-    console.log('sent');
-}
+};
 
 Client.socket.on('move', function(data) {
     Game.movePlayer(data.id, data.x, data.y);
+});
+
+Client.sendTransform = function(x, y, rotation) {
+    console.log(player.x+','+player.y+','+player.rotation);
+    Client.socket.emit('transform', {x: x, y: y, rotation: rotation});
+};
+
+Client.socket.on('updateTransform', function(data) {
+    Game.updateTransform(data.id, data.x, data.y, data.rotation);
+});
+
+Client.sendAcceleration = function(direction) {
+    Client.socket.emit('accelerate', {direction: direction});
+};
+
+Client.socket.on('updateAcceleration', function(data, direction) {
+    Game.setPlayerAcceleration(data.id, direction);
+});
+
+Client.sendRotation = function(angularVelocity) {
+    Client.socket.emit('rotate', {angularVelocity: angularVelocity});
+};
+
+Client.socket.on('updateRotation', function(data, angularVelocity) {
+    Game.setPlayerRotation(data.id, angularVelocity);
+});
+
+Client.sendShoot = function() {
+    Client.socket.emit('shoot');
+};
+
+Client.socket.on('fire', function(data) {
+    Game.playerShoot(data.id);
 });
