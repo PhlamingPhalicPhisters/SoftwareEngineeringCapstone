@@ -164,8 +164,8 @@ Game.update = function()
     }
 
     //console.log(Game.playerMap[0].x);
-    //Client.sendTransform(Game.playerMap[Client.getPlayerID()].x,
-        //Game.playerMap[Client.getPlayerID()].y,Game.playerMap[Client.getPlayerID()].rotation);
+    Client.sendTransform(Game.playerMap[Client.getPlayer()].x,
+        Game.playerMap[Client.getPlayer()].y,Game.playerMap[Client.getPlayer()].rotation);
 };
 
 /*Game.addNewPlayer = function(id,x,y){
