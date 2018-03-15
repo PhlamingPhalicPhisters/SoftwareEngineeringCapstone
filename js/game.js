@@ -73,12 +73,17 @@ Game.create = function(){
 
 };
 
-Game.update = function()
+function collisionHandler(id) {
+    Game.playerMap[id].destroy();
+    delete Game.playerMap[id];
+}
+
+Game.update = function(id)
 {
     //console.log('Game.update');
     //playerMap[Client.id].body.setZeroVelocity();
 
-   // Game.physics.arcade.collide(Game.playerMap[Client.id], layer[6]);
+    //Game.physics.p2.collide(Game.playerMap[id], layer[6]);
 
     /*if (Game.cursors.up.isDown)
     {
@@ -98,10 +103,7 @@ Game.update = function()
     }*/
 }
 
-Game.collisionHandler = function() {
-    Game.playerMap[Client.id].destroy();
-    delete Game.playerMap[Client.id];
-}
+
 
 
 Game.removePlayer = function(id){
@@ -138,19 +140,19 @@ Game.addNewPlayer = function(id,x,y){
         this.game.camera.follow(Game.playerMap[id]);
     }*/
 
-    this.game.physics.enable(Game.playerMap[id], Phaser.Physics.ARCADE);
-    Game.playerMap[Client.id].enableBody = true;
+    this.game.physics.enable(Game.playerMap[id], Phaser.Physics.P2JS);
+    Game.playerMap[id].enableBody = true;
     //console.log('id: ' + id);
-    this.game.camera.follow(Game.playerMap[Client.id]);
+    this.game.camera.follow(Game.playerMap[id]);
 
     //Game.playerMap[id].tween;
-    Game.playerMap[Client.id].body.immovable = true;
-    Game.playerMap[Client.id].body.collideWorldBounds = true;
+    //Game.playerMap[id].body.immovable = true;
+    Game.playerMap[id].body.collideWorldBounds = true;
 
 
-    Game.physics.p2.enable(Game.playerMap[Client.id]);
-    Game.playerMap[Client.id].body.setCollisionGroup(lilBoiCollisionGroup);
-    Game.playerMap[Client.id].body.collides([tilesCollisionGroup]);
+    Game.physics.p2.enable(Game.playerMap[id]);
+    Game.playerMap[id].body.setCollisionGroup(lilBoiCollisionGroup);
+    Game.playerMap[id].body.collides([tilesCollisionGroup], collisionHandler);
 
     //Game.playerMap[Client.id].body.setCollisionGroup(lilBoiCollisionGroup);
     //Game.playerMap[Client.id].body.collides([tileCollisionGroup]);
