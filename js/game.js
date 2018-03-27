@@ -22,7 +22,7 @@ Game.preload = function() {
     this.game.load.image('sprite','assets/sprites/sprite.png'); // this will be the sprite of the players
     //this.game.load.image('sprite', 'assets/sprites/knuck.gif');
 };
-var sprite;
+//var sprite;
 Game.create = function(){
     var width = this.game.width;
     var height = this.game.height;
@@ -67,8 +67,8 @@ Game.create = function(){
     //this.game.camera.follow(Game.localPlayer);
     layer.events.onInputUp.add(Game.getCoordinates, this);
 
-    sprite = this.game.add.sprite(100,100,'sprite');
-    sprite.anchor.set(0.5);
+    //sprite = this.game.add.sprite(100,100,'sprite');
+   // sprite.anchor.set(0.5);
 
     // Game.playerMap[id].anchor.x = 0.5;
     // Game.playerMap[id].anchor.y = 0.5;
@@ -79,11 +79,11 @@ Game.create = function(){
         this.game.camera.follow(Game.playerMap[id]);
     }*/
 
-    this.game.physics.enable(sprite, Phaser.Physics.ARCADE);
-    sprite.enableBody = true;
-    sprite.body.collideWorldBounds = true;
-    sprite.body.drag.set(100);
-    sprite.body.maxVelocity.set(200);
+    //this.game.physics.enable(sprite, Phaser.Physics.ARCADE);
+    //sprite.enableBody = true;
+    //sprite.body.collideWorldBounds = true;
+    //sprite.body.drag.set(100);
+    //sprite.body.maxVelocity.set(200);
 };
 
 Game.update = function()
@@ -164,8 +164,8 @@ Game.update = function()
     }
 
     //console.log(Game.playerMap[0].x);
-    Client.sendTransform(Game.playerMap[Client.getPlayer()].x,
-        Game.playerMap[Client.getPlayer()].y,Game.playerMap[Client.getPlayer()].rotation);
+    //Client.sendTransform(Game.playerMap[Client.getPlayer()].x,
+    //Game.playerMap[Client.getPlayer()].y,Game.playerMap[Client.getPlayer()].rotation);
 };
 
 /*Game.addNewPlayer = function(id,x,y){
