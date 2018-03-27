@@ -11,7 +11,6 @@ app.get('/',function(req,res){
     res.sendFile(__dirname+'/index.html');
 });
 
-
 server.lastPlayerId = 0;
 
 server.listen(process.env.PORT || 8081,function(){
@@ -23,19 +22,47 @@ io.on('connection',function(socket){
     socket.on('newplayer',function(){
         socket.player = {
             id: server.lastPlayerId++,
-            x: randomInt(100,400),
-            y: randomInt(100,400)
+            x: randomInt(100,500),
+            y: randomInt(100,500),
+            rotation: 0,
+            health: 100
         };
         socket.broadcast.emit('newplayer',socket.player);
         socket./*broadcast.*/emit('newplayer',socket.player);
         socket.emit('allplayers',getAllPlayers());
 
+        socket.on('getplayer',function(data){
+            socket.emit('setplayer',socket.player);
+        });
 
         socket.on('click',function(data){
             console.log('player.id '+socket.player.id+' clicked to '+data.x+', '+data.y);
             socket.player.x = data.x;
             socket.player.y = data.y;
             io.emit('move',socket.player);
+        });
+
+        socket.on('transform', function(data){
+            socket.player.x = data.x;
+            socket.player.y = data.y;
+            socket.player.rotation = data.rotation;
+            socket.broadcast.emit('updateTransform', socket.player);
+            // socket.player.scale = data.scale;
+        });
+
+        socket.on('accelerate',function(data){
+            //io.emit('updateAcceleration', socket.player, data.direction);
+            socket.emit('updateAcceleration', socket.player, data.direction);
+        });
+
+        socket.on('rotate',function(data){
+            //io.emit('updateRotation', socket.player, data.angularVelocity);
+            socket.emit('updateRotation', socket.player, data.angularVelocity);
+        });
+
+        socket.on('shoot',function(data){
+            //io.emit('updateAcceleration', socket.player);
+            socket.emit('updateAcceleration', socket.player);
         });
 
         // socket.on('move', function(data){
