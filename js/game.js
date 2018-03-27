@@ -21,12 +21,8 @@ Game.preload = function() {
     this.game.load.image('background','assets/map/dark-space.png');
     this.game.load.image('sprite','assets/sprites/sprite.png'); // this will be the sprite of the players
     //this.game.load.image('sprite', 'assets/sprites/knuck.gif');
-    this.game.load.image('panda','assets/sprites/panda.png');
 };
-//var sprite;
-var playerCollisionGroup;
-var pandaCollisionGroup;
-
+var sprite;
 Game.create = function(){
     var width = this.game.width;
     var height = this.game.height;
@@ -34,7 +30,7 @@ Game.create = function(){
     Game.playerMap = {};
 
     //game.world.setBounds(-width,-height,width*2,height*2);
-    Game.world.setBounds(0,0,2000,2000);
+    game.world.setBounds(0,0,2000,2000);
     var background = this.game.add.tileSprite(this.game.world.bounds.left,this.game.world.bounds.top,
         this.game.world.bounds.right, this.game.world.bounds.bottom,'background');
     this.game.stage.backgroundColor = '#ffffff';
@@ -54,7 +50,7 @@ Game.create = function(){
     }
     layer.inputEnabled = true; // Allows clicking on the map
 
-    Game.physics.startSystem(Phaser.Physics.P2JS);
+    this.game.physics.startSystem(Phaser.Physics.ARCADE);
     //this.game.physics.applyGravity = true;
 
     Client.askNewPlayer();
@@ -71,8 +67,8 @@ Game.create = function(){
     //this.game.camera.follow(Game.localPlayer);
     layer.events.onInputUp.add(Game.getCoordinates, this);
 
-    //sprite = this.game.add.sprite(100,100,'sprite');
-    //sprite.anchor.set(0.5);
+    sprite = this.game.add.sprite(100,100,'sprite');
+    sprite.anchor.set(0.5);
 
     // Game.playerMap[id].anchor.x = 0.5;
     // Game.playerMap[id].anchor.y = 0.5;
@@ -83,41 +79,12 @@ Game.create = function(){
         this.game.camera.follow(Game.playerMap[id]);
     }*/
 
-    //set collision calbacks
-    Game.physics.p2.setImpactEvents(true);
-    Game.physics.p2.restitution = 0.8;
-
-    playerCollisionGroup = Game.physics.p2.createCollisionGroup();
-    pandaCollisionGroup = Game.physics.p2.createCollisionGroup();
-    Game.physics.p2.updateBoundsCollisionGroup();
-
-    var pandas = game.add.group();
-    pandas.enableBody = true;
-    pandas.physicsBodyType = Phaser.Physics.P2JS;
-
-    var panda = pandas.create(game.world.randomX, game.world.randomY, 'panda');
-    panda.body.setRectangle(40, 40);
-
-    //  Tell the panda to use the pandaCollisionGroup
-    panda.body.setCollisionGroup(pandaCollisionGroup);
-
-    panda.body.collides([pandaCollisionGroup, playerCollisionGroup]);
-
-    //this.game.physics.enable(sprite, Phaser.Physics.ARCADE);
-    //sprite.enableBody = true;
-    //sprite.body.collideWorldBounds = true;
-    //sprite.body.drag.set(100);
-    //sprite.body.maxVelocity.set(200);
+    this.game.physics.enable(sprite, Phaser.Physics.ARCADE);
+    sprite.enableBody = true;
+    sprite.body.collideWorldBounds = true;
+    sprite.body.drag.set(100);
+    sprite.body.maxVelocity.set(200);
 };
-
-function hitPanda(body1, body2) {
-
-    //  body1 is the space ship (as it's the body that owns the callback)
-    //  body2 is the body it impacted with, in this case our panda
-    //  As body2 is a Phaser.Physics.P2.Body object, you access its own (the sprite) via the sprite property:
-    body2.sprite.alpha -= 0.1;
-
-}
 
 Game.update = function()
 {
@@ -197,8 +164,8 @@ Game.update = function()
     }
 
     //console.log(Game.playerMap[0].x);
-    //Client.sendTransform(Game.playerMap[Client.getPlayer()].x,
-    //Game.playerMap[Client.getPlayer()].y,Game.playerMap[Client.getPlayer()].rotation);
+    Client.sendTransform(Game.playerMap[Client.getPlayer()].x,
+        Game.playerMap[Client.getPlayer()].y,Game.playerMap[Client.getPlayer()].rotation);
 };
 
 /*Game.addNewPlayer = function(id,x,y){
@@ -256,15 +223,13 @@ Game.updateTransform = function(id, x, y, rotation)
 Game.setPlayerAcceleration = function(id, direction){
     if (direction == 1)
     {
-        /*game.physics.p2.accelerationFromRotation(Game.playerMap[id].rotation,
-            200, Game.playerMap[id].body.acceleration);*/
-        Game.playerMap[id].body.moveUp(200);
+        game.physics.arcade.accelerationFromRotation(Game.playerMap[id].rotation,
+            200, Game.playerMap[id].body.acceleration);
     }
     else if (direction == -1)
     {
-       /* game.physics.p2.accelerationFromRotation(Game.playerMap[id].rotation,
-            -200, Game.playerMap[id].body.acceleration);*/
-        Game.playerMap[id].body.moveDown(200);
+        game.physics.arcade.accelerationFromRotation(Game.playerMap[id].rotation,
+            -200, Game.playerMap[id].body.acceleration);
     }
     else
     {
@@ -287,11 +252,6 @@ Game.addNewPlayer = function(id,x,y){
 
     newPlayer.anchor.set(0.5);
 
-    Game.physics.p2.enable(newPlayer, false);
-    newPlayer.body.setCircle(28);
-    //newPlayer.body.fixedRotation = true;
-    newPlayer.body.setCollisionGroup(playerCollisionGroup);
-    newPlayer.body.collides(pandaCollisionGroup, hitPanda, this);
     // Game.playerMap[id].anchor.x = 0.5;
     // Game.playerMap[id].anchor.y = 0.5;
 
@@ -301,9 +261,9 @@ Game.addNewPlayer = function(id,x,y){
         this.game.camera.follow(Game.playerMap[id]);
     }*/
 
-    //this.game.physics.enable(newPlayer, Phaser.Physics.ARCADE);
+    this.game.physics.enable(newPlayer, Phaser.Physics.ARCADE);
     newPlayer.enableBody = true;
-    //newPlayer.body.collideWorldBounds = true;
+    newPlayer.body.collideWorldBounds = true;
     newPlayer.body.drag.set(100);
     newPlayer.body.maxVelocity.set(200);
 
