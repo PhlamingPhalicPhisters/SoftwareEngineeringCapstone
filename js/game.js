@@ -4,6 +4,8 @@ game.state.start('Game');*/
 
 var Game = {};
 
+var playerArray = [];
+
 Game.init = function(){
     console.log('Game.init');
     // Disable scroll bars
@@ -21,8 +23,11 @@ Game.preload = function() {
     this.game.load.image('background','assets/map/dark-space.png');
     this.game.load.image('sprite','assets/sprites/sprite.png'); // this will be the sprite of the players
     //this.game.load.image('sprite', 'assets/sprites/knuck.gif');
+    this.game.load.image('panda','assets/sprites/panda.png');
 };
-//var sprite;
+var sprite1;
+var sprite2;
+var spriteGroup;
 Game.create = function(){
     var width = this.game.width;
     var height = this.game.height;
@@ -67,6 +72,23 @@ Game.create = function(){
     //this.game.camera.follow(Game.localPlayer);
     layer.events.onInputUp.add(Game.getCoordinates, this);
 
+    sprite1 = game.add.sprite(200, 200, 'sprite');
+    sprite1.name = 'sprite';
+    Game.physics.enable(sprite1, Phaser.Physics.ARCADE);
+    sprite1.body.collideWorldBounds = true;
+    sprite1.body.immovable = false;
+    sprite1.body.setSize(26, 32, 13, 16);
+    sprite1.body.bounce.setTo(.5, .5);
+    sprite2 = game.add.sprite(250, 250, 'sprite');
+    sprite2.name = 'sprite';
+    Game.physics.enable(sprite2, Phaser.Physics.ARCADE);
+    sprite2.body.collideWorldBounds = true;
+    sprite2.body.immovable = false;
+    sprite2.body.setSize(26, 32, 13, 16);
+    sprite2.body.bounce.setTo(.5, .5);
+    spriteGroup = [sprite1, sprite2];
+    //sprite1.anchor.setTo(0.5, 0.5);
+
     //sprite = this.game.add.sprite(100,100,'sprite');
    // sprite.anchor.set(0.5);
 
@@ -84,13 +106,18 @@ Game.create = function(){
     //sprite.body.collideWorldBounds = true;
     //sprite.body.drag.set(100);
     //sprite.body.maxVelocity.set(200);
+
+
 };
 
 Game.update = function()
 {
+
     //game.world.scale.refresh();
-    //console.log('Game.update');
+    console.log(playerArray.length);
     //player.body.setZeroVelocity();
+    Game.physics.arcade.collide(playerArray, playerArray);
+    Game.physics.arcade.collide(spriteGroup, Game.playerMap[Client.id]);
 
     //this.game.physics.enable(Game.playerMap[Client.id], Phaser.Physics.ARCADE);
 
@@ -248,7 +275,7 @@ Game.playerShoot = function(){
 //Game.someGroup = Game.add.group();
 
 Game.addNewPlayer = function(id,x,y){
-    var newPlayer = this.game.add.sprite(x,y,'sprite');
+    var newPlayer = Game.add.sprite(x,y,'sprite');
 
     newPlayer.anchor.set(0.5);
 
@@ -261,9 +288,11 @@ Game.addNewPlayer = function(id,x,y){
         this.game.camera.follow(Game.playerMap[id]);
     }*/
 
-    this.game.physics.enable(newPlayer, Phaser.Physics.ARCADE);
-    newPlayer.enableBody = true;
+    Game.physics.enable(newPlayer, Phaser.Physics.ARCADE);
+    newPlayer.enableBody = true;                            //Here is what is needed for
     newPlayer.body.collideWorldBounds = true;
+    newPlayer.body.setSize(26, 32, 13, 16);                   //collisions to work
+    newPlayer.body.bounce.setTo(.5, .5);
     newPlayer.body.drag.set(100);
     newPlayer.body.maxVelocity.set(200);
 
@@ -272,6 +301,7 @@ Game.addNewPlayer = function(id,x,y){
     //console.log('id: ' + id);
 
     Game.playerMap[id] = newPlayer;
+    playerArray.push(newPlayer);
 
     this.game.camera.follow(Game.playerMap[Client.id], Phaser.Camera.FOLLOW_LOCKON);
 
