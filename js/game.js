@@ -218,6 +218,7 @@ Game.addNewPlayer = function(id,x,y,rotation){
     newPlayer.body.drag.set(100);
     newPlayer.body.maxVelocity.set(200);
 
+
     // Local player should be instantiated first before remote players
     Game.playerMap[id] = newPlayer;
     playerArray.push(newPlayer);
@@ -226,8 +227,8 @@ Game.addNewPlayer = function(id,x,y,rotation){
     }
 
     // Set local camera to follow local player sprite
-    this.game.camera.follow(Game.playerMap[Client.getPlayerID()], Phaser.Camera.FOLLOW_LOCKON);
 
+    this.game.camera.follow(Game.playerMap[Client.getPlayerID()], Phaser.Camera.FOLLOW_LOCKON);
 
     //Game.playerMap[id].tween;
     //Game.playerMap[id].body.immovable = true;
