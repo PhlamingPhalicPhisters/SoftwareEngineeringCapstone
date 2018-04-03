@@ -28,13 +28,14 @@ io.on('connection',function(socket){
             rotation: 0,
             health: 100
         };
+        console.log('Player '+socket.player.id+' connected');
         socket.broadcast.emit('newplayer',socket.player);
         socket./*broadcast.*/emit('newplayer',socket.player);
         socket.emit('allplayers',getAllPlayers());
 
-        socket.on('getplayer',function(data){
+        /*socket.on('getplayer',function(data){
             socket.emit('setplayer',socket.player);
-        });
+        });*/
 
         socket.on('click',function(data){
             console.log('player.id '+socket.player.id+' clicked to '+data.x+', '+data.y);
@@ -44,6 +45,7 @@ io.on('connection',function(socket){
         });
 
         socket.on('transform', function(data){
+            //console.log('Server transform');
             socket.player.x = data.x;
             socket.player.y = data.y;
             socket.player.rotation = data.rotation;
