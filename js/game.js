@@ -4,6 +4,8 @@ game.state.start('Game');*/
 
 var Game = {};
 
+var playerArray = [];
+
 Game.init = function(){
     console.log('Game.init');
 
@@ -24,7 +26,7 @@ Game.preload = function() {
     this.game.load.image('sprite','assets/sprites/sprite.png'); // this will be the sprite of the players
     //this.game.load.image('sprite', 'assets/sprites/knuck.gif');
 };
-var sprite;
+
 Game.create = function(){
     console.log('Game.create');
 
@@ -87,7 +89,7 @@ Game.update = function()
     // Maintain window scale thru resizing
     //game.world.scale.refresh();
     //console.log('Game.update');
-
+    Game.physics.arcade.collide(playerArray, playerArray);
     // Get forward/backward input
     if (Game.cursors.up.isDown)
     {
@@ -212,14 +214,17 @@ Game.addNewPlayer = function(id,x,y,rotation){
     newPlayer.rotation = rotation;
 
     // Enable appropriate player physics
-    this.game.physics.enable(newPlayer, Phaser.Physics.ARCADE);
-    newPlayer.enableBody = true;
+    Game.physics.enable(newPlayer, Phaser.Physics.ARCADE);
+    newPlayer.enableBody = true;                            //Here is what is needed for
     newPlayer.body.collideWorldBounds = true;
+    newPlayer.body.setSize(26, 32, 13, 16);                   //collisions to work
+    newPlayer.body.bounce.setTo(.5, .5);
     newPlayer.body.drag.set(100);
     newPlayer.body.maxVelocity.set(200);
 
     // Local player should be instantiated first before remote players
     Game.playerMap[id] = newPlayer;
+    playerArray.push(newPlayer);
     if (!Game.localPlayerInstantiated) {
         Game.localPlayerInstantiated = true;
     }
