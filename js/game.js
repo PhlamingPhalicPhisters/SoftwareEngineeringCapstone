@@ -58,8 +58,6 @@ Game.create = function(){
     map.addTilesetImage('tiles128','tiles'); // tilesheet is the key of the tileset in map's JSON file
     var layer = map.createLayer('GroundLayer');
 
-
-
     //for(var i = 0; i < map.layers.length; i++) {
         //layer = map.createLayer(i);
     //}
