@@ -1,6 +1,6 @@
 var Client = {};
 Client.socket = io.connect();
-//Client.player;
+Client.player;
 Client.id = -1;
 
 Client.askNewPlayer = function(){
@@ -9,7 +9,7 @@ Client.askNewPlayer = function(){
 
 Client.getPlayerID = function(){
     return Client.id;
-}
+};
 
 Client.getPlayer = function(){
     Client.socket.emit('getplayer');
@@ -25,7 +25,7 @@ Client.socket.on('newplayer',function(data){
         Client.id = data.id;
         console.log('Client.id: ' + data.id);
     }
-    Game.addNewPlayer(data.id,data.x,data.y);
+    Game.addNewPlayer(data.id,data.x,data.y,data.rotation);
 });
 
 Client.socket.on('allplayers',function(data){
@@ -33,9 +33,10 @@ Client.socket.on('allplayers',function(data){
     //console.log(data);
     for(var i = 0; i < data.length; i++){
         if (data[i].id != Client.id) {
-            Game.addNewPlayer(data[i].id, data[i].x, data[i].y);
+            Game.addNewPlayer(data[i].id, data[i].x, data[i].y, data[i].rotation);
         }
     }
+    Game.setAllPlayersAdded();
 });
 
 Client.socket.on('remove',function(id){
@@ -51,11 +52,13 @@ Client.socket.on('move', function(data) {
 });
 
 Client.sendTransform = function(x, y, rotation) {
-    console.log(player.x+','+player.y+','+player.rotation);
+    //console.log('Client sendTransform');
+    //console.log(x+','+y+','+rotation);
     Client.socket.emit('transform', {x: x, y: y, rotation: rotation});
 };
 
 Client.socket.on('updateTransform', function(data) {
+    //console.log('Client updateTransform');
     Game.updateTransform(data.id, data.x, data.y, data.rotation);
 });
 
