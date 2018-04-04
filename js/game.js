@@ -4,6 +4,10 @@ game.state.start('Game');*/
 
 var Game = {};
 
+var playerArray = [];
+
+var layer;
+
 Game.init = function(){
     console.log('Game.init');
 
@@ -18,18 +22,22 @@ Game.init = function(){
 Game.preload = function() {
     console.log('Game.preload');
 
-    this.game.load.tilemap('map', 'assets/map/example_map.json', null, Phaser.Tilemap.TILED_JSON);
-    this.game.load.spritesheet('tileset', 'assets/map/tilesheet.png',32,32);
+    this.game.load.tilemap('map', 'assets/map/uncompressedmap.json', null, Phaser.Tilemap.TILED_JSON);
+    this.game.load.image('tiles', 'assets/map/simples_pimples.png');
     this.game.load.image('background','assets/map/dark-space.png');
     this.game.load.image('sprite','assets/sprites/sprite.png'); // this will be the sprite of the players
     //this.game.load.image('sprite', 'assets/sprites/knuck.gif');
 };
-var sprite;
+
 Game.create = function(){
     console.log('Game.create');
 
     var width = this.game.width;
     var height = this.game.height;
+
+    // Enable Phaser Arcade game physics engine
+    //this.game.physics.startSystem(Phaser.Physics.ARCADE);
+    Game.physics.startSystem(Phaser.Physics.ARCADE);
 
     // Create reference list of all players in game
     Game.playerMap = {};
@@ -63,15 +71,16 @@ Game.create = function(){
 
     // Set up tile mapping and layer system
     var map = this.game.add.tilemap('map');
-    map.addTilesetImage('tilesheet', 'tileset'); // tilesheet is the key of the tileset in map's JSON file
-    var layer;
-    for(var i = 0; i < map.layers.length; i++) {
-        layer = map.createLayer(i);
-    }
+    map.addTilesetImage('tiles128','tiles'); // tilesheet is the key of the tileset in map's JSON file
+    layer = map.createLayer('GroundLayer');
+    map.setCollisionBetween(0, 4000, true, 'GroundLayer');
+
+    //for(var i = 0; i < map.layers.length; i++) {
+        //layer = map.createLayer(i);
+    //}
+
     layer.inputEnabled = true; // Allows clicking on the map
 
-    // Enable Phaser Arcade game physics engine
-    this.game.physics.startSystem(Phaser.Physics.ARCADE);
     //this.game.physics.applyGravity = true;
 
     // Create Local player & all active remote players
@@ -90,6 +99,11 @@ Game.create = function(){
 
 Game.update = function()
 {
+    // Maintain window scale thru resizing
+    //game.world.scale.refresh();
+    //console.log('Game.update');
+    Game.physics.arcade.collide(playerArray, playerArray);
+    Game.physics.arcade.collide(layer, playerArray);
     // Get forward/backward input
     if (Game.cursors.up.isDown)
     {
@@ -214,14 +228,17 @@ Game.addNewPlayer = function(id,x,y,rotation){
     newPlayer.rotation = rotation;
 
     // Enable appropriate player physics
-    this.game.physics.enable(newPlayer, Phaser.Physics.ARCADE);
-    newPlayer.enableBody = true;
+    Game.physics.enable(newPlayer, Phaser.Physics.ARCADE);
+    newPlayer.enableBody = true;                            //Here is what is needed for
     newPlayer.body.collideWorldBounds = true;
+    newPlayer.body.setSize(26, 32, 13, 16);                   //collisions to work
+    newPlayer.body.bounce.setTo(.5, .5);
     newPlayer.body.drag.set(100);
     newPlayer.body.maxVelocity.set(200);
 
     // Local player should be instantiated first before remote players
     Game.playerMap[id] = newPlayer;
+    playerArray.push(newPlayer);
     if (!Game.localPlayerInstantiated) {
         Game.localPlayerInstantiated = true;
     }
