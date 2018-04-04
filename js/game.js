@@ -6,6 +6,8 @@ var Game = {};
 
 var playerArray = [];
 
+var layer;
+
 Game.init = function(){
     console.log('Game.init');
 
@@ -29,7 +31,7 @@ Game.preload = function() {
 
 Game.create = function(){
     console.log('Game.create');
-
+    Game.physics.startSystem(Phaser.Physics.ARCADE);
     var width = this.game.width;
     var height = this.game.height;
 
@@ -56,7 +58,8 @@ Game.create = function(){
     // Set up tile mapping and layer system
     var map = this.game.add.tilemap('map');
     map.addTilesetImage('tiles128','tiles'); // tilesheet is the key of the tileset in map's JSON file
-    var layer = map.createLayer('GroundLayer');
+    layer = map.createLayer('GroundLayer');
+    map.setCollisionBetween(0, 4000, true, 'GroundLayer');
 
     //for(var i = 0; i < map.layers.length; i++) {
         //layer = map.createLayer(i);
@@ -65,7 +68,7 @@ Game.create = function(){
     layer.inputEnabled = true; // Allows clicking on the map
 
     // Enable Phaser Arcade game physics engine
-    this.game.physics.startSystem(Phaser.Physics.ARCADE);
+
     //this.game.physics.applyGravity = true;
 
     // Create Local player & all active remote players
@@ -88,6 +91,7 @@ Game.update = function()
     //game.world.scale.refresh();
     //console.log('Game.update');
     Game.physics.arcade.collide(playerArray, playerArray);
+    Game.physics.arcade.collide(layer, playerArray);
     // Get forward/backward input
     if (Game.cursors.up.isDown)
     {
