@@ -43,11 +43,21 @@ Game.create = function(){
         this.game.world.bounds.right, this.game.world.bounds.bottom,'background');
     this.game.stage.backgroundColor = '#ffffff';
 
-    // Maintain screen ratio with window resizing
+    // Set up scaling management
     this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
-    // this.scale.pageAlignHorizontally = true;
-    // this.scale.pageAlignVertically = true;
-    // this.scale.setScreenSize(true);
+    this.game.scale.pageAlignHorizontally = true;
+    this.game.scale.pageAlignVertically = true;
+    // this.game.scale.setMinMax(640,480/*,1920,1080*/);
+
+    // Handle window resizing events every 50ms
+    window.addEventListener('resize',function(event){
+        clearTimeout(window.resizedFinished);
+        window.resizedFinished = setTimeout(function(){
+            console.log('Resize finished');
+            Game.rescale();
+        }, 50);
+    });
+
     //game.camera.width = window.width * 0.5;
     //game.camera.height = window.height * 0.5;
 
@@ -80,10 +90,6 @@ Game.create = function(){
 
 Game.update = function()
 {
-    // Maintain window scale thru resizing
-    //game.world.scale.refresh();
-    //console.log('Game.update');
-
     // Get forward/backward input
     if (Game.cursors.up.isDown)
     {
@@ -232,4 +238,13 @@ Game.addNewPlayer = function(id,x,y,rotation){
 
 Game.setAllPlayersAdded = function(){
     Game.allPlayersAdded = true;
+};
+
+Game.rescale = function(){
+    console.log('Rescaling game to '+window.innerWidth+'x'+window.innerHeight);
+    this.game.scale.setGameSize(window.innerWidth, window.innerHeight);
+
+    // // Make sure camera bounds are maintained
+    this.game.camera.bounds = new Phaser.Rectangle(-this.game.world.width,-this.game.world.height,
+        this.game.world.width*3, this.game.world.height*3);
 };
