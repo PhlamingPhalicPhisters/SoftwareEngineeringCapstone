@@ -4,9 +4,9 @@ game.state.start('Game');*/
 
 var Game = {};
 
-var playerArray = [];
+var playerArray = [];   //array that holds all of the current players in order for collisions to work
 
-var layer;
+var layer;  //this is a test variable that holds a map layer to collide with
 
 //This variable represents the amount of ships in the game
 //It is used when assigning new players a ship
@@ -85,7 +85,7 @@ Game.create = function(){
     var map = this.game.add.tilemap('map');
     map.addTilesetImage('tiles128','tiles'); // tilesheet is the key of the tileset in map's JSON file
     layer = map.createLayer('GroundLayer');
-    map.setCollisionBetween(0, 4000, true, 'GroundLayer');
+    map.setCollisionBetween(0, 4000, true, 'GroundLayer');  //this map method is where you set all of the tiles the players will collide with
 
     //for(var i = 0; i < map.layers.length; i++) {
     //layer = map.createLayer(i);
@@ -114,8 +114,8 @@ Game.update = function()
     // Maintain window scale thru resizing
     //game.world.scale.refresh();
     //console.log('Game.update');
-    Game.physics.arcade.collide(playerArray, playerArray);
-    Game.physics.arcade.collide(layer, playerArray);
+    Game.physics.arcade.collide(playerArray, playerArray);  //collide players with all other players
+    Game.physics.arcade.collide(layer, playerArray);    //collide players with test map layer
     // Get forward/backward input
     if (Game.cursors.up.isDown)
     {
@@ -251,7 +251,8 @@ Game.addNewPlayer = function(id,x,y,rotation){
 
     // Local player should be instantiated first before remote players
     Game.playerMap[id] = newPlayer;
-    playerArray.push(newPlayer);
+    playerArray.push(newPlayer);    //push player into the player array for collisions
+
     if (!Game.localPlayerInstantiated) {
         Game.localPlayerInstantiated = true;
     }
