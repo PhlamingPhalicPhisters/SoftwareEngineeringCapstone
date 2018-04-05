@@ -70,8 +70,7 @@ io.on('connection',function(socket){
         });*/
         socket.on('fire',function(data){
             //socket.broadcast.emit('updateFire', data);
-            var time = Date.now();
-            socket.broadcast.emit('updateFire', {x: data.x, y: data.y, width: data.width, height: data.height, rotation: data.rotation, id: data.id, time: time});
+            socket.broadcast.emit('updateFire', {x: data.x, y: data.y, rotation: data.rotation});
         });
         socket.on('requestTime', function() {
             var time = Date.now();

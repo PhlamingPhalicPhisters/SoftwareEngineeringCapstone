@@ -86,11 +86,11 @@ Client.socket.on('fire', function(data) {
     Game.playerShoot(data.id);
 });*/
 
-Client.sendFire = function(x, y, width, height, rotation) {
+Client.sendFire = function(x, y, rotation) {
     //var bullet = bulletInfo.bullet;
     //var bullets = bulletInfo.bullets
 
-    Client.socket.emit('fire', {x: x, y: y, width: width, height: height, rotation: rotation, id: Client.id});
+    Client.socket.emit('fire', {x: x, y: y, rotation: rotation});
 };
 
 Client.requestTime = function() {
@@ -109,7 +109,7 @@ Client.socket.on('startTime', function(data) {
 });
 
 Client.socket.on('updateFire', function(data) {
-    Game.updateBullets(data.x, data.y, data.width, data.height, data.rotation, data.id, data.time);
+    Game.updateBullets(data.x, data.y, data.rotation);
 
     //Game.updateBullets(data);
 });

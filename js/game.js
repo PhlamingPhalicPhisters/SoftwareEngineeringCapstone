@@ -301,20 +301,20 @@ function fireBullet(bulletInfo) {
         bulletInfo.bullet = bulletInfo.bullets.getFirstExists(false);
 
         if (bulletInfo.bullet) {
-            bulletInfo.bullet.reset(Game.playerMap[Client.player.id].body.x + Game.playerMap[Client.player.id].width / 2, Game.playerMap[Client.player.id].body.y + Game.playerMap[Client.player.id].height / 2);
+            bulletInfo.bullet.reset(Game.playerMap[Client.player.id].x, Game.playerMap[Client.player.id].y);
             //bullet.body.collideWorldBounds = true;
             bulletInfo.bullet.lifespan = 2000;
             bulletInfo.bullet.rotation = Game.playerMap[Client.player.id].rotation;
             game.physics.arcade.velocityFromRotation(Game.playerMap[Client.player.id].rotation, 1000, bulletInfo.bullet.body.velocity);
             bulletInfo.bulletTime = game.time.now + 50;
             //Client.sendFire(bulletInfo.bullet);
-            Client.sendFire(Game.playerMap[Client.player.id].body.x, Game.playerMap[Client.player.id].body.y, Game.playerMap[Client.player.id].width, Game.playerMap[Client.player.id].height, Game.playerMap[Client.player.id].rotation);
+            Client.sendFire(Game.playerMap[Client.player.id].x, Game.playerMap[Client.player.id].y, Game.playerMap[Client.player.id].rotation);
         }
     }
 }
 
 
-Game.updateBullets = function(x, y, width, height, rotation, id, time) {
+Game.updateBullets = function(x, y, rotation) {
     /*if (avgPing == -1) {
         if (pingReceiveTimes.length == 0) {
             pingReceiveTimes = Client.getPingTimes();
@@ -341,7 +341,7 @@ Game.updateBullets = function(x, y, width, height, rotation, id, time) {
         publicBulletInfo.bullet = publicBulletInfo.bullets.getFirstExists(false);
 
         if (publicBulletInfo.bullet) {
-            publicBulletInfo.bullet.reset(x + width / 2, y + height / 2);
+            publicBulletInfo.bullet.reset(x, y);
             //bullet.body.collideWorldBounds = true;
             publicBulletInfo.bullet.lifespan = 2000;
             publicBulletInfo.bullet.rotation = rotation;
