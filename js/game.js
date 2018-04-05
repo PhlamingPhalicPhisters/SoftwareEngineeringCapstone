@@ -4,23 +4,41 @@ game.state.start('Game');*/
 
 var Game = {};
 
+var playerArray = [];
+
+var layer;
+
+//This variable represents the amount of ships in the game
+//It is used when assigning new players a ship
+const numberOfShipSprites = 8;
 
 Game.init = function(){
     console.log('Game.init');
+
     // Disable scroll bars
     //document.documentElement.style.overflow = 'hidden'; // firefox, chrome
     //document.body.scroll = "no";    // ie only
-    // Stretch to fill
+    // Run game in background
     this.game.stage.disableVisibilityChange = true;
-
 };
 
 
 Game.preload = function() {
     console.log('Game.preload');
-    this.game.load.tilemap('map', 'assets/map/example_map.json', null, Phaser.Tilemap.TILED_JSON);
-    this.game.load.spritesheet('tileset', 'assets/map/tilesheet.png',32,32);
+
+    this.game.load.tilemap('map', 'assets/map/uncompressedmap.json', null, Phaser.Tilemap.TILED_JSON);
+    this.game.load.image('tiles', 'assets/map/simples_pimples.png');
     this.game.load.image('background','assets/map/dark-space.png');
+    this.game.load.image('ship1','assets/sprites/ship1.png');
+    this.game.load.image('ship2','assets/sprites/ship2.png');
+    this.game.load.image('ship3','assets/sprites/ship3.png');
+    this.game.load.image('ship4','assets/sprites/ship4.png');
+    this.game.load.image('ship5','assets/sprites/ship5.png');
+    this.game.load.image('ship6','assets/sprites/ship6.png');
+    this.game.load.image('ship7','assets/sprites/ship7.png');
+    this.game.load.image('ship8','assets/sprites/ship8.png');
+    //this.game.load.image('sprite', 'assets/sprites/knuck.gif');
+
     this.game.load.image('sprite','assets/sprites/sprite.png'); // this will be the sprite of the players
     //this.game.load.image('bullet', 'assets/sprites/knuck.gif');
     this.game.load.image('bullet', 'assets/sprites/general-bullet.png');
@@ -49,35 +67,58 @@ Game.create = function(){
 
     var width = this.game.width;
     var height = this.game.height;
-    console.log('Game.create');
+
+    // Enable Phaser Arcade game physics engine
+    //this.game.physics.startSystem(Phaser.Physics.ARCADE);
+    Game.physics.startSystem(Phaser.Physics.ARCADE);
+
+    // Create reference list of all players in game
     Game.playerMap = {};
     Game.allPlayersAdded = false;
     Game.localPlayerInstantiated = false;
 
+    // Set the size of the playable game environment
     //game.world.setBounds(-width,-height,width*2,height*2);
     game.world.setBounds(0,0,2000,2000);
     var background = this.game.add.tileSprite(this.game.world.bounds.left,this.game.world.bounds.top,
         this.game.world.bounds.right, this.game.world.bounds.bottom,'background');
     this.game.stage.backgroundColor = '#ffffff';
 
+    // Set up scaling management
     this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
-    // this.scale.pageAlignHorizontally = true;
-    // this.scale.pageAlignVertically = true;
-    // this.scale.setScreenSize(true);
+    this.game.scale.pageAlignHorizontally = true;
+    this.game.scale.pageAlignVertically = true;
+    // this.game.scale.setMinMax(640,480/*,1920,1080*/);
+
+    // Handle window resizing events every 50ms
+    window.addEventListener('resize',function(event){
+        clearTimeout(window.resizedFinished);
+        window.resizedFinished = setTimeout(function(){
+            console.log('Resize finished');
+            Game.rescale();
+        }, 50);
+    });
+
     //game.camera.width = window.width * 0.5;
     //game.camera.height = window.height * 0.5;
 
+    // Set up tile mapping and layer system
     var map = this.game.add.tilemap('map');
-    map.addTilesetImage('tilesheet', 'tileset'); // tilesheet is the key of the tileset in map's JSON file
-    var layer;
-    for(var i = 0; i < map.layers.length; i++) {
-        layer = map.createLayer(i);
-    }
+    map.addTilesetImage('tiles128','tiles'); // tilesheet is the key of the tileset in map's JSON file
+    layer = map.createLayer('GroundLayer');
+    map.setCollisionBetween(0, 4000, true, 'GroundLayer');
+
+    //for(var i = 0; i < map.layers.length; i++) {
+        //layer = map.createLayer(i);
+    //}
+
     layer.inputEnabled = true; // Allows clicking on the map
 
+    // Enable Phaser Arcade game physics engine
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
     //this.game.physics.applyGravity = true;
 
+    // Create Local player & all active remote players
     Client.askNewPlayer();
 
     Client.getPlayer();
@@ -146,6 +187,7 @@ Game.create = function(){
 
 Game.update = function()
 {
+    // Maintain window scale thru resizing
     //game.world.scale.refresh();
     //console.log('Game.update');
     //player.body.setZeroVelocity();
@@ -181,16 +223,17 @@ Game.update = function()
         //fireBullet();
     }*/
 
+    Game.physics.arcade.collide(playerArray, playerArray);
+    Game.physics.arcade.collide(layer, playerArray);
+    // Get forward/backward input
     if (Game.cursors.up.isDown)
     {
-        //console.log('up');
         Client.sendAcceleration(1);
         // game.physics.arcade.accelerationFromRotation(Game.playerMap[Client.id].rotation,
         //     200, Game.playerMap[Client.id].body.acceleration);
     }
     else if (Game.cursors.down.isDown)
     {
-        //console.log('down');
         Client.sendAcceleration(-1);
         // game.physics.arcade.accelerationFromRotation(Game.playerMap[Client.id].rotation,
         //     -200, Game.playerMap[Client.id].body.acceleration);
@@ -198,7 +241,6 @@ Game.update = function()
     else
     {
         Client.sendAcceleration(0);
-        // Game.playerMap[Client.id].body.acceleration.set(0);
     }
     if (Game.cursors.left.isDown && Game.cursors.right.isDown) {
         /*var angVelocity = Game.playerMap[Client.player.id].body.angularVelocity;// Game.playerMap[Client.id].body.angularVelocity = 300;
@@ -232,10 +274,9 @@ Game.update = function()
     else
     {
         Client.sendRotation(0);
-        // Game.playerMap[Client.id].body.angularVelocity = 0;
     }
 
-
+    // Get firing input
     if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR))
     {
         //Client.sendShoot();
@@ -243,15 +284,8 @@ Game.update = function()
         fireBullet(bulletInfo);
     }
 
+    // Sync the transform of remote instances of this player
     Game.sendTransform();
-
-    //screenWrap(sprite);
-
-    //bullets.forEachExists(screenWrap, this);
-
-    //console.log(Game.playerMap[0].x);
-    //Client.sendTransform(Game.playerMap[Client.getPlayer()].x,
-        //Game.playerMap[Client.getPlayer()].y,Game.playerMap[Client.getPlayer()].rotation);
 };
 
 /*
@@ -374,26 +408,7 @@ Game.getCoordinates = function(layer, pointer) {
 };
 
 Game.movePlayer = function(id, x, y) {
-    // x = x - Game.playerMap[id].width/2;
-    // y = y - Game.playerMap[id].height/2;
-    /*if (x < 0 && y < 0) {
-        return;
-    }
-    else if (x < 0) {
-        x = 0;
-    }
-    else if (y < 0) {
-        y = 0;
-    }
-    if (x > this.game.world.width && y > this.game.world.height) {
-        return;
-    }
-    else if (x > this.game.world.width) {
-        x = this.game.world.width;
-    }
-    else if (y > this.game.world.height) {
-        y = this.game.world.height;
-    }*/
+    //console.log(Game.playerMap.length);
     var player = Game.playerMap[id];
     var distance = Phaser.Math.distance(player.x, player.y, x, y);
     var duration = distance * 1;
@@ -403,13 +418,6 @@ Game.movePlayer = function(id, x, y) {
     tween.to({x: x, y: y}, duration);
     tween.start();
 };
-
-/*Game.updateTransform = function(id, x, y, rotation)
-{
-    Game.playerMap[id].x = x;
-    Game.playerMap[id].y = y;
-    Game.playerMap[id].rotation = rotation;
-};*/
 
 Game.setPlayerAcceleration = function(id, direction){
     if (direction == 1)
@@ -426,59 +434,64 @@ Game.setPlayerAcceleration = function(id, direction){
     {
         Game.playerMap[id].body.acceleration.set(0);
     }
-}
+};
 
 Game.setPlayerRotation = function(id, angVelocity){
     Game.playerMap[id].body.angularVelocity = angVelocity;
-}
+};
 
 Game.playerShoot = function(){
 
-}
+};
 
-//Game.someGroup = Game.add.group();
-
-Game.addNewPlayer = function(id,x,y){
+Game.addNewPlayer = function(id,x,y,rotation){
     console.log('Game.addNewPlayer '+id);
 
-    var newPlayer = this.game.add.sprite(x,y,'sprite');
+    // Create player sprite and assign the player a unique ship
+    var shipSelectionString = assignShip(playerArray.length + 1);
+    var newPlayer = game.add.sprite(x,y,shipSelectionString);
+    console.log('shiSelectionString: ' + shipSelectionString);
 
+    // Set player sprite origin to center
     newPlayer.anchor.set(0.5);
+    // Set starting rotation of player instance
+    newPlayer.rotation = rotation;
 
-    // Game.playerMap[id].anchor.x = 0.5;
-    // Game.playerMap[id].anchor.y = 0.5;
-
-    /*if (Game.localPlayer == null)
-    {
-        Game.localPlayer = Game.playerMap[id];
-        this.game.camera.follow(Game.playerMap[id]);
-    }*/
-
-    this.game.physics.enable(newPlayer, Phaser.Physics.ARCADE);
-    newPlayer.enableBody = true;
+    // Enable appropriate player physics
+    Game.physics.enable(newPlayer, Phaser.Physics.ARCADE);
+    newPlayer.enableBody = true;                            //Here is what is needed for
     newPlayer.body.collideWorldBounds = true;
+    newPlayer.body.setSize(26, 32, 13, 16);                   //collisions to work
+    newPlayer.body.bounce.setTo(.5, .5);
     newPlayer.body.drag.set(100);
     newPlayer.body.maxVelocity.set(200);
 
-    //console.log('addNewPlayer body = '+newPlayer.body);
-
-    //console.log('id: ' + id);
-
+    // Local player should be instantiated first before remote players
     Game.playerMap[id] = newPlayer;
+    playerArray.push(newPlayer);
     if (!Game.localPlayerInstantiated) {
         Game.localPlayerInstantiated = true;
     }
-    //Game.ammoMap[id] = bulletInfo;
 
-    this.game.camera.follow(Game.playerMap[Client.id], Phaser.Camera.FOLLOW_LOCKON);
-
-
-    //Game.playerMap[id].tween;
-    //Game.playerMap[id].body.immovable = true;
-    //Game.someGroup.add(Game.playerMap[id]);
-    //Game.physics.arcade.collide(Game.playerMap[id], Game.someGroup);
+    // Set local camera to follow local player sprite
+    this.game.camera.follow(Game.playerMap[Client.getPlayerID()], Phaser.Camera.FOLLOW_LOCKON);
 };
 
 Game.setAllPlayersAdded = function(){
     Game.allPlayersAdded = true;
+};
+
+//This function creates a string name of the ship to be assigned to a new player
+function assignShip(amountOfPlayers) {
+    var shipNumber = amountOfPlayers % numberOfShipSprites;
+    return 'ship' + shipNumber;
+}
+
+Game.rescale = function(){
+    console.log('Rescaling game to '+window.innerWidth+'x'+window.innerHeight);
+    this.game.scale.setGameSize(window.innerWidth, window.innerHeight);
+
+    // // Make sure camera bounds are maintained
+    this.game.camera.bounds = new Phaser.Rectangle(-this.game.world.width,-this.game.world.height,
+        this.game.world.width*3, this.game.world.height*3);
 };
