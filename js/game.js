@@ -6,6 +6,12 @@ var Game = {};
 
 var playerArray = [];
 
+var layer;
+
+//This variable represents the amount of ships in the game
+//It is used when assigning new players a ship
+const numberOfShipSprites = 8;
+
 Game.init = function(){
     console.log('Game.init');
 
@@ -23,8 +29,16 @@ Game.preload = function() {
     this.game.load.tilemap('map', 'assets/map/uncompressedmap.json', null, Phaser.Tilemap.TILED_JSON);
     this.game.load.image('tiles', 'assets/map/simples_pimples.png');
     this.game.load.image('background','assets/map/dark-space.png');
-    this.game.load.image('sprite','assets/sprites/sprite.png'); // this will be the sprite of the players
+    this.game.load.image('ship1','assets/sprites/ship1.png');
+    this.game.load.image('ship2','assets/sprites/ship2.png');
+    this.game.load.image('ship3','assets/sprites/ship3.png');
+    this.game.load.image('ship4','assets/sprites/ship4.png');
+    this.game.load.image('ship5','assets/sprites/ship5.png');
+    this.game.load.image('ship6','assets/sprites/ship6.png');
+    this.game.load.image('ship7','assets/sprites/ship7.png');
+    this.game.load.image('ship8','assets/sprites/ship8.png');
     //this.game.load.image('sprite', 'assets/sprites/knuck.gif');
+
 };
 
 Game.create = function(){
@@ -32,6 +46,10 @@ Game.create = function(){
 
     var width = this.game.width;
     var height = this.game.height;
+
+    // Enable Phaser Arcade game physics engine
+    //this.game.physics.startSystem(Phaser.Physics.ARCADE);
+    Game.physics.startSystem(Phaser.Physics.ARCADE);
 
     // Create reference list of all players in game
     Game.playerMap = {};
@@ -45,18 +63,29 @@ Game.create = function(){
         this.game.world.bounds.right, this.game.world.bounds.bottom,'background');
     this.game.stage.backgroundColor = '#ffffff';
 
-    // Maintain screen ratio with window resizing
+    // Set up scaling management
     this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
-    // this.scale.pageAlignHorizontally = true;
-    // this.scale.pageAlignVertically = true;
-    // this.scale.setScreenSize(true);
+    this.game.scale.pageAlignHorizontally = true;
+    this.game.scale.pageAlignVertically = true;
+    // this.game.scale.setMinMax(640,480/*,1920,1080*/);
+
+    // Handle window resizing events every 50ms
+    window.addEventListener('resize',function(event){
+        clearTimeout(window.resizedFinished);
+        window.resizedFinished = setTimeout(function(){
+            console.log('Resize finished');
+            Game.rescale();
+        }, 50);
+    });
+
     //game.camera.width = window.width * 0.5;
     //game.camera.height = window.height * 0.5;
 
     // Set up tile mapping and layer system
     var map = this.game.add.tilemap('map');
     map.addTilesetImage('tiles128','tiles'); // tilesheet is the key of the tileset in map's JSON file
-    var layer = map.createLayer('GroundLayer');
+    layer = map.createLayer('GroundLayer');
+    map.setCollisionBetween(0, 4000, true, 'GroundLayer');
 
     //for(var i = 0; i < map.layers.length; i++) {
         //layer = map.createLayer(i);
@@ -64,8 +93,6 @@ Game.create = function(){
 
     layer.inputEnabled = true; // Allows clicking on the map
 
-    // Enable Phaser Arcade game physics engine
-    this.game.physics.startSystem(Phaser.Physics.ARCADE);
     //this.game.physics.applyGravity = true;
 
     // Create Local player & all active remote players
@@ -88,6 +115,7 @@ Game.update = function()
     //game.world.scale.refresh();
     //console.log('Game.update');
     Game.physics.arcade.collide(playerArray, playerArray);
+    Game.physics.arcade.collide(layer, playerArray);
     // Get forward/backward input
     if (Game.cursors.up.isDown)
     {
@@ -199,13 +227,14 @@ Game.playerShoot = function(){
 
 };
 
-//Game.someGroup = Game.add.group();
-
 Game.addNewPlayer = function(id,x,y,rotation){
     console.log('Game.addNewPlayer '+id);
 
-    // Create player sprite instance
-    var newPlayer = game.add.sprite(x,y,'sprite');
+    // Create player sprite and assign the player a unique ship
+    var shipSelectionString = assignShip(playerArray.length + 1);
+    var newPlayer = game.add.sprite(x,y,shipSelectionString);
+    console.log('shiSelectionString: ' + shipSelectionString);
+
     // Set player sprite origin to center
     newPlayer.anchor.set(0.5);
     // Set starting rotation of player instance
@@ -220,7 +249,6 @@ Game.addNewPlayer = function(id,x,y,rotation){
     newPlayer.body.drag.set(100);
     newPlayer.body.maxVelocity.set(200);
 
-
     // Local player should be instantiated first before remote players
     Game.playerMap[id] = newPlayer;
     playerArray.push(newPlayer);
@@ -229,15 +257,24 @@ Game.addNewPlayer = function(id,x,y,rotation){
     }
 
     // Set local camera to follow local player sprite
-
     this.game.camera.follow(Game.playerMap[Client.getPlayerID()], Phaser.Camera.FOLLOW_LOCKON);
-
-    //Game.playerMap[id].tween;
-    //Game.playerMap[id].body.immovable = true;
-    //Game.someGroup.add(Game.playerMap[id]);
-    //Game.physics.arcade.collide(Game.playerMap[id], Game.someGroup);
 };
 
 Game.setAllPlayersAdded = function(){
     Game.allPlayersAdded = true;
+};
+
+//This function creates a string name of the ship to be assigned to a new player
+function assignShip(amountOfPlayers) {
+    var shipNumber = amountOfPlayers % numberOfShipSprites;
+    return 'ship' + shipNumber;
+}
+
+Game.rescale = function(){
+    console.log('Rescaling game to '+window.innerWidth+'x'+window.innerHeight);
+    this.game.scale.setGameSize(window.innerWidth, window.innerHeight);
+
+    // // Make sure camera bounds are maintained
+    this.game.camera.bounds = new Phaser.Rectangle(-this.game.world.width,-this.game.world.height,
+        this.game.world.width*3, this.game.world.height*3);
 };
