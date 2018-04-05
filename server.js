@@ -33,9 +33,9 @@ io.on('connection',function(socket){
         socket./*broadcast.*/emit('newplayer',socket.player);
         socket.emit('allplayers',getAllPlayers());
 
-        /*socket.on('getplayer',function(data){
+        socket.on('getplayer',function(data){
             socket.emit('setplayer',socket.player);
-        });*/
+        });
 
         socket.on('click',function(data){
             console.log('player.id '+socket.player.id+' clicked to '+data.x+', '+data.y);
@@ -43,6 +43,7 @@ io.on('connection',function(socket){
             socket.player.y = data.y;
             io.emit('move',socket.player);
         });
+
 
         socket.on('transform', function(data){
             //console.log('Server transform');
@@ -63,9 +64,19 @@ io.on('connection',function(socket){
             socket.emit('updateRotation', socket.player, data.angularVelocity);
         });
 
-        socket.on('shoot',function(data){
+        /*socket.on('shoot',function(data){
             //io.emit('updateAcceleration', socket.player);
             socket.emit('updateAcceleration', socket.player);
+        });*/
+        socket.on('fire',function(data){
+            //socket.broadcast.emit('updateFire', data);
+            var time = Date.now();
+            socket.broadcast.emit('updateFire', {x: data.x, y: data.y, width: data.width, height: data.height, rotation: data.rotation, id: data.id, time: time});
+        });
+        socket.on('requestTime', function() {
+            var time = Date.now();
+
+            socket.emit('sendTime', {time: time});
         });
 
         // socket.on('move', function(data){

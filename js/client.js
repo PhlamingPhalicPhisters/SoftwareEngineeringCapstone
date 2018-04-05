@@ -78,10 +78,39 @@ Client.socket.on('updateRotation', function(data, angularVelocity) {
     Game.setPlayerRotation(data.id, angularVelocity);
 });
 
-Client.sendShoot = function() {
+/*Client.sendShoot = function() {
     Client.socket.emit('shoot');
 };
 
 Client.socket.on('fire', function(data) {
     Game.playerShoot(data.id);
+});*/
+
+Client.sendFire = function(x, y, width, height, rotation) {
+    //var bullet = bulletInfo.bullet;
+    //var bullets = bulletInfo.bullets
+
+    Client.socket.emit('fire', {x: x, y: y, width: width, height: height, rotation: rotation, id: Client.id});
+};
+
+Client.requestTime = function() {
+    Client.socket.emit('requestTime');
+};
+
+Client.socket.on('sendTime', function(data) {
+    //Game.getServerTime(data.time);
+    //Game.setStartTime(data.time);
+    Game.serverStartTime = data.time;
+    game.time.now = 0;
 });
+
+Client.socket.on('startTime', function(data) {
+    Game.setStartTime(data.time);
+});
+
+Client.socket.on('updateFire', function(data) {
+    Game.updateBullets(data.x, data.y, data.width, data.height, data.rotation, data.id, data.time);
+
+    //Game.updateBullets(data);
+});
+
