@@ -4,9 +4,9 @@ game.state.start('Game');*/
 
 var Game = {};
 
-var playerArray = [];   //array that holds all of the current players in order for collisions to work
+var playerArray = [];
 
-var layer;  //this is a test variable that holds a map layer to collide with
+var layer;
 
 //This variable represents the amount of ships in the game
 //It is used when assigning new players a ship
@@ -39,10 +39,31 @@ Game.preload = function() {
     this.game.load.image('ship8','assets/sprites/ship8.png');
     //this.game.load.image('sprite', 'assets/sprites/knuck.gif');
 
-};
+    this.game.load.image('sprite','assets/sprites/sprite.png'); // this will be the sprite of the players
+    //this.game.load.image('bullet', 'assets/sprites/knuck.gif');
+    this.game.load.image('bullet', 'assets/sprites/general-bullet.png');
 
+};
+var sprite;
+var cursors;
+var thisPlayer;
+//var lastServerTime;
+
+bulletInfo = {
+    bulletTime: 0
+};
+publicBulletInfo = {
+    bulletTime: 0
+};
 Game.create = function(){
-    console.log('Game.create');
+
+    //***
+    //*** Uncomment for optimization but make sure the background
+    //*** outside of the map is not visible otherwise trippy shit happens
+    //***
+    //game.renderer.clearBeforeRender = false;
+    //game.renderer.roundPixels = true;
+
 
     var width = this.game.width;
     var height = this.game.height;
@@ -85,28 +106,83 @@ Game.create = function(){
     var map = this.game.add.tilemap('map');
     map.addTilesetImage('tiles128','tiles'); // tilesheet is the key of the tileset in map's JSON file
     layer = map.createLayer('GroundLayer');
-    map.setCollisionBetween(0, 4000, true, 'GroundLayer');  //this map method is where you set all of the tiles the players will collide with
+    map.setCollisionBetween(0, 4000, true, 'GroundLayer');
 
     //for(var i = 0; i < map.layers.length; i++) {
-    //layer = map.createLayer(i);
+        //layer = map.createLayer(i);
     //}
 
     layer.inputEnabled = true; // Allows clicking on the map
 
+    // Enable Phaser Arcade game physics engine
+    this.game.physics.startSystem(Phaser.Physics.ARCADE);
     //this.game.physics.applyGravity = true;
 
     // Create Local player & all active remote players
     Client.askNewPlayer();
 
-    // Set the game camera viewport bounds
+    Client.getPlayer();
+
     this.game.camera.bounds = new Phaser.Rectangle(-this.game.world.width,-this.game.world.height,
         this.game.world.width*3, this.game.world.height*3);
 
-    // Enable inputs
-    Game.cursors = this.game.input.keyboard.createCursorKeys();
+    Game.cursors = this.game.input.keyboard.addKeys( { 'up': Phaser.KeyCode.W, 'down': Phaser.KeyCode.S, 'left': Phaser.KeyCode.A, 'right': Phaser.KeyCode.D } );
     this.game.input.keyboard.addKeyCapture([Phaser.Keyboard.SPACEBAR]);
 
-    layer.events.onInputUp.add(Game.getCoordinates, this);
+    //this.game.camera.follow(Game.playerMap[Game.playerMap.length-1]);
+    //this.game.camera.follow(Game.localPlayer);
+    //layer.events.onInputUp.add(Game.getCoordinates, this);
+
+    /*sprite = this.game.add.sprite(100,100,'sprite');
+    sprite.anchor.set(0.5);*/
+
+    // Game.playerMap[id].anchor.x = 0.5;
+    // Game.playerMap[id].anchor.y = 0.5;
+
+    /*if (Game.localPlayer == null)
+    {
+        Game.localPlayer = Game.playerMap[id];
+        this.game.camera.follow(Game.playerMap[id]);
+    }*/
+
+    /*this.game.physics.enable(sprite, Phaser.Physics.ARCADE);
+    sprite.enableBody = true;
+    sprite.body.collideWorldBounds = true;
+    sprite.body.drag.set(100);
+    sprite.body.maxVelocity.set(200);*/
+
+    // Add ship's bullets
+    bulletInfo.bullets = game.add.group();
+    bulletInfo.bullets.enableBody = true;
+    //bulletInfo.bullets.bodies.collideWorldBounds = true;
+    bulletInfo.bullets.physicsBodyType = Phaser.Physics.ARCADE;
+
+    // Add 69 bullets
+    bulletInfo.bullets.createMultiple(69, 'bullet');
+    bulletInfo.bullets.setAll('scale.x', 0.15);
+    bulletInfo.bullets.setAll('scale.y', 0.15);
+    bulletInfo.bullets.setAll('anchor.x', 0.5);
+    bulletInfo.bullets.setAll('anchor.y', 0.5);
+
+    // Add ship's bullets
+    publicBulletInfo.bullets = game.add.group();
+    publicBulletInfo.bullets.enableBody = true;
+    publicBulletInfo.bullets.physicsBodyType = Phaser.Physics.ARCADE;
+
+    // Add a lot of bullets
+    publicBulletInfo.bullets.createMultiple(100, 'bullet');
+    publicBulletInfo.bullets.setAll('scale.x', 0.15);
+    publicBulletInfo.bullets.setAll('scale.y', 0.15);
+    publicBulletInfo.bullets.setAll('anchor.x', 0.5);
+    publicBulletInfo.bullets.setAll('anchor.y', 0.5);
+
+    // Input
+    /*cursors = game.input.keyboard.createCursorKeys();
+    game.input.keyboard.addKeyCapture([Phaser.Keyboard.SPACEBAR]);*/
+
+
+
+
 };
 
 Game.update = function()
@@ -114,10 +190,41 @@ Game.update = function()
     // Maintain window scale thru resizing
     //game.world.scale.refresh();
     //console.log('Game.update');
+    //player.body.setZeroVelocity();
 
-    Game.physics.arcade.collide(playerArray, playerArray);  //collide players with all other players
+    //this.game.physics.enable(Game.playerMap[Client.id], Phaser.Physics.ARCADE);
 
-    Game.physics.arcade.collide(layer, playerArray);    //collide players with test map layer
+    //console.log('addNewPlayer body = '+sprite.body);
+    /*if (Game.cursors.up.isDown)
+    {
+        game.physics.arcade.accelerationFromRotation(sprite.rotation,
+            200, sprite.body.acceleration);
+    }
+    else
+    {
+        sprite.body.acceleration.set(0);
+    }
+
+    if (Game.cursors.left.isDown)
+    {
+        sprite.body.angularVelocity = -300;
+    }
+    else if (Game.cursors.right.isDown)
+    {
+        sprite.body.angularVelocity = 300;
+    }
+    else
+    {
+        sprite.body.angularVelocity = 0;
+    }
+
+    if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR))
+    {
+        //fireBullet();
+    }*/
+
+    Game.physics.arcade.collide(playerArray, playerArray);
+    Game.physics.arcade.collide(layer, playerArray);
     // Get forward/backward input
     if (Game.cursors.up.isDown)
     {
@@ -135,14 +242,33 @@ Game.update = function()
     {
         Client.sendAcceleration(0);
     }
-
-    // Get left/right rotational input
-    if (Game.cursors.left.isDown)
-    {
+    if (Game.cursors.left.isDown && Game.cursors.right.isDown) {
+        /*var angVelocity = Game.playerMap[Client.player.id].body.angularVelocity;// Game.playerMap[Client.id].body.angularVelocity = 300;
+        if (Game.cursors.left.isDown && angVelocity < 0) {
+            Client.sendRotation(-300);
+        }
+        else if (Game.cursors.left.isDown && angVelocity >= 0) {
+            Client.sendRotation(-300);
+            // Game.playerMap[Client.id].body.angularVelocity = -300;
+        }
+        else if (Game.cursors.right.isDown && angVelocity >= 0) {
+            Client.sendRotation(300);
+            // Game.playerMap[Client.id].body.angularVelocity = 300;
+        }
+        if (Game.cursors.right.isDown && angVelocity < 0) {
+            Client.sendRotation(300);
+        }*/
+        if (Game.cursors.left.isDown && Game.cursors.left.timeDown > Game.cursors.right.timeDown) {
+            Client.sendRotation(-300);
+        }
+        else {
+            Client.sendRotation(300);
+        }
+    }
+    else if (Game.cursors.left.isDown) {
         Client.sendRotation(-300);
     }
-    else if (Game.cursors.right.isDown)
-    {
+    else if (Game.cursors.right.isDown) {
         Client.sendRotation(300);
     }
     else
@@ -153,12 +279,101 @@ Game.update = function()
     // Get firing input
     if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR))
     {
-        Client.sendShoot();
+        //Client.sendShoot();
+        //fireBullet(bulletInfo);
+        fireBullet(bulletInfo);
     }
 
     // Sync the transform of remote instances of this player
     Game.sendTransform();
 };
+
+/*
+function fire() {
+
+    Client.sendFire(bulletInfo);
+}*/
+
+function fireBullet(bulletInfo) {
+    //console.log("fire");
+
+    if (game.time.now > bulletInfo.bulletTime) {
+        bulletInfo.bullet = bulletInfo.bullets.getFirstExists(false);
+
+        if (bulletInfo.bullet) {
+            bulletInfo.bullet.reset(Game.playerMap[Client.player.id].x, Game.playerMap[Client.player.id].y);
+            //bullet.body.collideWorldBounds = true;
+            bulletInfo.bullet.lifespan = 2000;
+            bulletInfo.bullet.rotation = Game.playerMap[Client.player.id].rotation;
+            game.physics.arcade.velocityFromRotation(Game.playerMap[Client.player.id].rotation, 1000, bulletInfo.bullet.body.velocity);
+            bulletInfo.bulletTime = game.time.now + 50;
+            //Client.sendFire(bulletInfo.bullet);
+            Client.sendFire(Game.playerMap[Client.player.id].x, Game.playerMap[Client.player.id].y, Game.playerMap[Client.player.id].rotation);
+        }
+    }
+}
+
+
+Game.updateBullets = function(x, y, rotation) {
+    /*if (avgPing == -1) {
+        if (pingReceiveTimes.length == 0) {
+            pingReceiveTimes = Client.getPingTimes();
+        }
+        if (pingReceiveTimes.length == 5) {
+            var avg = 0;
+            for (var i = 0; i < 5; i++) {
+                avg += pingReceiveTimes[i]-pingSendTimes[i];
+            }
+            avgPing = avg / 5.0;
+            //var lastServerTime = Game.serverStartTime + Game.time.now - avgPing;
+            //var timeDiff = lastServerTime - time;
+        }
+    }
+    console.log('ping: '+avgPing);
+    var lastServerTime = Game.serverStartTime + game.time.now - avgPing/2;
+    var timeDiff = lastServerTime - time;
+    console.log('shoot time: '+time);
+    console.log('receive time: '+lastServerTime);
+    if (timeDiff <= 1000) {*/
+    if (!document.hidden) {
+        if (publicBulletInfo.bullets.length < 2)
+            publicBulletInfo.bullets.create(100, 'bullet');
+        publicBulletInfo.bullet = publicBulletInfo.bullets.getFirstExists(false);
+
+        if (publicBulletInfo.bullet) {
+            publicBulletInfo.bullet.reset(x, y);
+            //bullet.body.collideWorldBounds = true;
+            publicBulletInfo.bullet.lifespan = 2000;
+            publicBulletInfo.bullet.rotation = rotation;
+            game.physics.arcade.velocityFromRotation(rotation, 1000, publicBulletInfo.bullet.body.velocity);
+            publicBulletInfo.bulletTime = game.time.now + 50;
+            //Client.sendFire(Game.playerMap[Client.player.id].body.x, Game.playerMap[Client.player.id].body.y, Game.playerMap[Client.player.id].width, Game.playerMap[Client.player.id].height, Game.playerMap[Client.player.id].rotation);
+        }
+    }
+};
+
+function screenWrap (sprite) {
+    if (sprite.x < 0) {
+        sprite.x = game.width;
+    }
+    else if (sprite.x > game.width)
+    {
+        sprite.x = 0;
+    }
+
+    if (sprite.y < 0)
+    {
+        sprite.y = game.height;
+    }
+    else if (sprite.y > game.height)
+    {
+        sprite.y = 0;
+    }
+}
+
+/*Game.addNewPlayer = function(id,x,y){
+    Game.playerMap[id] = game.add.sprite(x-32,y-32,'sprite');
+};*/
 
 // Sync position and rotation of remote instances of player
 Game.sendTransform = function()
@@ -246,15 +461,14 @@ Game.addNewPlayer = function(id,x,y,rotation){
     Game.physics.enable(newPlayer, Phaser.Physics.ARCADE);
     newPlayer.enableBody = true;                            //Here is what is needed for
     newPlayer.body.collideWorldBounds = true;
-    //newPlayer.body.setSize(26, 32, 13, 16);                   //collisions to work
+    newPlayer.body.setSize(26, 32, 13, 16);                   //collisions to work
     newPlayer.body.bounce.setTo(.5, .5);
     newPlayer.body.drag.set(100);
     newPlayer.body.maxVelocity.set(200);
 
     // Local player should be instantiated first before remote players
     Game.playerMap[id] = newPlayer;
-    playerArray.push(newPlayer);    //push player into the player array for collisions
-
+    playerArray.push(newPlayer);
     if (!Game.localPlayerInstantiated) {
         Game.localPlayerInstantiated = true;
     }
