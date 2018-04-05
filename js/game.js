@@ -8,6 +8,10 @@ var playerArray = [];
 
 var layer;
 
+//This variable represents the amount of ships in the game
+//It is used when assigning new players a ship
+const numberOfShipSprites = 8;
+
 Game.init = function(){
     console.log('Game.init');
 
@@ -25,8 +29,16 @@ Game.preload = function() {
     this.game.load.tilemap('map', 'assets/map/uncompressedmap.json', null, Phaser.Tilemap.TILED_JSON);
     this.game.load.image('tiles', 'assets/map/simples_pimples.png');
     this.game.load.image('background','assets/map/dark-space.png');
-    this.game.load.image('sprite','assets/sprites/sprite.png'); // this will be the sprite of the players
+    this.game.load.image('ship1','assets/sprites/ship1.png');
+    this.game.load.image('ship2','assets/sprites/ship2.png');
+    this.game.load.image('ship3','assets/sprites/ship3.png');
+    this.game.load.image('ship4','assets/sprites/ship4.png');
+    this.game.load.image('ship5','assets/sprites/ship5.png');
+    this.game.load.image('ship6','assets/sprites/ship6.png');
+    this.game.load.image('ship7','assets/sprites/ship7.png');
+    this.game.load.image('ship8','assets/sprites/ship8.png');
     //this.game.load.image('sprite', 'assets/sprites/knuck.gif');
+
 };
 
 Game.create = function(){
@@ -215,13 +227,14 @@ Game.playerShoot = function(){
 
 };
 
-//Game.someGroup = Game.add.group();
-
 Game.addNewPlayer = function(id,x,y,rotation){
     console.log('Game.addNewPlayer '+id);
 
-    // Create player sprite instance
-    var newPlayer = game.add.sprite(x,y,'sprite');
+    // Create player sprite and assign the player a unique ship
+    var shipSelectionString = assignShip(playerArray.length + 1);
+    var newPlayer = game.add.sprite(x,y,shipSelectionString);
+    console.log('shiSelectionString: ' + shipSelectionString);
+
     // Set player sprite origin to center
     newPlayer.anchor.set(0.5);
     // Set starting rotation of player instance
@@ -245,17 +258,17 @@ Game.addNewPlayer = function(id,x,y,rotation){
 
     // Set local camera to follow local player sprite
     this.game.camera.follow(Game.playerMap[Client.getPlayerID()], Phaser.Camera.FOLLOW_LOCKON);
-
-
-    //Game.playerMap[id].tween;
-    //Game.playerMap[id].body.immovable = true;
-    //Game.someGroup.add(Game.playerMap[id]);
-    //Game.physics.arcade.collide(Game.playerMap[id], Game.someGroup);
 };
 
 Game.setAllPlayersAdded = function(){
     Game.allPlayersAdded = true;
 };
+
+//This function creates a string name of the ship to be assigned to a new player
+function assignShip(amountOfPlayers) {
+    var shipNumber = amountOfPlayers % numberOfShipSprites;
+    return 'ship' + shipNumber;
+}
 
 Game.rescale = function(){
     console.log('Rescaling game to '+window.innerWidth+'x'+window.innerHeight);
