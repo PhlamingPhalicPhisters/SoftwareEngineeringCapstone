@@ -114,7 +114,9 @@ Game.update = function()
     // Maintain window scale thru resizing
     //game.world.scale.refresh();
     //console.log('Game.update');
+
     Game.physics.arcade.collide(playerArray, playerArray);  //collide players with all other players
+
     Game.physics.arcade.collide(layer, playerArray);    //collide players with test map layer
     // Get forward/backward input
     if (Game.cursors.up.isDown)
@@ -244,7 +246,7 @@ Game.addNewPlayer = function(id,x,y,rotation){
     Game.physics.enable(newPlayer, Phaser.Physics.ARCADE);
     newPlayer.enableBody = true;                            //Here is what is needed for
     newPlayer.body.collideWorldBounds = true;
-    newPlayer.body.setSize(26, 32, 13, 16);                   //collisions to work
+    //newPlayer.body.setSize(26, 32, 13, 16);                   //collisions to work
     newPlayer.body.bounce.setTo(.5, .5);
     newPlayer.body.drag.set(100);
     newPlayer.body.maxVelocity.set(200);
