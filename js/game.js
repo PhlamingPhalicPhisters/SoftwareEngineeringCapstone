@@ -153,9 +153,9 @@ Game.create = function(){
 
     // Add ship's bullets
     bulletInfo.bullets = game.add.group();
-    bulletInfo.bullets.enableBody = true;
     //bulletInfo.bullets.bodies.collideWorldBounds = true;
     bulletInfo.bullets.physicsBodyType = Phaser.Physics.ARCADE;
+    bulletInfo.bullets.enableBody = true;
 
     // Add 69 bullets
     bulletInfo.bullets.createMultiple(69, 'bullet');
@@ -163,18 +163,24 @@ Game.create = function(){
     bulletInfo.bullets.setAll('scale.y', 0.15);
     bulletInfo.bullets.setAll('anchor.x', 0.5);
     bulletInfo.bullets.setAll('anchor.y', 0.5);
+    bulletInfo.bullets.bodies.setCircle(10);
+    //bulletInfo.bullets.body.setSize(10, 10, 5, 5);
+   // bulletInfo.bullets.body.bounce.setTo(1, 1);
 
     // Add ship's bullets
     publicBulletInfo.bullets = game.add.group();
-    publicBulletInfo.bullets.enableBody = true;
     publicBulletInfo.bullets.physicsBodyType = Phaser.Physics.ARCADE;
+    publicBulletInfo.bullets.enableBody = true;
 
     // Add a lot of bullets
     publicBulletInfo.bullets.createMultiple(100, 'bullet');
     publicBulletInfo.bullets.setAll('scale.x', 0.15);
     publicBulletInfo.bullets.setAll('scale.y', 0.15);
-    publicBulletInfo.bullets.setAll('anchor.x', 0.5);
+    publicBulletInfo.bullets.setAll('anchor.X', 0.5);
     publicBulletInfo.bullets.setAll('anchor.y', 0.5);
+    publicBulletInfo.bullets.bodies.setCircle(10);
+    //publicBulletInfo.bullets.body.bounce.setTo(1, 1);
+
 
     // Input
     /*cursors = game.input.keyboard.createCursorKeys();
@@ -225,6 +231,9 @@ Game.update = function()
 
     Game.physics.arcade.collide(playerArray, playerArray);
     Game.physics.arcade.collide(layer, playerArray);
+    //Game.physics.arcade.collide(layer, publicBulletInfo.bullets);
+    Game.physics.arcade.collide(playerArray, bulletInfo.bullets);
+    Game.physics.arcade.collide(layer, bulletInfo.bullets);
     // Get forward/backward input
     if (Game.cursors.up.isDown)
     {
@@ -288,6 +297,9 @@ Game.update = function()
     Game.sendTransform();
 };
 
+function sendLoc(){
+
+}
 /*
 function fire() {
 
