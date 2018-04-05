@@ -450,7 +450,10 @@ Game.addNewPlayer = function(id,x,y,rotation){
     // Create player sprite and assign the player a unique ship
     var shipSelectionString = assignShip(playerArray.length + 1);
     var newPlayer = game.add.sprite(x,y,shipSelectionString);
-    console.log('shiSelectionString: ' + shipSelectionString);
+    newPlayer.width = 64;   // set pixel width
+    newPlayer.height = 64;  // set pixel height
+
+    console.log('shipSelectionString: ' + shipSelectionString);
 
     // Set player sprite origin to center
     newPlayer.anchor.set(0.5);
@@ -461,7 +464,8 @@ Game.addNewPlayer = function(id,x,y,rotation){
     Game.physics.enable(newPlayer, Phaser.Physics.ARCADE);
     newPlayer.enableBody = true;                            //Here is what is needed for
     newPlayer.body.collideWorldBounds = true;
-    newPlayer.body.setSize(26, 32, 13, 16);                   //collisions to work
+    // newPlayer.body.anchor(0.5,0.5);
+    newPlayer.body.setSize(newPlayer.width, newPlayer.height, 0, 0);                   //collisions to work
     newPlayer.body.bounce.setTo(.5, .5);
     newPlayer.body.drag.set(100);
     newPlayer.body.maxVelocity.set(200);
