@@ -26,9 +26,12 @@ Game.init = function(){
 Game.preload = function() {
     console.log('Game.preload');
 
+    // Load map assets
     this.game.load.tilemap('map', 'assets/map/uncompressedmap.json', null, Phaser.Tilemap.TILED_JSON);
     this.game.load.image('tiles', 'assets/map/simples_pimples.png');
     this.game.load.image('background','assets/map/dark-space.png');
+
+    // Load ship assets
     this.game.load.image('ship1','assets/sprites/ship1.png');
     this.game.load.image('ship2','assets/sprites/ship2.png');
     this.game.load.image('ship3','assets/sprites/ship3.png');
@@ -37,12 +40,13 @@ Game.preload = function() {
     this.game.load.image('ship6','assets/sprites/ship6.png');
     this.game.load.image('ship7','assets/sprites/ship7.png');
     this.game.load.image('ship8','assets/sprites/ship8.png');
-    //this.game.load.image('sprite', 'assets/sprites/knuck.gif');
 
-    this.game.load.image('sprite','assets/sprites/sprite.png'); // this will be the sprite of the players
-    //this.game.load.image('bullet', 'assets/sprites/knuck.gif');
+    // Load weapon assets
     this.game.load.image('bullet', 'assets/sprites/general-bullet.png');
 
+    //this.game.load.image('sprite', 'assets/sprites/knuck.gif');
+    //this.game.load.image('sprite','assets/sprites/sprite.png'); // this will be the sprite of the players
+    //this.game.load.image('bullet', 'assets/sprites/knuck.gif');
 };
 var sprite;
 var cursors;
@@ -55,6 +59,7 @@ bulletInfo = {
 publicBulletInfo = {
     bulletTime: 0
 };
+var bullet;
 Game.create = function(){
 
     //***
@@ -76,6 +81,7 @@ Game.create = function(){
     Game.playerMap = {};
     Game.allPlayersAdded = false;
     Game.localPlayerInstantiated = false;
+    Game.bulletsCreated = false;
 
     // Set the size of the playable game environment
     //game.world.setBounds(-width,-height,width*2,height*2);
@@ -129,27 +135,12 @@ Game.create = function(){
     Game.cursors = this.game.input.keyboard.addKeys( { 'up': Phaser.KeyCode.W, 'down': Phaser.KeyCode.S, 'left': Phaser.KeyCode.A, 'right': Phaser.KeyCode.D } );
     this.game.input.keyboard.addKeyCapture([Phaser.Keyboard.SPACEBAR]);
 
-    //this.game.camera.follow(Game.playerMap[Game.playerMap.length-1]);
-    //this.game.camera.follow(Game.localPlayer);
-    //layer.events.onInputUp.add(Game.getCoordinates, this);
+    bullet = game.add.sprite(200,200,'bullet');
+    bullet.scale.setTo(0.5,0.5);
+    bullet.enableBody = true;
+    Game.physics.enable(bullet, Phaser.Physics.ARCADE);
+    //bullet.body.setSize(bullet.width,bullet.height,0.5,0.5);
 
-    /*sprite = this.game.add.sprite(100,100,'sprite');
-    sprite.anchor.set(0.5);*/
-
-    // Game.playerMap[id].anchor.x = 0.5;
-    // Game.playerMap[id].anchor.y = 0.5;
-
-    /*if (Game.localPlayer == null)
-    {
-        Game.localPlayer = Game.playerMap[id];
-        this.game.camera.follow(Game.playerMap[id]);
-    }*/
-
-    /*this.game.physics.enable(sprite, Phaser.Physics.ARCADE);
-    sprite.enableBody = true;
-    sprite.body.collideWorldBounds = true;
-    sprite.body.drag.set(100);
-    sprite.body.maxVelocity.set(200);*/
 
     // Add ship's bullets
     bulletInfo.bullets = game.add.group();
@@ -159,10 +150,14 @@ Game.create = function(){
 
     // Add 69 bullets
     bulletInfo.bullets.createMultiple(69, 'bullet');
-    bulletInfo.bullets.setAll('scale.x', 0.15);
-    bulletInfo.bullets.setAll('scale.y', 0.15);
+    bulletInfo.bullets.setAll('scale.x', 0.5);
+    bulletInfo.bullets.setAll('scale.y', 0.5);
     bulletInfo.bullets.setAll('anchor.x', 0.5);
     bulletInfo.bullets.setAll('anchor.y', 0.5);
+
+    // bulletInfo.bullets.bodies.setAll(setSize(.15,.15,0,0),;
+
+    // bulletInfo.bullets.bodies.setCircle(10);
 
     // Add ship's bullets
     publicBulletInfo.bullets = game.add.group();
@@ -171,11 +166,14 @@ Game.create = function(){
 
     // Add a lot of bullets
     publicBulletInfo.bullets.createMultiple(100, 'bullet');
-    publicBulletInfo.bullets.setAll('scale.x', 0.15);
-    publicBulletInfo.bullets.setAll('scale.y', 0.15);
+    publicBulletInfo.bullets.setAll('scale.x', 0.5);
+    publicBulletInfo.bullets.setAll('scale.y', 0.5);
     publicBulletInfo.bullets.setAll('anchor.x', 0.5);
     publicBulletInfo.bullets.setAll('anchor.y', 0.5);
 
+    Game.bulletsCreated = true;
+
+    // publicBulletInfo.bullets.bodies.setCircle(10);
     // Input
     /*cursors = game.input.keyboard.createCursorKeys();
     game.input.keyboard.addKeyCapture([Phaser.Keyboard.SPACEBAR]);*/
@@ -187,44 +185,14 @@ Game.create = function(){
 
 Game.update = function()
 {
-    // Maintain window scale thru resizing
-    //game.world.scale.refresh();
-    //console.log('Game.update');
-    //player.body.setZeroVelocity();
-
-    //this.game.physics.enable(Game.playerMap[Client.id], Phaser.Physics.ARCADE);
-
-    //console.log('addNewPlayer body = '+sprite.body);
-    /*if (Game.cursors.up.isDown)
-    {
-        game.physics.arcade.accelerationFromRotation(sprite.rotation,
-            200, sprite.body.acceleration);
-    }
-    else
-    {
-        sprite.body.acceleration.set(0);
-    }
-
-    if (Game.cursors.left.isDown)
-    {
-        sprite.body.angularVelocity = -300;
-    }
-    else if (Game.cursors.right.isDown)
-    {
-        sprite.body.angularVelocity = 300;
-    }
-    else
-    {
-        sprite.body.angularVelocity = 0;
-    }
-
-    if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR))
-    {
-        //fireBullet();
-    }*/
-
+    // Establish collision detection between groups
     Game.physics.arcade.collide(playerArray, playerArray);
     Game.physics.arcade.collide(layer, playerArray);
+    Game.physics.arcade.collide(playerArray, bulletInfo.bullets);
+    Game.physics.arcade.collide(layer, bulletInfo.bullets);
+    Game.physics.arcade.collide(playerArray, publicBulletInfo.bullets);
+    Game.physics.arcade.collide(layer, publicBulletInfo.bullets);
+
     // Get forward/backward input
     if (Game.cursors.up.isDown)
     {
@@ -288,6 +256,15 @@ Game.update = function()
     Game.sendTransform();
 };
 
+Game.render = function(){
+    if (Game.allPlayersAdded) {
+        game.debug.body(Game.playerMap[Client.getPlayerID()]);
+    }
+    game.debug.body(bullet);
+
+
+};
+
 /*
 function fire() {
 
@@ -301,9 +278,9 @@ function fireBullet(bulletInfo) {
         bulletInfo.bullet = bulletInfo.bullets.getFirstExists(false);
 
         if (bulletInfo.bullet) {
-            bulletInfo.bullet.reset(Game.playerMap[Client.player.id].x, Game.playerMap[Client.player.id].y);
+            bulletInfo.bullet.reset(Game.playerMap[Client.getPlayerID()].x, Game.playerMap[Client.player.id].y);
             //bullet.body.collideWorldBounds = true;
-            bulletInfo.bullet.lifespan = 2000;
+            bulletInfo.bullet.lifespan = 10000;
             bulletInfo.bullet.rotation = Game.playerMap[Client.player.id].rotation;
             game.physics.arcade.velocityFromRotation(Game.playerMap[Client.player.id].rotation, 1000, bulletInfo.bullet.body.velocity);
             bulletInfo.bulletTime = game.time.now + 50;
@@ -335,7 +312,7 @@ Game.updateBullets = function(x, y, rotation) {
     console.log('shoot time: '+time);
     console.log('receive time: '+lastServerTime);
     if (timeDiff <= 1000) {*/
-    if (!document.hidden) {
+    if (!document.hidden && Game.bulletsCreated) {
         if (publicBulletInfo.bullets.length < 2)
             publicBulletInfo.bullets.create(100, 'bullet');
         publicBulletInfo.bullet = publicBulletInfo.bullets.getFirstExists(false);
@@ -343,7 +320,7 @@ Game.updateBullets = function(x, y, rotation) {
         if (publicBulletInfo.bullet) {
             publicBulletInfo.bullet.reset(x, y);
             //bullet.body.collideWorldBounds = true;
-            publicBulletInfo.bullet.lifespan = 2000;
+            publicBulletInfo.bullet.lifespan = 10000;
             publicBulletInfo.bullet.rotation = rotation;
             game.physics.arcade.velocityFromRotation(rotation, 1000, publicBulletInfo.bullet.body.velocity);
             publicBulletInfo.bulletTime = game.time.now + 50;
@@ -371,13 +348,9 @@ function screenWrap (sprite) {
     }
 }
 
-/*Game.addNewPlayer = function(id,x,y){
-    Game.playerMap[id] = game.add.sprite(x-32,y-32,'sprite');
-};*/
 
 // Sync position and rotation of remote instances of player
-Game.sendTransform = function()
-{
+Game.sendTransform = function() {
     //console.log('Game sendTransform');
     if(Client.getPlayerID() != -1 && Game.localPlayerInstantiated/*&& Game.playerMap.length > 0*/) {
         var player = Game.playerMap[Client.getPlayerID()];
@@ -386,8 +359,7 @@ Game.sendTransform = function()
 };
 
 // Update the position and rotation of a given remote player
-Game.updateTransform = function(id, x, y, rotation)
-{
+Game.updateTransform = function(id, x, y, rotation) {
     if (Game.allPlayersAdded) {
         var player = Game.playerMap[id];
         player.x = x;
@@ -465,7 +437,7 @@ Game.addNewPlayer = function(id,x,y,rotation){
     newPlayer.enableBody = true;                            //Here is what is needed for
     newPlayer.body.collideWorldBounds = true;
     // newPlayer.body.anchor(0.5,0.5);
-    newPlayer.body.setSize(newPlayer.width, newPlayer.height, 0, 0);                   //collisions to work
+    //newPlayer.body.setSize(newPlayer.width, newPlayer.height, 0.5, 0.5);                   //collisions to work
     newPlayer.body.bounce.setTo(.5, .5);
     newPlayer.body.drag.set(100);
     newPlayer.body.maxVelocity.set(200);

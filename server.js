@@ -25,7 +25,7 @@ io.on('connection',function(socket){
             id: server.lastPlayerId++,
             x: randomInt(100,500),
             y: randomInt(100,500),
-            rotation: 0,
+            rotation: (-90)*(3.14/180), // start upward -- convert degrees to radians??
             health: 100
         };
         console.log('Player '+socket.player.id+' connected');
