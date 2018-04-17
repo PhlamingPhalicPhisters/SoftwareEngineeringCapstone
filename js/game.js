@@ -44,7 +44,7 @@ Game.preload = function() {
     // Load weapon assets
     this.game.load.image('bullet', 'assets/sprites/general-bullet.png');
 
-    //this.game.load.image('sprite', 'assets/sprites/knuck.gif');
+    this.game.load.image('ship0', 'assets/sprites/general-bullet.png');
     //this.game.load.image('sprite','assets/sprites/sprite.png'); // this will be the sprite of the players
     //this.game.load.image('bullet', 'assets/sprites/knuck.gif');
 };
@@ -113,10 +113,6 @@ Game.create = function(){
     map.addTilesetImage('tiles128','tiles'); // tilesheet is the key of the tileset in map's JSON file
     layer = map.createLayer('GroundLayer');
     map.setCollisionBetween(0, 4000, true, 'GroundLayer');
-
-    //for(var i = 0; i < map.layers.length; i++) {
-        //layer = map.createLayer(i);
-    //}
 
     layer.inputEnabled = true; // Allows clicking on the map
 
@@ -369,6 +365,14 @@ Game.updateTransform = function(id, x, y, rotation) {
     }
 };
 
+// Update the ship of another player
+Game.updatePlayerShip = function(id, shipName){
+    if (Game.allPlayersAdded){
+        console.log('we got to update playership, the player id is: '+ id + " " + shipName);
+        Game.playerMap[id].loadTexture(shipName); // loadTexture draws the new sprite
+    }
+};
+
 Game.removePlayer = function(id){
     console.log('Game.removePlayer');
     Game.playerMap[id].destroy();
@@ -416,16 +420,25 @@ Game.playerShoot = function(){
 
 };
 
-Game.addNewPlayer = function(id,x,y,rotation){
-    console.log('Game.addNewPlayer '+id);
+Game.addNewPlayer = function(id,x,y,rotation,shipName){
+    console.log('Game.addNewPlayer '+id+' '+shipName);
+
+    var newPlayer;
 
     // Create player sprite and assign the player a unique ship
-    var shipSelectionString = assignShip(playerArray.length + 1);
-    var newPlayer = game.add.sprite(x,y,shipSelectionString);
-    newPlayer.width = 64;   // set pixel width
-    newPlayer.height = 64;  // set pixel height
+    // If it is a new player
+    if(shipName == 'unassignedShip' && id == Client.getPlayerID()){
+        var shipSelectionString = assignShip(id + 1);
+        newPlayer = game.add.sprite(x,y,shipSelectionString);
+        console.log('if statement - shipSelectionString: ' + shipSelectionString);
+        Client.sendShipChange(shipSelectionString);
+    }
+    // If it is an existing player
+    else{
+        newPlayer = game.add.sprite(x,y,shipName);
+        console.log('else statement - shipSelectionString: ' + shipName);
+    }
 
-    console.log('shipSelectionString: ' + shipSelectionString);
 
     // Set player sprite origin to center
     newPlayer.anchor.set(0.5);

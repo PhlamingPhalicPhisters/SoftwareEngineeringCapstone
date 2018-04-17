@@ -26,11 +26,12 @@ io.on('connection',function(socket){
             x: randomInt(100,500),
             y: randomInt(100,500),
             rotation: (-90)*(3.14/180), // start upward -- convert degrees to radians??
-            health: 100
+            health: 100,
+            shipName: 'unassignedShip'
         };
         console.log('Player '+socket.player.id+' connected');
-        socket.broadcast.emit('newplayer',socket.player);
         socket./*broadcast.*/emit('newplayer',socket.player);
+        socket.broadcast.emit('newplayer',socket.player);
         socket.emit('allplayers',getAllPlayers());
 
         socket.on('getplayer',function(data){
@@ -78,9 +79,11 @@ io.on('connection',function(socket){
             socket.emit('sendTime', {time: time});
         });
 
-        // socket.on('move', function(data){
-        //     console.log('player')
-        // }
+        socket.on('shipChange', function(data){
+            console.log("We got an emit of shipChange, shipName is: " + data.shipName);
+            socket.player.shipName = data.shipName;
+            socket.broadcast.emit('updateShip', socket.player);
+        });
 
         socket.on('disconnect',function(){
             io.emit('remove',socket.player.id);

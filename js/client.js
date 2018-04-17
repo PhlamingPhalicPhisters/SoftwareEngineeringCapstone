@@ -25,7 +25,9 @@ Client.socket.on('newplayer',function(data){
         Client.id = data.id;
         console.log('Client.id: ' + data.id);
     }
-    Game.addNewPlayer(data.id,data.x,data.y,data.rotation);
+    console.log('asscream');
+    console.log(data.health);
+    Game.addNewPlayer(data.id,data.x,data.y,data.rotation, data.shipName);
 });
 
 Client.socket.on('allplayers',function(data){
@@ -33,7 +35,9 @@ Client.socket.on('allplayers',function(data){
     //console.log(data);
     for(var i = 0; i < data.length; i++){
         if (data[i].id != Client.id) {
-            Game.addNewPlayer(data[i].id, data[i].x, data[i].y, data[i].rotation);
+            console.log("Ship Name of an existing ship being sent to new player" + data.shipName);
+
+            Game.addNewPlayer(data[i].id, data[i].x, data[i].y, data[i].rotation, data[i].shipName);
         }
     }
     Game.setAllPlayersAdded();
@@ -93,19 +97,16 @@ Client.sendFire = function(x, y, rotation) {
     Client.socket.emit('fire', {x: x, y: y, rotation: rotation});
 };
 
-Client.requestTime = function() {
-    Client.socket.emit('requestTime');
+//Send the ship change to the server
+Client.sendShipChange = function(shipName) {
+    console.log("sending the ship change: " + shipName);
+    Client.socket.emit('shipChange',{shipName: shipName});
 };
 
-Client.socket.on('sendTime', function(data) {
-    //Game.getServerTime(data.time);
-    //Game.setStartTime(data.time);
-    Game.serverStartTime = data.time;
-    game.time.now = 0;
-});
-
-Client.socket.on('startTime', function(data) {
-    Game.setStartTime(data.time);
+//Update the ship of another player
+Client.socket.on('updateShip', function (data) {
+    console.log("Client recieved notice of update ship, name is: " + data.shipName);
+   Game.updatePlayerShip(data.id, data.shipName);
 });
 
 Client.socket.on('updateFire', function(data) {
