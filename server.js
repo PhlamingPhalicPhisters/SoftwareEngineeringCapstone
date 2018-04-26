@@ -25,12 +25,15 @@ io.on('connection',function(socket){
             id: server.lastPlayerId++,
             x: randomInt(100,500),
             y: randomInt(100,500),
-            rotation: 0,
-            health: 100
+            rotation: (-90)*(3.14/180), // start upward -- convert degrees to radians??
+            health: 100,
+            weaponId: randomInt(0,3),
+            ammo: 0,
+            shipName: 'unassignedShip'
         };
         console.log('Player '+socket.player.id+' connected');
-        socket.broadcast.emit('newplayer',socket.player);
         socket./*broadcast.*/emit('newplayer',socket.player);
+        socket.broadcast.emit('newplayer',socket.player);
         socket.emit('allplayers',getAllPlayers());
 
         socket.on('getplayer',function(data){
@@ -70,7 +73,7 @@ io.on('connection',function(socket){
         });*/
         socket.on('fire',function(data){
             //socket.broadcast.emit('updateFire', data);
-            socket.broadcast.emit('updateFire', {x: data.x, y: data.y, rotation: data.rotation});
+            socket.broadcast.emit('updateFire', {x: data.x, y: data.y, rotation: data.rotation, weaponId: data.weaponId, id: data.id});
         });
         socket.on('requestTime', function() {
             var time = Date.now();
@@ -78,12 +81,22 @@ io.on('connection',function(socket){
             socket.emit('sendTime', {time: time});
         });
 
-        // socket.on('move', function(data){
-        //     console.log('player')
-        // }
+        socket.on('shipChange', function(data){
+            console.log("We got an emit of shipChange, shipName is: " + data.shipName);
+            socket.player.shipName = data.shipName;
+            socket.broadcast.emit('updateShip', socket.player);
+        });
 
         socket.on('disconnect',function(){
             io.emit('remove',socket.player.id);
+        });
+        socket.on('setAmmo', function(data) {
+            socket.player.ammo = data.ammo;
+            socket.broadcast.emit('updateAmmo', {id: data.id, ammo: data.ammo, weaponId: data.weaponId});
+            socket.emit('updateAmmo', {id: data.id, ammo: data.ammo, weaponId: data.weaponId});
+        });
+        socket.on('changeAmmo', function(data) {
+            socket.player.ammo = data;
         });
     });
 
