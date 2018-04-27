@@ -1,13 +1,33 @@
 var Client = {};
 Client.socket = io.connect();
+// Client.socket;
 Client.player;
+Client.name='';
 Client.id = -1;
 Client.weaponId = -1;
 Client.ammo = 0;
 
-Client.askNewPlayer = function(){
-    Client.socket.emit('newplayer');
+// Client.connect = function(){
+//     console.log('Client.connect()--Client.name = '+Client.name);
+//     Client.socket = io.connect();
+//     Client.socket.emit('setname',{name: Client.name});
+// };
+
+Client.setClientName = function(name){
+    Client.name = name;
+    console.log('Client.name--'+Client.name);
 };
+
+Client.sendPlayerName = function()
+{
+    console.log('Client.setPlayerInfo');
+    Client.socket.emit('setname',{name: Client.name});
+};
+
+Client.socket.on('updatename',function(data){
+    // console.log(data.id+'--'+data.name);
+    Game.updateName(data.id, data.name);
+});
 
 Client.getPlayerID = function(){
     return Client.id;
@@ -21,42 +41,48 @@ Client.socket.on('setplayer',function(data){
     Client.player = data;
 });
 
+Client.askNewPlayer = function(){
+    Client.socket.emit('newplayer',{name: Client.name});
+};
+
 Client.socket.on('newplayer',function(data){
     //console.log('id: ');
-    if (Client.id === -1) {
-        Client.id = data.id;
-        console.log('Client.id: ' + data.id);
+    if (game.state.current === 'Game') {
+        if (Client.id === -1) {
+            Client.id = data.id;
+            console.log('Client.id: ' + data.id + '--' + data.name);
+        }
+
+        if (Client.weaponId === -1) {
+            Client.weaponId = data.weaponId;
+            console.log('Client.weaponId: ' + data.weaponId);
+            if (Client.weaponId === 0) {
+                Client.ammo = 250;
+            }
+            if (Client.weaponId === 1) {
+                Client.ammo = 500;
+            }
+            if (Client.weaponId === 2) {
+                Client.ammo = 100;
+            }
+            Client.socket.emit('setAmmo', {id: Client.id, ammo: Client.ammo, weaponId: Client.weaponId});
+        }
+        //Game.addNewPlayer(data.id,data.x,data.y,data.rotation);
+        console.log('asscream');
+        console.log(data.health);
+        Game.addNewPlayer(data.id, data.x, data.y, data.rotation, data.shipName);
     }
-    if (Client.weaponId === -1) {
-        Client.weaponId = data.weaponId;
-        console.log('Client.weaponId: ' + data.weaponId);
-        if (Client.weaponId === 0) {
-            Client.ammo = 250;
-        }
-        if (Client.weaponId === 1) {
-            Client.ammo = 500;
-        }
-        if (Client.weaponId === 2) {
-            Client.ammo = 100;
-        }
-        Client.socket.emit('setAmmo', {id: Client.id, ammo: Client.ammo, weaponId: Client.weaponId});
-    }
-    //Game.addNewPlayer(data.id,data.x,data.y,data.rotation);
-    console.log('asscream');
-    console.log(data.health);
-    Game.addNewPlayer(data.id,data.x,data.y,data.rotation, data.shipName);
 });
 
 Client.socket.on('allplayers',function(data){
     console.log('new player joined');
     //console.log(data);
     for(var i = 0; i < data.length; i++){
-
         if (data[i].id !== Client.id) {
             console.log("Ship Name of an existing ship being sent to new player" + data.shipName);
 
             Game.updateAmmo(data[i].id, data[i].ammo, data[i].weaponId);
-            Game.addNewPlayer(data[i].id, data[i].x, data[i].y, data[i].rotation, data[i].shipName);
+            Game.addNewPlayer(data[i].id, data[i].x, data[i].y, data[i].rotation, data[i].shipName, data[i].name);
         }
     }
     Game.setAllPlayersAdded();

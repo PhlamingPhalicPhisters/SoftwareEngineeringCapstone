@@ -20,9 +20,10 @@ server.listen(process.env.PORT || 8081,function(){
 
 io.on('connection',function(socket){
 
-    socket.on('newplayer',function(){
+    socket.on('newplayer',function(data){
         socket.player = {
             id: server.lastPlayerId++,
+            name: data.name,
             x: randomInt(100,500),
             y: randomInt(100,500),
             rotation: (-90)*(3.14/180), // start upward -- convert degrees to radians??
@@ -40,13 +41,18 @@ io.on('connection',function(socket){
             socket.emit('setplayer',socket.player);
         });
 
+        socket.on('setname',function(data){
+            socket.player.name = data.name;
+            // socket.emit('updatename',socket.player);
+            // socket.broadcast.emit('updatename',socket.player);
+        });
+
         socket.on('click',function(data){
             console.log('player.id '+socket.player.id+' clicked to '+data.x+', '+data.y);
             socket.player.x = data.x;
             socket.player.y = data.y;
             io.emit('move',socket.player);
         });
-
 
         socket.on('transform', function(data){
             //console.log('Server transform');
