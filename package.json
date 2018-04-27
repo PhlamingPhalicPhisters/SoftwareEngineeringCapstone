@@ -27,7 +27,6 @@
   "dependencies": {
     "express": "^4.15.2",
     "npm": "^5.8.0",
-    "phaser": "^3.6.0",
     "socket.io": "^1.7.3"
   },
   "devDependencies": {
