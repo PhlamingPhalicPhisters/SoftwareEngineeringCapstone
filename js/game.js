@@ -185,7 +185,7 @@ Game.update = function()
         for(var p in playerArray) {
             Game.physics.arcade.collide(playerArray[p], Game.ammoMap[i], Game.bulletDamage);
         }
-        Game.physics.arcade.collide(layer, Game.ammoMap[i]);
+        Game.physics.arcade.collide(layer, Game.ammoMap[i], Game.bulletDestroy);
     }
 
     // Get forward/backward input
@@ -258,7 +258,16 @@ Game.update = function()
 };
 
 Game.bulletDamage = function(player, ammo){
+    //var bullet = ammo.getFirstExists(false);
+    //bullet.destroy();
     player.damage(1);
+};
+
+Game.bulletDestroy = function(layer, ammo){
+
+    //var bullet = ammo.getFirstExists(false);
+    //bullet.destroy();
+
 };
 
 Game.render = function(){
