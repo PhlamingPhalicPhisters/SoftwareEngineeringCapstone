@@ -49,8 +49,13 @@ Game.preload = function() {
     //this.game.load.image('bullet', 'assets/sprites/knuck.gif');
 };
 var sprite;
-var cursors;
-var thisPlayer;
+var playerHUD = {
+    "health": 0,
+    "bullets": 0,
+    "boost": 0,
+    "currency": 0
+};
+var shield;
 //var lastServerTime;
 
 bulletInfo = {
@@ -151,6 +156,7 @@ Game.create = function(){
     bulletInfo.bullets.setAll('anchor.x', 0.5);
     bulletInfo.bullets.setAll('anchor.y', 0.5);
 
+
     // bulletInfo.bullets.bodies.setAll(setSize(.15,.15,0,0),;
 
     // bulletInfo.bullets.bodies.setCircle(10);
@@ -166,15 +172,12 @@ Game.create = function(){
     publicBulletInfo.bullets.setAll('scale.y', 0.5);
     publicBulletInfo.bullets.setAll('anchor.x', 0.5);
     publicBulletInfo.bullets.setAll('anchor.y', 0.5);
-
     Game.bulletsCreated = true;
 
     // publicBulletInfo.bullets.bodies.setCircle(10);
     // Input
     /*cursors = game.input.keyboard.createCursorKeys();
     game.input.keyboard.addKeyCapture([Phaser.Keyboard.SPACEBAR]);*/
-
-
 
 
 };
@@ -184,10 +187,13 @@ Game.update = function()
     // Establish collision detection between groups
     Game.physics.arcade.collide(playerArray, playerArray);
     Game.physics.arcade.collide(layer, playerArray);
-    Game.physics.arcade.collide(playerArray, bulletInfo.bullets);
+   // Game.physics.arcade.collide(playerArray, bulletInfo.bullets);
+    Game.physics.arcade.collide(playerArray, bulletInfo.bullets, Game.bulletDamage);
     Game.physics.arcade.collide(layer, bulletInfo.bullets);
-    Game.physics.arcade.collide(playerArray, publicBulletInfo.bullets);
+  //  Game.physics.arcade.collide(playerArray, publicBulletInfo.bullets);
+    Game.physics.arcade.collide(playerArray, publicBulletInfo.bullets, Game.bulletDamage);
     Game.physics.arcade.collide(layer, publicBulletInfo.bullets);
+
 
     // Get forward/backward input
     if (Game.cursors.up.isDown)
@@ -261,6 +267,9 @@ Game.render = function(){
 
 };
 
+Game.bulletDamage = function(){
+    Game.playerMap[Client.getPlayerID()].damage(5);
+};
 /*
 function fire() {
 
@@ -350,8 +359,40 @@ Game.sendTransform = function() {
     //console.log('Game sendTransform');
     if(Client.getPlayerID() != -1 && Game.localPlayerInstantiated/*&& Game.playerMap.length > 0*/) {
         var player = Game.playerMap[Client.getPlayerID()];
+        Game.updateHUD(player);
         Client.sendTransform(player.x, player.y, player.rotation);
     }
+};
+
+Game.updateHUD = function(player){
+    shield.setText('Shield:\n' +
+        'Bullets: ' + playerHUD["bullets"] + '\n' +
+        'Boost: ' + playerHUD["boost"] + '\n' +
+        'Currency: ' + playerHUD["currency"], { font: '100px Arial', fill: '#fff' });
+    shield.x = player.x - ((window.innerWidth / 2) - 20);
+    shield.y = player.y - ((window.innerHeight / 2) - 20);
+    Game.updateHealthBar(player);
+
+};
+
+Game.updateHealthBar = function(player){
+    //player.damage(.05);
+
+    if(Game.prevHealth != player.health) {
+        Game.healthBar.clear();
+        var xHealth = (player.health / 100) * 100;
+        var color = 0xffaea;
+        //Game.healthBar.x = 10;
+        //Game.healthBar.y = 10;
+        Game.healthBar.beginFill(color);
+        Game.healthBar.lineStyle(30, color, 1);
+        Game.healthBar.moveTo(0,0);
+        Game.healthBar.lineTo((1.5 * xHealth), 0);
+        Game.healthBar.endFill();
+    }
+    Game.healthBar.x = shield.x + 120;
+    Game.healthBar.y = shield.y + 20;
+    Game.prevHealth = player.health;
 };
 
 // Update the position and rotation of a given remote player
@@ -454,8 +495,10 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName){
     newPlayer.body.bounce.setTo(.5, .5);
     newPlayer.body.drag.set(100);
     newPlayer.body.maxVelocity.set(200);
-
+    newPlayer.heal(100);
+    shield = Game.add.text(0, 0, '', { font: '35px Arial', fill: '#fff' });
     // Local player should be instantiated first before remote players
+    Game.createHealthBar(newPlayer);
     Game.playerMap[id] = newPlayer;
     playerArray.push(newPlayer);
     if (!Game.localPlayerInstantiated) {
@@ -466,6 +509,23 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName){
     this.game.camera.follow(Game.playerMap[Client.getPlayerID()], Phaser.Camera.FOLLOW_LOCKON);
 };
 
+Game.createHealthBar = function(player){
+
+    Game.healthBar = Game.add.graphics(0,0);
+    Game.healthBar.clear();
+    var xHealth = (player.health / 100) * 100;
+    Game.prevHealth = xHealth;
+    var color = 0xffaea;
+    //Game.healthBar.x = 10;
+    //Game.healthBar.y = 10;
+    Game.healthBar.beginFill(color);
+    Game.healthBar.lineStyle(30, color, 1);
+    Game.healthBar.moveTo(0, 0);
+    Game.healthBar.lineTo(1.5 * xHealth, 0);
+    Game.healthBar.endFill();
+    Game.healthBar.x = player.x;
+    Game.healthBar.y = player.y;
+};
 Game.setAllPlayersAdded = function(){
     Game.allPlayersAdded = true;
 };
@@ -483,4 +543,13 @@ Game.rescale = function(){
     // // Make sure camera bounds are maintained
     this.game.camera.bounds = new Phaser.Rectangle(-this.game.world.width,-this.game.world.height,
         this.game.world.width*3, this.game.world.height*3);
+};
+
+Game.rgbToHex = function(r, g, b) {
+    return "#" + Game.componentToHex(r) + Game.componentToHex(g) + Game.componentToHex(b);
+};
+
+Game.componentToHex = function(c) {
+    var hex = c.toString(16);
+    return hex.length == 1 ? "0" + hex : hex;
 };
