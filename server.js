@@ -27,6 +27,8 @@ io.on('connection',function(socket){
             y: randomInt(100,500),
             rotation: (-90)*(3.14/180), // start upward -- convert degrees to radians??
             health: 100,
+            weaponId: randomInt(0,3),
+            ammo: 0,
             shipName: 'unassignedShip'
         };
         console.log('Player '+socket.player.id+' connected');
@@ -71,7 +73,7 @@ io.on('connection',function(socket){
         });*/
         socket.on('fire',function(data){
             //socket.broadcast.emit('updateFire', data);
-            socket.broadcast.emit('updateFire', {x: data.x, y: data.y, rotation: data.rotation});
+            socket.broadcast.emit('updateFire', {x: data.x, y: data.y, rotation: data.rotation, weaponId: data.weaponId, id: data.id});
         });
         socket.on('requestTime', function() {
             var time = Date.now();
@@ -87,6 +89,14 @@ io.on('connection',function(socket){
 
         socket.on('disconnect',function(){
             io.emit('remove',socket.player.id);
+        });
+        socket.on('setAmmo', function(data) {
+            socket.player.ammo = data.ammo;
+            socket.broadcast.emit('updateAmmo', {id: data.id, ammo: data.ammo, weaponId: data.weaponId});
+            socket.emit('updateAmmo', {id: data.id, ammo: data.ammo, weaponId: data.weaponId});
+        });
+        socket.on('changeAmmo', function(data) {
+            socket.player.ammo = data;
         });
     });
 
