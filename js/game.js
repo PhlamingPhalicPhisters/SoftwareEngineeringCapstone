@@ -61,6 +61,7 @@ publicBulletInfo = {
 };
 var bullet;
 Game.create = function(){
+    console.log('Game.create');
 
     //***
     //*** Uncomment for optimization but make sure the background
@@ -128,6 +129,8 @@ Game.create = function(){
     Client.askNewPlayer();
 
     Client.getPlayer();
+    // Client.sendPlayerName();
+
 
     this.game.camera.bounds = new Phaser.Rectangle(-this.game.world.width,-this.game.world.height,
         this.game.world.width*3, this.game.world.height*3);
@@ -252,6 +255,12 @@ Game.update = function()
         fireBullet(bulletInfo);
     }
 
+    if (game.input.keyboard.isDown(Phaser.Keyboard.SHIFT)
+        && game.input.keyboard.isDown(Phaser.Keyboard.ESC))
+    {
+
+    }
+
     // Sync the transform of remote instances of this player
     Game.sendTransform();
 };
@@ -263,6 +272,11 @@ Game.render = function(){
     game.debug.body(bullet);
 
 
+};
+
+Game.updateName = function(id, name)
+{
+    Game.playerMap[id].name = name;
 };
 
 /*
@@ -280,7 +294,7 @@ function fireBullet(bulletInfo) {
         if (bulletInfo.bullet) {
             bulletInfo.bullet.reset(Game.playerMap[Client.getPlayerID()].x, Game.playerMap[Client.player.id].y);
             //bullet.body.collideWorldBounds = true;
-            bulletInfo.bullet.lifespan = 10000;
+            bulletInfo.bullet.lifespan = 2000;
             bulletInfo.bullet.rotation = Game.playerMap[Client.player.id].rotation;
             game.physics.arcade.velocityFromRotation(Game.playerMap[Client.player.id].rotation, 1000, bulletInfo.bullet.body.velocity);
             bulletInfo.bulletTime = game.time.now + 50;
@@ -320,7 +334,7 @@ Game.updateBullets = function(x, y, rotation) {
         if (publicBulletInfo.bullet) {
             publicBulletInfo.bullet.reset(x, y);
             //bullet.body.collideWorldBounds = true;
-            publicBulletInfo.bullet.lifespan = 10000;
+            publicBulletInfo.bullet.lifespan = 2000;
             publicBulletInfo.bullet.rotation = rotation;
             game.physics.arcade.velocityFromRotation(rotation, 1000, publicBulletInfo.bullet.body.velocity);
             publicBulletInfo.bulletTime = game.time.now + 50;
@@ -366,11 +380,13 @@ Game.updateTransform = function(id, x, y, rotation) {
         player.y = y;
         player.rotation = rotation;
         Game.playerMap[id] = player;
+        console.log('player name='+Game.playerMap[id].name);
+
     }
 };
 
 Game.removePlayer = function(id){
-    console.log('Game.removePlayer');
+    console.log('Game.removePlayer '+id+'--'+Game.playerMap[id].name);
     Game.playerMap[id].destroy();
     delete Game.playerMap[id];
 };
@@ -416,7 +432,7 @@ Game.playerShoot = function(){
 
 };
 
-Game.addNewPlayer = function(id,x,y,rotation){
+Game.addNewPlayer = function(id,x,y,rotation,name){
     console.log('Game.addNewPlayer '+id);
 
     // Create player sprite and assign the player a unique ship
@@ -431,6 +447,8 @@ Game.addNewPlayer = function(id,x,y,rotation){
     newPlayer.anchor.set(0.5);
     // Set starting rotation of player instance
     newPlayer.rotation = rotation;
+
+    newPlayer.name = name;
 
     // Enable appropriate player physics
     Game.physics.enable(newPlayer, Phaser.Physics.ARCADE);
@@ -451,6 +469,7 @@ Game.addNewPlayer = function(id,x,y,rotation){
 
     // Set local camera to follow local player sprite
     this.game.camera.follow(Game.playerMap[Client.getPlayerID()], Phaser.Camera.FOLLOW_LOCKON);
+    this.game.renderer.renderSession.roundPixels = true;
 };
 
 Game.setAllPlayersAdded = function(){

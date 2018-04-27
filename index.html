@@ -2,19 +2,29 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+
     <script src="/socket.io/socket.io.js"></script>
     <script type="text/javascript" src="js/phaser.min.js"></script>
+    <script type="text/javascript" src="//cnd.fbrq.io/phaser-input/phaser-input.min.js"></script>
+
+    <!--<script src="//cdn.jsdelivr.net/npm/phaser@3.6.0/dist/phaser.js"></script>-->
+    <!--<script src="//cdn.jsdelivr.net/npm/phaser@3.6.0/dist/phaser.min.js"></script>-->
 
     <title>It's A Simple Game... Really</title>
 </head>
 <body style="margin:0; height: 100%; overflow: hidden; background-color:#000">
-    <div id='game'></div>
-    <audio autoplay>
+    <div class="scaleable-wrapper" id="scaleable-wrapper">
+        <div class="very-specific-design" id="very-specific-design">
+            <div id='game'></div>
+        </div>
+    </div>
+    <!--<audio autoplay>
         <source src="assets/Bag-Raiders-Shooting-Stars.mp3" type="audio/mpeg">
         Your browser does not support the audio element.
-    </audio>
+    </audio>-->
     <!--KNO DA WAE-->
 </body>
+<script src="js/menu.js" type="text/javascript"></script>
 <script src="js/game.js" type="text/javascript"></script>
 <script src="js/main.js" type="text/javascript"></script>
 <script src="js/client.js" type="text/javascript"></script>

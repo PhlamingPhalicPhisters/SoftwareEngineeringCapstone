@@ -1,11 +1,31 @@
 var Client = {};
 Client.socket = io.connect();
+// Client.socket;
 Client.player;
+Client.name='';
 Client.id = -1;
 
-Client.askNewPlayer = function(){
-    Client.socket.emit('newplayer');
+// Client.connect = function(){
+//     console.log('Client.connect()--Client.name = '+Client.name);
+//     Client.socket = io.connect();
+//     Client.socket.emit('setname',{name: Client.name});
+// };
+
+Client.setClientName = function(name){
+    Client.name = name;
+    console.log('Client.name--'+Client.name);
 };
+
+Client.sendPlayerName = function()
+{
+    console.log('Client.setPlayerInfo');
+    Client.socket.emit('setname',{name: Client.name});
+};
+
+Client.socket.on('updatename',function(data){
+    // console.log(data.id+'--'+data.name);
+    Game.updateName(data.id, data.name);
+});
 
 Client.getPlayerID = function(){
     return Client.id;
@@ -19,13 +39,19 @@ Client.socket.on('setplayer',function(data){
     Client.player = data;
 });
 
+Client.askNewPlayer = function(){
+    Client.socket.emit('newplayer',{name: Client.name});
+};
+
 Client.socket.on('newplayer',function(data){
     //console.log('id: ');
-    if (Client.id == -1) {
-        Client.id = data.id;
-        console.log('Client.id: ' + data.id);
+    if (game.state.current === 'Game') {
+        if (Client.id === -1) {
+            Client.id = data.id;
+            console.log('Client.id: ' + data.id + '--' + data.name);
+        }
+        Game.addNewPlayer(data.id, data.x, data.y, data.rotation, data.name);
     }
-    Game.addNewPlayer(data.id,data.x,data.y,data.rotation);
 });
 
 Client.socket.on('allplayers',function(data){
@@ -33,7 +59,7 @@ Client.socket.on('allplayers',function(data){
     //console.log(data);
     for(var i = 0; i < data.length; i++){
         if (data[i].id != Client.id) {
-            Game.addNewPlayer(data[i].id, data[i].x, data[i].y, data[i].rotation);
+            Game.addNewPlayer(data[i].id, data[i].x, data[i].y, data[i].rotation, data[i].name);
         }
     }
     Game.setAllPlayersAdded();
