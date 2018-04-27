@@ -76,6 +76,7 @@ var playerHUD = {
 
 var bullet;
 Game.create = function(){
+    console.log('Game.create');
 
     //***
     //*** Uncomment for optimization but make sure the background
@@ -246,6 +247,12 @@ Game.update = function()
         fireBullet();
     }
 
+    if (game.input.keyboard.isDown(Phaser.Keyboard.SHIFT)
+        && game.input.keyboard.isDown(Phaser.Keyboard.ESC))
+    {
+
+    }
+
     // Sync the transform of remote instances of this player
     Game.sendTransform();
 };
@@ -263,6 +270,10 @@ Game.render = function(){
 
 };
 
+Game.updateName = function(id, name)
+{
+    Game.playerMap[id].name = name;
+};
 
 function fireBullet() {
     if (game.time.now > Game.ammoMap[Client.id].bulletTime && Client.weaponId !== -1) {
@@ -373,6 +384,7 @@ Game.updateTransform = function(id, x, y, rotation) {
         player.y = y;
         player.rotation = rotation;
         Game.playerMap[id] = player;
+        // console.log('player name='+Game.playerMap[id].name);
     }
 };
 
@@ -385,7 +397,7 @@ Game.updatePlayerShip = function(id, shipName){
 };
 
 Game.removePlayer = function(id){
-    console.log('Game.removePlayer');
+    console.log('Game.removePlayer '+id+'--'+Game.playerMap[id].name);
     Game.playerMap[id].destroy();
     delete Game.playerMap[id];
 };
@@ -407,7 +419,7 @@ Game.movePlayer = function(id, x, y) {
 };
 
 Game.setPlayerAcceleration = function(id, direction){
-    if (direction == 1)
+    if (direction === 1)
     {
         game.physics.arcade.accelerationFromRotation(Game.playerMap[id].rotation,
             200, Game.playerMap[id].body.acceleration);
@@ -432,8 +444,8 @@ Game.playerShoot = function(){
 };
 
 
-Game.addNewPlayer = function(id,x,y,rotation,shipName){
-    console.log('Game.addNewPlayer '+id+' '+shipName);
+Game.addNewPlayer = function(id,x,y,rotation,shipName,name){
+    console.log('Game.addNewPlayer '+id+'--'+name+'--'+shipName);
 
     var newPlayer;
 
@@ -457,6 +469,8 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName){
     newPlayer.anchor.set(0.5);
     // Set starting rotation of player instance
     newPlayer.rotation = rotation;
+
+    newPlayer.name = name;
 
     // Enable appropriate player physics
     Game.physics.enable(newPlayer, Phaser.Physics.ARCADE);
