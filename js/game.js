@@ -335,6 +335,9 @@ Game.updateAmmo = function(id, ammo, weaponId) {
     Game.ammoMap[id].setAll('scale.y', 0.5);
     Game.ammoMap[id].setAll('anchor.x', 0.5);
     Game.ammoMap[id].setAll('anchor.y', 0.5);
+    Game.ammoMap[id].forEach(function(bullet) {
+        bullet.body.setSize(bullet.width * Game.ammoMap[id].scale.x,
+            bullet.height * Game.ammoMap[id].scale.y)});    // rescale bodies
     Game.ammoMap[id].bulletTime = 0;
     if (Game.ammoMap.length === Game.playerMap)
         Game.bulletsCreated = true;

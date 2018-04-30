@@ -89,7 +89,9 @@ Client.socket.on('allplayers',function(data){
 });
 
 Client.socket.on('remove',function(id){
-    Game.removePlayer(id);
+    if (game.state.current === 'Game') {
+        Game.removePlayer(id);
+    }
 });
 
 Client.sendClick = function(x, y) {
@@ -155,7 +157,9 @@ Client.socket.on('updateShip', function (data) {
 });
 
 Client.socket.on('updateFire', function(data) {
-    Game.updateBullets(data.x, data.y, data.rotation, data.weaponId, data.id);
+    if (game.state.current === 'Game') {
+        Game.updateBullets(data.x, data.y, data.rotation, data.weaponId, data.id);
+    }
 
     //Game.updateBullets(data);
 });

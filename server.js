@@ -88,7 +88,7 @@ io.on('connection',function(socket){
         });
 
         socket.on('shipChange', function(data){
-            console.log("We got an emit of shipChange, shipName is: " + data.shipName);
+            // console.log("We got an emit of shipChange, shipName is: " + data.shipName);
             socket.player.shipName = data.shipName;
             socket.broadcast.emit('updateShip', socket.player);
         });
