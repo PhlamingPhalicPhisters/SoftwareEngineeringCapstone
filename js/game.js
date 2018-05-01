@@ -60,6 +60,8 @@ Game.preload = function() {
     this.game.load.image('bullet1', 'assets/sprites/bullet1.png');
     this.game.load.image('bullet2', 'assets/sprites/bullet2.png');
 
+    // Load dust assets
+    //this game.load.image('dust', TODODODODODO);
 
     this.game.load.image('ship0', 'assets/sprites/general-bullet.png');
 };
@@ -132,6 +134,7 @@ Game.create = function(){
 
     //Order of these statments impacts the order of render
     map.createLayer('Backgroundlayer');
+    var zoneLayer = map.createLayer('Zonelayer');
     layer = map.createLayer('Groundlayer');
     map.setCollisionBetween(0, 4000, true, 'Groundlayer');
     layer.resizeWorld();
@@ -287,6 +290,7 @@ Game.bulletDestroy = function(heck, blasty){
     //ammo.destroy();
 };
 
+/*
 Game.render = function(){
     if (Game.allPlayersAdded) {
         game.debug.body(Game.playerMap[Client.getPlayerID()]);
@@ -294,6 +298,7 @@ Game.render = function(){
     game.debug.body(bullet);
     game.debug.text(game.time.fps, 2, 14, "#00ff00");
 };
+*/
 
 Game.updateName = function(id, name)    //This never gets called?
 {

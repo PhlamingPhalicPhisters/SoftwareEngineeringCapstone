@@ -33,10 +33,12 @@ io.on('connection',function(socket){
             shipName: 'unassignedShip',
             focused: true
         };
+
         console.log('Player '+socket.player.id+' connected');
         socket./*broadcast.*/emit('newplayer',socket.player);
         socket.broadcast.emit('newplayer',socket.player);
         socket.emit('allplayers',getAllPlayers());
+
 
         socket.on('getplayer',function(data){
             socket.emit('setplayer',socket.player);
