@@ -363,15 +363,22 @@ Game.sendTransform = function() {
 
 
 Game.updateHUD = function(player){
-    player.shield.x = player.x - ((window.innerWidth / 2) - 20);
-    player.shield.y = player.y - ((window.innerHeight / 2) - 20);
+    //player.shield.x = player.x - ((window.innerWidth / 2) - 20);
+    //player.shield.y = player.y - ((window.innerHeight / 2) - 20);
 
-    if(player.prevHealth != player.health) {
+    player.shield.x = (this.game.camera.width / 2) - ((window.innerWidth / 2) - 20);
+    player.shield.y = (this.game.camera.height / 2) - ((window.innerHeight / 2) - 20);
+    player.shield.fixedToCamera = true;
+
+    if(player.prevHealth != player.health || player.prevAmmo != Client.ammo) {
+        playerHUD["bullets"] = Client.ammo;
+        player.prevAmmo = Client.ammo;
         player.shield.setText('Shield:\n' +
             'Bullets: ' + playerHUD["bullets"] + '\n' +
             'Boost: ' + playerHUD["boost"] + '\n' +
             'Currency: ' + playerHUD["currency"], {font: '100px Arial', fill: '#fff'});
     }
+
     Game.updateHealthBar(player);
 };
 
@@ -394,6 +401,7 @@ Game.updateHealthBar = function(player) {
     player.healthBar.x = player.shield.x + 120;
     player.healthBar.y = player.shield.y + 20;
     player.prevHealth = player.health;
+    player.healthBar.fixedToCamera = true;
 };
 
 // Update the position and rotation of a given remote player
