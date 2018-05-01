@@ -30,6 +30,8 @@ Game.init = function(){
     //document.body.scroll = "no";    // ie only
     // Run game in background
     this.game.stage.disableVisibilityChange = true;
+
+    Game.playerSize = 64;   // sq. px. size
 };
 
 
@@ -476,6 +478,9 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name){
         console.log('else statement - shipSelectionString: ' + shipName);
     }
 
+    // make all ships the same width & height
+    newPlayer.width = Game.playerSize;
+    newPlayer.height = Game.playerSize;
 
     // Set player sprite origin to center
     newPlayer.anchor.set(0.5);
