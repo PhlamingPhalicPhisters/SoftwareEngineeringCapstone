@@ -17,14 +17,14 @@ addWeapon(2000, 1750, 65, 2);
 addWeapon(2000, 500, 75, 10);
 
 Game.ammoMap = {};
+Game.bulletArray = [];
 
 //This variable represents the amount of ships in the game
 //It is used when assigning new players a ship
-const numberOfShipSprites = 8;
+const numberOfShipSprites = 9;
 
 Game.init = function(){
     console.log('Game.init');
-
     // Disable scroll bars
     //document.documentElement.style.overflow = 'hidden'; // firefox, chrome
     //document.body.scroll = "no";    // ie only
@@ -38,10 +38,12 @@ Game.init = function(){
 Game.preload = function() {
     console.log('Game.preload');
 
+    game.load.onLoadStart.add(loadStart, this);
+    this.game.stage.disableVisibilityChange = true;
+
     // Load map assets
-    this.game.load.tilemap('map', 'assets/map/uncompressedmap.json', null, Phaser.Tilemap.TILED_JSON);
-    this.game.load.image('tiles', 'assets/map/simples_pimples.png');
-    this.game.load.image('background','assets/map/dark-space.png');
+    this.game.load.tilemap('map', 'assets/map/bigtilestest.json', null, Phaser.Tilemap.TILED_JSON);
+    this.game.load.image('tiles', 'assets/map/largetilesheet.png');
 
     // Load ship assets
     this.game.load.image('ship1','assets/sprites/ship1.png');
@@ -60,9 +62,18 @@ Game.preload = function() {
 
 
     this.game.load.image('ship0', 'assets/sprites/general-bullet.png');
-    //this.game.load.image('sprite','assets/sprites/sprite.png'); // this will be the sprite of the players
-    //this.game.load.image('bullet', 'assets/sprites/knuck.gif');
 };
+
+//Helper function for the loading screen
+function loadStart() {
+    game.add.sprite(game.world.centerX,game.world.centerY, 'shipload');
+    game.stage.backgroundColor = '#000000';
+    game.add.text(game.world.centerX+40,game.world.centerY, 'Loading...', { fill: '#ffffff' });
+    //var sprite = game.add.sprite(game.world.centerX,game.world.centerY,'loadingSprite');
+    //sprite.animations.add('spin');
+    //sprite.animations.play('spin',10,true);
+};
+
 var sprite;
 var cursors;
 var thisPlayer;
@@ -87,9 +98,7 @@ Game.create = function(){
     //game.renderer.clearBeforeRender = false;
     //game.renderer.roundPixels = true;
 
-
-    var width = this.game.width;
-    var height = this.game.height;
+    game.time.advancedTiming = true;
 
     // Enable Phaser Arcade game physics engine
     //this.game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -100,13 +109,6 @@ Game.create = function(){
     Game.allPlayersAdded = false;
     Game.localPlayerInstantiated = false;
     Game.bulletsCreated = false;
-
-    // Set the size of the playable game environment
-    //game.world.setBounds(-width,-height,width*2,height*2);
-    game.world.setBounds(0,0,2000,2000);
-    var background = this.game.add.tileSprite(this.game.world.bounds.left,this.game.world.bounds.top,
-        this.game.world.bounds.right, this.game.world.bounds.bottom,'background');
-    this.game.stage.backgroundColor = '#ffffff';
 
     // Set up scaling management
     this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
@@ -123,30 +125,29 @@ Game.create = function(){
         }, 50);
     });
 
-    //game.camera.width = window.width * 0.5;
-    //game.camera.height = window.height * 0.5;
-
     // Set up tile mapping and layer system
+    //Name of tilesheet in json, name in game.js
     var map = this.game.add.tilemap('map');
-    map.addTilesetImage('tiles128','tiles'); // tilesheet is the key of the tileset in map's JSON file
-    layer = map.createLayer('GroundLayer');
-    map.setCollisionBetween(0, 4000, true, 'GroundLayer');
+    map.addTilesetImage('largetilesheet','tiles');
 
-    layer.inputEnabled = true; // Allows clicking on the map
+    //Order of these statments impacts the order of render
+    map.createLayer('Backgroundlayer');
+    layer = map.createLayer('Groundlayer');
+    map.setCollisionBetween(0, 4000, true, 'Groundlayer');
+    layer.resizeWorld();
 
     // Enable Phaser Arcade game physics engine
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
-    //this.game.physics.applyGravity = true;
 
     // Create Local player & all active remote players
     Client.askNewPlayer();
-
     Client.getPlayer();
 
     this.game.camera.bounds = new Phaser.Rectangle(-this.game.world.width,-this.game.world.height,
         this.game.world.width*3, this.game.world.height*3);
 
-    Game.cursors = this.game.input.keyboard.addKeys( { 'up': Phaser.KeyCode.W, 'down': Phaser.KeyCode.S, 'left': Phaser.KeyCode.A, 'right': Phaser.KeyCode.D } );
+    Game.cursors = this.game.input.keyboard.addKeys( { 'up': Phaser.KeyCode.W, 'down': Phaser.KeyCode.S,
+        'left': Phaser.KeyCode.A, 'right': Phaser.KeyCode.D } );
     this.game.input.keyboard.addKeyCapture([Phaser.Keyboard.SPACEBAR]);
 
     bullet = game.add.sprite(200,200,'bullet');
@@ -154,10 +155,6 @@ Game.create = function(){
     bullet.enableBody = true;
     Game.physics.enable(bullet, Phaser.Physics.ARCADE);
     //bullet.body.setSize(bullet.width,bullet.height,0.5,0.5);
-
-
-
-
     // publicBulletInfo.bullets.bodies.setCircle(10);
     // Input
     /*cursors = game.input.keyboard.createCursorKeys();
@@ -172,9 +169,17 @@ window.addEventListener("focus", function(event)
     game.input.keyboard.start();
     console.log('in focus');
 }, false);*/
-window.addEventListener("blur", function(event)
-{
+
+Game.focused = true;
+window.addEventListener("blur", function(event) {
     game.input.keyboard.reset();
+    Client.setFocus(false);
+    Game.focused = false;
+}, false);
+window.addEventListener("focus", function(event) {
+    Client.askTransform();
+    Client.setFocus(true);
+    Game.focused = true;
 }, false);
 
 Game.update = function()
@@ -183,12 +188,20 @@ Game.update = function()
         // Establish collision detection between groups
         Game.physics.arcade.collide(playerArray, playerArray);
         Game.physics.arcade.collide(layer, playerArray);
-    for (var i in Game.ammoMap) {
+
+    for(var q in Game.bulletArray)
+        for(var p in playerArray)
+            Game.physics.arcade.collideHandler(playerArray[p], Game.bulletArray[q], function(player, bullet){player.damage(bullet.damage); bullet.destroy();});
+
+    for(var r in Game.bulletArray)
+        Game.physics.arcade.collide(layer, Game.bulletArray[r], function(theLayer, theBullet){theBullet.destroy();});
+
+    /*for (var i in Game.ammoMap) {
         for(var p in playerArray) {
             Game.physics.arcade.collide(playerArray[p], Game.ammoMap[i], Game.bulletDamage);
         }
         Game.physics.arcade.collide(layer, Game.ammoMap[i], Game.bulletDestroy);
-    }
+    }*/
 
     // Get forward/backward input
     if (Game.cursors.up.isDown)
@@ -261,15 +274,16 @@ Game.update = function()
 
 Game.bulletDamage = function(player, ammo){
     //var bullet = ammo.getFirstExists(false);
-    //bullet.destroy();
-    player.damage(1);
+    player.damage(ammo.damage);
+    ammo.destroy();
+
 };
 
-Game.bulletDestroy = function(layer, ammo){
+Game.bulletDestroy = function(heck, blasty){
 
-    //var bullet = ammo.getFirstExists(false);
-    //bullet.destroy();
+    blasty.destroy(this);
 
+    //ammo.destroy();
 };
 
 Game.render = function(){
@@ -277,13 +291,13 @@ Game.render = function(){
         game.debug.body(Game.playerMap[Client.getPlayerID()]);
     }
     game.debug.body(bullet);
-
-
+    game.debug.text(game.time.fps, 2, 14, "#00ff00");
 };
 
-Game.updateName = function(id, name)
+Game.updateName = function(id, name)    //This never gets called?
 {
     Game.playerMap[id].name = name;
+    //console.log("It the name boi: " + Game.playerMap[id].name);
 };
 
 function fireBullet() {
@@ -295,6 +309,7 @@ function fireBullet() {
             bullet.reset(Game.playerMap[Client.getPlayerID()].body.x + Game.playerMap[Client.player.id].width/2, Game.playerMap[Client.player.id].body.y + Game.playerMap[Client.player.id].height/2);
             bullet.lifespan = weaponArray[Client.weaponId].lifespan;
             bullet.rotation = Game.playerMap[Client.player.id].rotation;
+            bullet.damage = weaponArray[Client.weaponId].damage;
             game.physics.arcade.velocityFromRotation(Game.playerMap[Client.player.id].rotation, weaponArray[Client.weaponId].velocity, bullet.body.velocity);
             Game.ammoMap[Client.id].bulletTime = game.time.now + weaponArray[Client.weaponId].bulletTime;
             bullet.events.onKilled.add(function() {
@@ -314,6 +329,7 @@ Game.updateBullets = function(x, y, rotation, weaponId, id) {
         if (bullet) {
             bullet.reset(x, y);
             bullet.lifespan = weaponArray[weaponId].lifespan;
+            bullet.damage = weaponArray[weaponId].damage;
             bullet.rotation = rotation;
             game.physics.arcade.velocityFromRotation(rotation, weaponArray[weaponId].velocity, bullet.body.velocity);
             bullet.events.onKilled.add(function() {
@@ -322,6 +338,8 @@ Game.updateBullets = function(x, y, rotation, weaponId, id) {
         }
     }
 };
+
+
 
 Game.updateAmmo = function(id, ammo, weaponId) {
     Game.ammoMap[id] = game.add.group();
@@ -339,7 +357,10 @@ Game.updateAmmo = function(id, ammo, weaponId) {
     Game.ammoMap[id].setAll('anchor.y', 0.5);
     Game.ammoMap[id].forEach(function(bullet) {
         bullet.body.setSize(bullet.width * Game.ammoMap[id].scale.x,
-            bullet.height * Game.ammoMap[id].scale.y)});    // rescale bodies
+            bullet.height * Game.ammoMap[id].scale.y);
+        Game.bulletArray.push(bullet);
+        console.log(Game.bulletArray.length);
+    });    // rescale bodies
     Game.ammoMap[id].bulletTime = 0;
     if (Game.ammoMap.length === Game.playerMap)
         Game.bulletsCreated = true;
@@ -348,7 +369,7 @@ Game.updateAmmo = function(id, ammo, weaponId) {
 // Sync position and rotation of remote instances of player
 Game.sendTransform = function() {
     //console.log('Game sendTransform');
-    if(Client.getPlayerID() !== -1 && Game.localPlayerInstantiated/*&& Game.playerMap.length > 0*/) {
+    if(Client.getPlayerID() !== -1 && Game.localPlayerInstantiated && Game.focused/*&& Game.playerMap.length > 0*/) {
         var player = Game.playerMap[Client.getPlayerID()];
         Game.updateHUD(player);
         Client.sendTransform(player.x, player.y, player.rotation);
@@ -357,15 +378,28 @@ Game.sendTransform = function() {
 
 
 Game.updateHUD = function(player){
-    player.shield.x = player.x - ((window.innerWidth / 2) - 20);
-    player.shield.y = player.y - ((window.innerHeight / 2) - 20);
+    //player.shield.x = player.x - ((window.innerWidth / 2) - 20);
+    //player.shield.y = player.y - ((window.innerHeight / 2) - 20);
 
-    if(player.prevHealth != player.health) {
+    player.shield.x = (this.game.camera.width / 2) - ((window.innerWidth / 2) - 20);
+    player.shield.y = (this.game.camera.height / 2) - ((window.innerHeight / 2) - 20);
+    player.shield.fixedToCamera = true;
+    player.nameHover.setText(Client.name);
+    player.nameHover.x = (this.game.camera.width / 2) - (player.nameHover.width / 2);
+    player.nameHover.y = (this.game.camera.height / 2) - 60;
+    player.nameHover.fixedToCamera = true;
+
+
+    if(player.prevHealth != player.health || player.prevAmmo != Client.ammo) {
+        playerHUD["bullets"] = Client.ammo;
+        player.prevAmmo = Client.ammo;
         player.shield.setText('Shield:\n' +
             'Bullets: ' + playerHUD["bullets"] + '\n' +
             'Boost: ' + playerHUD["boost"] + '\n' +
             'Currency: ' + playerHUD["currency"], {font: '100px Arial', fill: '#fff'});
     }
+
+
     Game.updateHealthBar(player);
 };
 
@@ -388,6 +422,7 @@ Game.updateHealthBar = function(player) {
     player.healthBar.x = player.shield.x + 120;
     player.healthBar.y = player.shield.y + 20;
     player.prevHealth = player.health;
+    player.healthBar.fixedToCamera = true;
 };
 
 // Update the position and rotation of a given remote player
@@ -510,6 +545,7 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name){
     // Local player should be instantiated first before remote players
     Game.playerMap[id] = newPlayer;
     Game.playerMap[id].shield = Game.add.text(0, 0, '', { font: '35px Arial', fill: '#fff' });
+    Game.playerMap[id].nameHover = Game.add.text(0, 0, '', {font: '20px Arial', fill: '#fff'});
     Game.playerMap[id].healthBar = Game.add.graphics(0,0);
     Game.playerMap[id].prevHealth = -1;
     //Game.createHealthBar(Game.playerMap[id]);

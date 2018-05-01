@@ -171,3 +171,23 @@ Client.socket.on('updateAmmo', function(data) {
 Client.changeAmmo = function(ammo) {
     Client.socket.emit('changeAmmo', ammo);
 };
+
+Client.askTransform = function() {
+    Client.socket.emit('askTransform');
+};
+
+Client.socket.on('returnTransform', function(data) {
+    Game.updateTransform(data.id, data.x, data.y, data.rotation);
+});
+
+Client.setFocus = function(focused) {
+    Client.socket.emit('setFocus', focused);
+};
+
+Client.socket.on('askCoordinates', function(data) {
+    Client.socket.emit('returnCoordinates', {x: Game.playerMap[data.id].x, y: Game.playerMap[data.id].y, rotation: Game.playerMap[data.id].rotation, id: data.socketID});
+});
+
+Client.socket.on('updateCoordinates', function(data) {
+    Game.updateTransform(Client.id, data.x, data.y, data.rotation);
+});
