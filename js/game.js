@@ -170,9 +170,17 @@ window.addEventListener("focus", function(event)
     game.input.keyboard.start();
     console.log('in focus');
 }, false);*/
-window.addEventListener("blur", function(event)
-{
+
+Game.focused = true;
+window.addEventListener("blur", function(event) {
     game.input.keyboard.reset();
+    Client.setFocus(false);
+    Game.focused = false;
+}, false);
+window.addEventListener("focus", function(event) {
+    Client.askTransform();
+    Client.setFocus(true);
+    Game.focused = true;
 }, false);
 
 Game.update = function()
@@ -346,7 +354,7 @@ Game.updateAmmo = function(id, ammo, weaponId) {
 // Sync position and rotation of remote instances of player
 Game.sendTransform = function() {
     //console.log('Game sendTransform');
-    if(Client.getPlayerID() !== -1 && Game.localPlayerInstantiated/*&& Game.playerMap.length > 0*/) {
+    if(Client.getPlayerID() !== -1 && Game.localPlayerInstantiated && Game.focused/*&& Game.playerMap.length > 0*/) {
         var player = Game.playerMap[Client.getPlayerID()];
         Game.updateHUD(player);
         Client.sendTransform(player.x, player.y, player.rotation);
