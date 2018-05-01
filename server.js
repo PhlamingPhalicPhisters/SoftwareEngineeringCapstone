@@ -30,7 +30,8 @@ io.on('connection',function(socket){
             health: 100,
             weaponId: randomInt(0,3),
             ammo: 0,
-            shipName: 'unassignedShip'
+            shipName: 'unassignedShip',
+            focused: true
         };
         console.log('Player '+socket.player.id+' connected');
         socket./*broadcast.*/emit('newplayer',socket.player);
@@ -63,6 +64,11 @@ io.on('connection',function(socket){
             // socket.player.scale = data.scale;
         });
 
+        socket.on('askTransform', function() {
+            findFocused(socket.id, socket.player.id);
+            //socket.emit('returnTransform', socket.player);
+        });
+
         socket.on('accelerate',function(data){
             //io.emit('updateAcceleration', socket.player, data.direction);
             socket.emit('updateAcceleration', socket.player, data.direction);
@@ -88,7 +94,7 @@ io.on('connection',function(socket){
         });
 
         socket.on('shipChange', function(data){
-            console.log("We got an emit of shipChange, shipName is: " + data.shipName);
+            // console.log("We got an emit of shipChange, shipName is: " + data.shipName);
             socket.player.shipName = data.shipName;
             socket.broadcast.emit('updateShip', socket.player);
         });
@@ -104,12 +110,37 @@ io.on('connection',function(socket){
         socket.on('changeAmmo', function(data) {
             socket.player.ammo = data;
         });
+        socket.on('setBlurred', function(data) {
+            socket.player.focused = data;
+        });
+        socket.on('returnCoordinates', function(data) {
+            emitMessage(data.id, data.x, data.y, data.rotation);
+            //io.sockets.connected[data.id].emit('updateCoordinates', {x: data.x, y: data.y, rotation: data.rotation});
+        });
     });
 
     socket.on('test',function(){
         console.log('test received');
     });
 });
+
+function findFocused(sID, id) {
+    Object.keys(io.sockets.connected).forEach(function(socketID) {
+        io.sockets.connected[socketID].emit('askCoordinates', {socketID: sID, id: id});
+    });
+}
+
+function emitMessage(id, x, y, rotation) {
+    //io.sockets.connected[id].emit('updateCoordinates', {x: x, y: y, rotation: rotation});
+    Object.keys(io.sockets.connected).forEach(function(socketID) {
+        //console.log('id: ' + socketID + ' ' + id);
+        if (socketID === id) {
+            io.sockets.connected[socketID].emit('updateCoordinates', {x: x, y: y, rotation: rotation});
+            //console.log('id: ' + id);
+        }
+        //io.sockets.connected[socketID].emit('askCoordinates', id);
+    });
+}
 
 function getAllPlayers(){
     var players = [];
