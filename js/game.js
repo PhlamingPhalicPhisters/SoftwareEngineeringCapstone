@@ -21,11 +21,10 @@ Game.bulletArray = [];
 
 //This variable represents the amount of ships in the game
 //It is used when assigning new players a ship
-const numberOfShipSprites = 8;
+const numberOfShipSprites = 9;
 
 Game.init = function(){
     console.log('Game.init');
-
     // Disable scroll bars
     //document.documentElement.style.overflow = 'hidden'; // firefox, chrome
     //document.body.scroll = "no";    // ie only
@@ -37,10 +36,12 @@ Game.init = function(){
 Game.preload = function() {
     console.log('Game.preload');
 
+    game.load.onLoadStart.add(loadStart, this);
+    this.game.stage.disableVisibilityChange = true;
+
     // Load map assets
-    this.game.load.tilemap('map', 'assets/map/uncompressedmap.json', null, Phaser.Tilemap.TILED_JSON);
-    this.game.load.image('tiles', 'assets/map/simples_pimples.png');
-    this.game.load.image('background','assets/map/dark-space.png');
+    this.game.load.tilemap('map', 'assets/map/bigtilestest.json', null, Phaser.Tilemap.TILED_JSON);
+    this.game.load.image('tiles', 'assets/map/largetilesheet.png');
 
     // Load ship assets
     this.game.load.image('ship1','assets/sprites/ship1.png');
@@ -59,9 +60,18 @@ Game.preload = function() {
 
 
     this.game.load.image('ship0', 'assets/sprites/general-bullet.png');
-    //this.game.load.image('sprite','assets/sprites/sprite.png'); // this will be the sprite of the players
-    //this.game.load.image('bullet', 'assets/sprites/knuck.gif');
 };
+
+//Helper function for the loading screen
+function loadStart() {
+    game.add.sprite(game.world.centerX,game.world.centerY, 'shipload');
+    game.stage.backgroundColor = '#000000';
+    game.add.text(game.world.centerX+40,game.world.centerY, 'Loading...', { fill: '#ffffff' });
+    //var sprite = game.add.sprite(game.world.centerX,game.world.centerY,'loadingSprite');
+    //sprite.animations.add('spin');
+    //sprite.animations.play('spin',10,true);
+};
+
 var sprite;
 var cursors;
 var thisPlayer;
@@ -86,9 +96,7 @@ Game.create = function(){
     //game.renderer.clearBeforeRender = false;
     //game.renderer.roundPixels = true;
 
-
-    var width = this.game.width;
-    var height = this.game.height;
+    game.time.advancedTiming = true;
 
     // Enable Phaser Arcade game physics engine
     //this.game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -99,13 +107,6 @@ Game.create = function(){
     Game.allPlayersAdded = false;
     Game.localPlayerInstantiated = false;
     Game.bulletsCreated = false;
-
-    // Set the size of the playable game environment
-    //game.world.setBounds(-width,-height,width*2,height*2);
-    game.world.setBounds(0,0,2000,2000);
-    var background = this.game.add.tileSprite(this.game.world.bounds.left,this.game.world.bounds.top,
-        this.game.world.bounds.right, this.game.world.bounds.bottom,'background');
-    this.game.stage.backgroundColor = '#ffffff';
 
     // Set up scaling management
     this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
@@ -122,30 +123,29 @@ Game.create = function(){
         }, 50);
     });
 
-    //game.camera.width = window.width * 0.5;
-    //game.camera.height = window.height * 0.5;
-
     // Set up tile mapping and layer system
+    //Name of tilesheet in json, name in game.js
     var map = this.game.add.tilemap('map');
-    map.addTilesetImage('tiles128','tiles'); // tilesheet is the key of the tileset in map's JSON file
-    layer = map.createLayer('GroundLayer');
-    map.setCollisionBetween(0, 4000, true, 'GroundLayer');
+    map.addTilesetImage('largetilesheet','tiles');
 
-    layer.inputEnabled = true; // Allows clicking on the map
+    //Order of these statments impacts the order of render
+    map.createLayer('Backgroundlayer');
+    layer = map.createLayer('Groundlayer');
+    map.setCollisionBetween(0, 4000, true, 'Groundlayer');
+    layer.resizeWorld();
 
     // Enable Phaser Arcade game physics engine
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
-    //this.game.physics.applyGravity = true;
 
     // Create Local player & all active remote players
     Client.askNewPlayer();
-
     Client.getPlayer();
 
     this.game.camera.bounds = new Phaser.Rectangle(-this.game.world.width,-this.game.world.height,
         this.game.world.width*3, this.game.world.height*3);
 
-    Game.cursors = this.game.input.keyboard.addKeys( { 'up': Phaser.KeyCode.W, 'down': Phaser.KeyCode.S, 'left': Phaser.KeyCode.A, 'right': Phaser.KeyCode.D } );
+    Game.cursors = this.game.input.keyboard.addKeys( { 'up': Phaser.KeyCode.W, 'down': Phaser.KeyCode.S,
+        'left': Phaser.KeyCode.A, 'right': Phaser.KeyCode.D } );
     this.game.input.keyboard.addKeyCapture([Phaser.Keyboard.SPACEBAR]);
 
     bullet = game.add.sprite(200,200,'bullet');
@@ -153,10 +153,6 @@ Game.create = function(){
     bullet.enableBody = true;
     Game.physics.enable(bullet, Phaser.Physics.ARCADE);
     //bullet.body.setSize(bullet.width,bullet.height,0.5,0.5);
-
-
-
-
     // publicBulletInfo.bullets.bodies.setCircle(10);
     // Input
     /*cursors = game.input.keyboard.createCursorKeys();
@@ -293,8 +289,7 @@ Game.render = function(){
         game.debug.body(Game.playerMap[Client.getPlayerID()]);
     }
     game.debug.body(bullet);
-
-
+    game.debug.text(game.time.fps, 2, 14, "#00ff00");
 };
 
 Game.updateName = function(id, name)    //This never gets called?
