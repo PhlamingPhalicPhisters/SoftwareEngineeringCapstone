@@ -272,11 +272,12 @@ Game.update = function()
     Game.sendTransform();
 };
 
+
+
 Game.bulletDamage = function(player, ammo){
     //var bullet = ammo.getFirstExists(false);
     player.damage(ammo.damage);
     ammo.destroy();
-
 };
 
 Game.bulletDestroy = function(heck, blasty){
@@ -359,7 +360,7 @@ Game.updateAmmo = function(id, ammo, weaponId) {
         bullet.body.setSize(bullet.width * Game.ammoMap[id].scale.x,
             bullet.height * Game.ammoMap[id].scale.y);
         Game.bulletArray.push(bullet);
-        console.log(Game.bulletArray.length);
+        //console.log(Game.bulletArray.length);
     });    // rescale bodies
     Game.ammoMap[id].bulletTime = 0;
     if (Game.ammoMap.length === Game.playerMap)
@@ -559,6 +560,12 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name){
     this.game.renderer.renderSession.roundPixels = true;
 
 
+};
+
+Game.setDeathBehavior = function(id) {
+    Game.playerMap[id].events.onKilled.add(function() {
+        game.state.start('Menu');
+    });
 };
 
 Game.createHealthBar = function(player){

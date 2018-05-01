@@ -71,6 +71,7 @@ Client.socket.on('newplayer',function(data){
         console.log('asscream');
         console.log(data.health);
         Game.addNewPlayer(data.id, data.x, data.y, data.rotation, data.shipName);
+        Game.setDeathBehavior(data.id);
     }
 });
 
