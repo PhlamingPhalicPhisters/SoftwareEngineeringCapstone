@@ -20,6 +20,10 @@ server.listen(process.env.PORT || 8081,function(){
 
 io.on('connection',function(socket){
 
+    /*socket.on('disconnect', function() {
+        console.log('disconnected');
+    });*/
+
     socket.on('newplayer',function(data){
         socket.player = {
             id: server.lastPlayerId++,
@@ -62,11 +66,12 @@ io.on('connection',function(socket){
             socket.player.x = data.x;
             socket.player.y = data.y;
             socket.player.rotation = data.rotation;
+            socket.player.health = data.health;
             socket.broadcast.emit('updateTransform', socket.player);
             // socket.player.scale = data.scale;
         });
 
-        socket.on('askTransform', function() {
+        socket.on('askUpdate', function() {
             findFocused(socket.id, socket.player.id);
             //socket.emit('returnTransform', socket.player);
         });
@@ -112,11 +117,13 @@ io.on('connection',function(socket){
         socket.on('changeAmmo', function(data) {
             socket.player.ammo = data;
         });
-        socket.on('setBlurred', function(data) {
+        socket.on('setFocus', function(data) {
             socket.player.focused = data;
+            //console.log('focused: ' + data);
         });
         socket.on('returnCoordinates', function(data) {
-            emitMessage(data.id, data.x, data.y, data.rotation);
+            emitMessage(data.id, data.x, data.y, data.rotation, data.health);
+            //console.log('health: ' + data.health);
             //io.sockets.connected[data.id].emit('updateCoordinates', {x: data.x, y: data.y, rotation: data.rotation});
         });
     });
@@ -128,17 +135,23 @@ io.on('connection',function(socket){
 
 function findFocused(sID, id) {
     Object.keys(io.sockets.connected).forEach(function(socketID) {
-        io.sockets.connected[socketID].emit('askCoordinates', {socketID: sID, id: id});
+        //console.log('socket: ' + socketID);
+        //console.log('hawej: ' + io.sockets.connected[socketID].player !== undefined);
+        if (io.sockets.connected[socketID].player !== undefined && io.sockets.connected[socketID].player.focused) {
+            io.sockets.connected[socketID].emit('askCoordinates', {socketID: sID, id: id});
+            //console.log('socket: ' + io.sockets.connected[socketID].player.focused);
+        }
+
     });
 }
 
-function emitMessage(id, x, y, rotation) {
+function emitMessage(id, x, y, rotation, health) {
     //io.sockets.connected[id].emit('updateCoordinates', {x: x, y: y, rotation: rotation});
     Object.keys(io.sockets.connected).forEach(function(socketID) {
         //console.log('id: ' + socketID + ' ' + id);
         if (socketID === id) {
-            io.sockets.connected[socketID].emit('updateCoordinates', {x: x, y: y, rotation: rotation});
-            //console.log('id: ' + id);
+            io.sockets.connected[socketID].emit('updateCoordinates', {x: x, y: y, rotation: rotation, health: health});
+            //console.log('health: ' + health);
         }
         //io.sockets.connected[socketID].emit('askCoordinates', id);
     });

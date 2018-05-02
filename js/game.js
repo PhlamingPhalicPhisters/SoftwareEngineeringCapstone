@@ -24,6 +24,7 @@ Game.bulletArray = [];
 const numberOfShipSprites = 9;
 
 Game.init = function(){
+    Client.connect();
     console.log('Game.init');
     // Disable scroll bars
     //document.documentElement.style.overflow = 'hidden'; // firefox, chrome
@@ -38,7 +39,7 @@ Game.init = function(){
 Game.preload = function() {
     console.log('Game.preload');
 
-    game.load.onLoadStart.add(loadStart, this);
+    game.load.onLoadStart.addOnce(loadStart, this);
     this.game.stage.disableVisibilityChange = true;
 
     // Load map assets
@@ -180,7 +181,7 @@ window.addEventListener("blur", function(event) {
     Game.focused = false;
 }, false);
 window.addEventListener("focus", function(event) {
-    Client.askTransform();
+    Client.askUpdate();
     Client.setFocus(true);
     Game.focused = true;
 }, false);
@@ -290,15 +291,13 @@ Game.bulletDestroy = function(heck, blasty){
     //ammo.destroy();
 };
 
-/*
-Game.render = function(){
+/*Game.render = function(){
     if (Game.allPlayersAdded) {
         game.debug.body(Game.playerMap[Client.getPlayerID()]);
     }
     game.debug.body(bullet);
     game.debug.text(game.time.fps, 2, 14, "#00ff00");
-};
-*/
+};*/
 
 Game.updateName = function(id, name)    //This never gets called?
 {
@@ -378,7 +377,7 @@ Game.sendTransform = function() {
     if(Client.getPlayerID() !== -1 && Game.localPlayerInstantiated && Game.focused/*&& Game.playerMap.length > 0*/) {
         var player = Game.playerMap[Client.getPlayerID()];
         Game.updateHUD(player);
-        Client.sendTransform(player.x, player.y, player.rotation);
+        Client.sendTransform(player.x, player.y, player.rotation, player.health);
     }
 };
 
@@ -432,15 +431,20 @@ Game.updateHealthBar = function(player) {
 };
 
 // Update the position and rotation of a given remote player
-Game.updateTransform = function(id, x, y, rotation) {
+Game.updateTransform = function(id, x, y, rotation, health) {
     if (Game.allPlayersAdded) {
         var player = Game.playerMap[id];
         player.x = x;
         player.y = y;
         player.rotation = rotation;
+        player.health = health;
         Game.playerMap[id] = player;
         // console.log('player name='+Game.playerMap[id].name);
+        if (id === Client.id && player.health <= 0) {
+            Game.playerMap[id].kill();
+        }
     }
+
 };
 
 // Update the ship of another player
@@ -569,6 +573,7 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name){
 
 Game.setDeathBehavior = function(id) {
     Game.playerMap[id].events.onKilled.add(function() {
+        Client.disconnect();
         game.state.start('Menu');
     });
 };
