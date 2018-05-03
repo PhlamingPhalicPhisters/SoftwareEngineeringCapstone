@@ -13,6 +13,22 @@ Client.ammo = 0;
 //     Client.socket.emit('setname',{name: Client.name});
 // };
 
+Client.disconnect = function () {
+    Client.socket.disconnect();
+};
+
+Client.connect = function() {
+
+    Client.socket = Client.socket.close();
+    Client.socket = Client.socket.open();
+// Client.socket;
+    Client.player;
+    Client.name='';
+    Client.id = -1;
+    Client.weaponId = -1;
+    Client.ammo = 0;
+};
+
 Client.setClientName = function(name){
     Client.name = name;
     console.log('Client.name--'+Client.name);
@@ -103,15 +119,15 @@ Client.socket.on('move', function(data) {
     Game.movePlayer(data.id, data.x, data.y);
 });
 
-Client.sendTransform = function(x, y, rotation) {
+Client.sendTransform = function(x, y, rotation, health) {
     //console.log('Client sendTransform');
     //console.log(x+','+y+','+rotation);
-    Client.socket.emit('transform', {x: x, y: y, rotation: rotation});
+    Client.socket.emit('transform', {x: x, y: y, rotation: rotation, health: health});
 };
 
 Client.socket.on('updateTransform', function(data) {
     //console.log('Client updateTransform');
-    Game.updateTransform(data.id, data.x, data.y, data.rotation);
+    Game.updateTransform(data.id, data.x, data.y, data.rotation, data.health);
 });
 
 Client.sendAcceleration = function(direction) {
@@ -145,31 +161,6 @@ Client.sendFire = function(x, y, rotation, weaponId, id) {
     Client.socket.emit('fire', {x: x, y: y, rotation: rotation, weaponId: weaponId, id: id});
 };
 
-Client.socket.on('updateFire', function(data) {
-    if (game.state.current === 'Game') {
-        Game.updateBullets(data.x, data.y, data.rotation, data.weaponId, data.id);
-    }
-
-    //Game.updateBullets(data);
-});
-
-Client.changeAmmo = function(ammo) {
-    Client.socket.emit('changeAmmo', ammo);
-};
-
-Client.socket.on('updateAmmo', function(data) {
-    Game.updateAmmo(data.id, data.ammo, data.weaponId);
-});
-
-Client.sendCollect = function(value) {
-    Client.socket.emit('collect', {id: Client.id, value: value});
-};
-
-Client.socket.on('updateCollect',function(data)
-{
-    Game.updateCollect(data.id, data.value);
-});
-
 //Send the ship change to the server
 Client.sendShipChange = function(shipName) {
     console.log("sending the ship change: " + shipName);
@@ -182,8 +173,33 @@ Client.socket.on('updateShip', function (data) {
     Game.updatePlayerShip(data.id, data.shipName);
 });
 
-Client.askTransform = function() {
-    Client.socket.emit('askTransform');
+Client.socket.on('updateFire', function(data) {
+    if (game.state.current === 'Game') {
+        Game.updateBullets(data.x, data.y, data.rotation, data.weaponId, data.id);
+    }
+
+    //Game.updateBullets(data);
+});
+
+Client.socket.on('updateAmmo', function(data) {
+    Game.updateAmmo(data.id, data.ammo, data.weaponId);
+});
+
+Client.changeAmmo = function(ammo) {
+    Client.socket.emit('changeAmmo', ammo);
+};
+
+Client.sendCollect = function(value) {
+    Client.socket.emit('collect', {id: Client.id, value: value});
+};
+
+Client.socket.on('updateCollect',function(data)
+{
+    Game.updateCollect(data.id, data.value);
+});
+
+Client.askUpdate = function() {
+    Client.socket.emit('askUpdate');
 };
 
 Client.socket.on('returnTransform', function(data) {
@@ -195,9 +211,9 @@ Client.setFocus = function(focused) {
 };
 
 Client.socket.on('askCoordinates', function(data) {
-    Client.socket.emit('returnCoordinates', {x: Game.playerMap[data.id].x, y: Game.playerMap[data.id].y, rotation: Game.playerMap[data.id].rotation, id: data.socketID});
+    Client.socket.emit('returnCoordinates', {x: Game.playerMap[data.id].x, y: Game.playerMap[data.id].y, rotation: Game.playerMap[data.id].rotation, id: data.socketID, health: Game.playerMap[data.id].health});
 });
 
 Client.socket.on('updateCoordinates', function(data) {
-    Game.updateTransform(Client.id, data.x, data.y, data.rotation);
+    Game.updateTransform(Client.id, data.x, data.y, data.rotation, data.health);
 });
