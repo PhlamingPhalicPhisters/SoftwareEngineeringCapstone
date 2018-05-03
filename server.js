@@ -28,6 +28,7 @@ io.on('connection',function(socket){
             y: randomInt(3600,4100),
             rotation: (-90)*(3.14/180), // start upward -- convert degrees to radians??
             health: 100,
+            score: 0,
             weaponId: randomInt(0,3),
             ammo: 0,
             shipName: 'unassignedShip',
@@ -89,6 +90,14 @@ io.on('connection',function(socket){
             //socket.broadcast.emit('updateFire', data);
             socket.broadcast.emit('updateFire', {x: data.x, y: data.y, rotation: data.rotation, weaponId: data.weaponId, id: data.id});
         });
+
+        socket.on('collect',function(data)
+        {
+            socket.player.score += data.value;
+            socket.broadcast.emit('updateCollect', data);
+            socket.emit('updateCollect', data);
+        });
+
         socket.on('requestTime', function() {
             var time = Date.now();
 

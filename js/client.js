@@ -145,6 +145,31 @@ Client.sendFire = function(x, y, rotation, weaponId, id) {
     Client.socket.emit('fire', {x: x, y: y, rotation: rotation, weaponId: weaponId, id: id});
 };
 
+Client.socket.on('updateFire', function(data) {
+    if (game.state.current === 'Game') {
+        Game.updateBullets(data.x, data.y, data.rotation, data.weaponId, data.id);
+    }
+
+    //Game.updateBullets(data);
+});
+
+Client.changeAmmo = function(ammo) {
+    Client.socket.emit('changeAmmo', ammo);
+};
+
+Client.socket.on('updateAmmo', function(data) {
+    Game.updateAmmo(data.id, data.ammo, data.weaponId);
+});
+
+Client.sendCollect = function(value) {
+    Client.socket.emit('collect', {id: Client.id, value: value});
+};
+
+Client.socket.on('updateCollect',function(data)
+{
+    Game.updateCollect(data.id, data.value);
+});
+
 //Send the ship change to the server
 Client.sendShipChange = function(shipName) {
     console.log("sending the ship change: " + shipName);
@@ -154,24 +179,8 @@ Client.sendShipChange = function(shipName) {
 //Update the ship of another player
 Client.socket.on('updateShip', function (data) {
     console.log("Client recieved notice of update ship, name is: " + data.shipName);
-   Game.updatePlayerShip(data.id, data.shipName);
+    Game.updatePlayerShip(data.id, data.shipName);
 });
-
-Client.socket.on('updateFire', function(data) {
-    if (game.state.current === 'Game') {
-        Game.updateBullets(data.x, data.y, data.rotation, data.weaponId, data.id);
-    }
-
-    //Game.updateBullets(data);
-});
-
-Client.socket.on('updateAmmo', function(data) {
-    Game.updateAmmo(data.id, data.ammo, data.weaponId);
-});
-
-Client.changeAmmo = function(ammo) {
-    Client.socket.emit('changeAmmo', ammo);
-};
 
 Client.askTransform = function() {
     Client.socket.emit('askTransform');

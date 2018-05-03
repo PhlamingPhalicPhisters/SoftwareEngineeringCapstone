@@ -7,6 +7,7 @@ var Game = {};
 var playerArray = [];
 
 var layer;
+var safeZoneLayer;
 
 var weaponArray = [];
 function addWeapon(lifespan, velocity, bulletTime, damage) {
@@ -32,6 +33,7 @@ Game.init = function(){
     this.game.stage.disableVisibilityChange = true;
 
     Game.playerSize = 64;   // sq. px. size
+    Game.isSafe = false;    // local player is in safe zone
 };
 
 
@@ -134,8 +136,8 @@ Game.create = function(){
 
     //Order of these statments impacts the order of render
     map.createLayer('Backgroundlayer');
-    var zoneLayer = map.createLayer('Zonelayer');
     layer = map.createLayer('Groundlayer');
+    safeZoneLayer = map.createLayer('SafeZoneLayer');
     map.setCollisionBetween(0, 4000, true, 'Groundlayer');
     layer.resizeWorld();
 
@@ -191,13 +193,20 @@ Game.update = function()
         // Establish collision detection between groups
         Game.physics.arcade.collide(playerArray, playerArray);
         Game.physics.arcade.collide(layer, playerArray);
+        // Game.physics.arcade.collide(dustGroup, playerArray, Game.collectEvent);
+        Game.physics.arcade.overlap(safeZoneLayer, playerArray, Game.safeZoneEvent);
 
     for(var q in Game.bulletArray)
         for(var p in playerArray)
             Game.physics.arcade.collideHandler(playerArray[p], Game.bulletArray[q], function(player, bullet){player.damage(bullet.damage); bullet.destroy();});
 
     for(var r in Game.bulletArray)
-        Game.physics.arcade.collide(layer, Game.bulletArray[r], function(theLayer, theBullet){theBullet.destroy();});
+        Game.physics.arcade.collideHandler(Game.bulletArray[r], layer, function(theBullet, theLayer){
+            // console.log('before bullet.destroy()');
+            // theBullet.body = null;
+            // theBullet.destroy();
+            // console.log('after bullet.destroy()');
+        });
 
     /*for (var i in Game.ammoMap) {
         for(var p in playerArray) {
@@ -275,6 +284,10 @@ Game.update = function()
     Game.sendTransform();
 };
 
+
+Game.safeZoneEvent = function(safeZoneLayer, player){
+    Client.sendCollect(5);
+};
 
 
 Game.bulletDamage = function(player, ammo){
@@ -494,10 +507,10 @@ Game.setPlayerRotation = function(id, angVelocity){
     Game.playerMap[id].body.angularVelocity = angVelocity;
 };
 
-Game.playerShoot = function(){
-
+Game.updateCollect = function(id, value)
+{
+    playerHUD["currency"] += value;
 };
-
 
 Game.addNewPlayer = function(id,x,y,rotation,shipName,name){
     console.log('Game.addNewPlayer '+id+'--'+name+'--'+shipName);

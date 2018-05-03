@@ -20,7 +20,7 @@ Menu.preload = function()
     this.game.load.image('andromedaio_3','assets/splash/andromedaio_3.png');
     this.game.load.image('andromedaio_4','assets/splash/andromedaio_4.png');
     this.game.load.image('andromedaio_5','assets/splash/andromedaio_5.png');
-    this.game.load.image('shipload','assets/sprites/ship1.png');
+    // this.game.load.image('shipload','assets/sprites/ship1.png');
     //this.game.load.spritesheet('loadingSprite','/assets/sprites/39/images/sprites.gif', 64,64,20);
 
     this.game.load.image('background','assets/map/dark-space.png');
@@ -36,7 +36,7 @@ Menu.create = function()
 
     // Set up scaling management
     // this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
-    // this.game.scale.pageAlignHorizontally = true;
+    this.game.scale.pageAlignHorizontally = true;
     this.game.scale.pageAlignVertically = true;
 
     // Handle window resizing events every 50ms
