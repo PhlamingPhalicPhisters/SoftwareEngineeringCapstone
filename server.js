@@ -39,7 +39,7 @@ io.on('connection',function(socket){
             focused: true
         };
 
-        console.log('Player '+socket.player.id+' connected');
+        console.log('Player '+socket.player.id+' ('+socket.player.name+') connected');
         socket./*broadcast.*/emit('newplayer',socket.player);
         socket.broadcast.emit('newplayer',socket.player);
         socket.emit('allplayers',getAllPlayers());
@@ -51,6 +51,7 @@ io.on('connection',function(socket){
 
         socket.on('setname',function(data){
             socket.player.name = data.name;
+            console.log('socket.player.name: '+socket.player.name);
             // socket.emit('updatename',socket.player);
             // socket.broadcast.emit('updatename',socket.player);
         });
@@ -100,7 +101,7 @@ io.on('connection',function(socket){
         {
             socket.player.score += data.value;
             socket.broadcast.emit('updateCollect', data);
-            socket.emit('updateCollect', data);
+            socket.emit('updateCollect', {id: socket.player.id, score: socket.player.score});
         });
 
         socket.on('requestTime', function() {

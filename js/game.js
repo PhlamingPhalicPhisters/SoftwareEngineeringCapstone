@@ -83,12 +83,12 @@ var sprite;
 var cursors;
 var thisPlayer;
 //var lastServerTime;
-var playerHUD = {
-    "health": 0,
-    "bullets": 0,
-    "boost": 0,
-    "currency": 0
-};
+// var playerHUD = {
+//     "health": 0,
+//     "bullets": 0,
+//     "boost": 0,
+//     "currency": 0
+// };
 
 
 
@@ -137,9 +137,10 @@ Game.create = function(){
 
     //Order of these statments impacts the order of render
     map.createLayer('Backgroundlayer');
+    safeZoneLayer = map.createLayer('Zonelayer');
     layer = map.createLayer('Groundlayer');
-    safeZoneLayer = map.createLayer('SafeZoneLayer');
     map.setCollisionBetween(0, 4000, true, 'Groundlayer');
+    map.setCollisionBetween(0, 1, true, 'Zonelayer');
     layer.resizeWorld();
 
     // Enable Phaser Arcade game physics engine
@@ -151,6 +152,13 @@ Game.create = function(){
 
     this.game.camera.bounds = new Phaser.Rectangle(-this.game.world.width,-this.game.world.height,
         this.game.world.width*3, this.game.world.height*3);
+
+    Game.playerHUD = {
+        "health": 0,
+        "bullets": 0,
+        "boost": 0,
+        "currency": 0
+    };
 
     Game.cursors = this.game.input.keyboard.addKeys( { 'up': Phaser.KeyCode.W, 'down': Phaser.KeyCode.S,
         'left': Phaser.KeyCode.A, 'right': Phaser.KeyCode.D } );
@@ -287,9 +295,15 @@ Game.update = function()
 
 
 Game.safeZoneEvent = function(safeZoneLayer, player){
+    console.log('overlap w/ safeZoneLayer');
     Client.sendCollect(5);
+    //Game.updateHUD(player);
 };
 
+Game.updateCollect = function(id, value)
+{
+    Game.playerHUD["currency"] = value;
+};
 
 Game.bulletDamage = function(player, ammo){
     //var bullet = ammo.getFirstExists(false);
@@ -409,12 +423,12 @@ Game.updateHUD = function(player){
 
 
     if(player.prevHealth != player.health || player.prevAmmo != Client.ammo) {
-        playerHUD["bullets"] = Client.ammo;
+        Game.playerHUD["bullets"] = Client.ammo;
         player.prevAmmo = Client.ammo;
         player.shield.setText('Shield:\n' +
-            'Bullets: ' + playerHUD["bullets"] + '\n' +
-            'Boost: ' + playerHUD["boost"] + '\n' +
-            'Currency: ' + playerHUD["currency"], {font: '100px Arial', fill: '#fff'});
+            'Bullets: ' + Game.playerHUD["bullets"] + '\n' +
+            'Boost: ' + Game.playerHUD["boost"] + '\n' +
+            'Currency: ' + Game.playerHUD["currency"], {font: '100px Arial', fill: '#fff'});
     }
 
 
@@ -511,12 +525,7 @@ Game.setPlayerRotation = function(id, angVelocity){
     Game.playerMap[id].body.angularVelocity = angVelocity;
 };
 
-Game.updateCollect = function(id, value)
-{
-    playerHUD["currency"] += value;
-};
-
-Game.addNewPlayer = function(id,x,y,rotation,shipName,name){
+Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
     console.log('Game.addNewPlayer '+id+'--'+name+'--'+shipName);
 
     var newPlayer;
@@ -526,12 +535,14 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name){
     // If it is a new player
     if(shipName == 'unassignedShip' && id == Client.getPlayerID()){
         var shipSelectionString = assignShip(id + 1);
+        console.log(name + '\'s shipName: '+shipSelectionString);
         newPlayer = game.add.sprite(x,y,shipSelectionString);
         console.log('if statement - shipSelectionString: ' + shipSelectionString);
         Client.sendShipChange(shipSelectionString);
     }
     // If it is an existing player
     else{
+        console.log(name+'\'s shipName: '+shipName);
         newPlayer = game.add.sprite(x,y,shipName);
         console.log('else statement - shipSelectionString: ' + shipName);
     }
@@ -557,12 +568,16 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name){
     newPlayer.body.drag.set(100);
     newPlayer.body.maxVelocity.set(200);
 
+    // Initialize player's health
     newPlayer.heal(100);
 
+    // Set the player's score
+    Game.playerHUD["currency"] = score;
+
    /* newPlayer.shield.setText('Shield:\n' +
-        'Bullets: ' + playerHUD["bullets"] + '\n' +
-        'Boost: ' + playerHUD["boost"] + '\n' +
-        'Currency: ' + playerHUD["currency"], { font: '100px Arial', fill: '#fff' }); */
+        'Bullets: ' + Game.playerHUD["bullets"] + '\n' +
+        'Boost: ' + Game.playerHUD["boost"] + '\n' +
+        'Currency: ' + Game.playerHUD["currency"], { font: '100px Arial', fill: '#fff' }); */
     // Local player should be instantiated first before remote players
 
     // Local player should be instantiated first before remote players
