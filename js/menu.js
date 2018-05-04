@@ -40,7 +40,7 @@ Menu.create = function()
 
     // Set up scaling management
     // this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
-    // this.game.scale.pageAlignHorizontally = true;
+    this.game.scale.pageAlignHorizontally = true;
     this.game.scale.pageAlignVertically = true;
 
     // Handle window resizing events every 50ms
