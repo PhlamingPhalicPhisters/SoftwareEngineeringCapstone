@@ -25,8 +25,6 @@ Game.bulletArray = [];
 //It is used when assigning new players a ship
 const numberOfShipSprites = 9;
 
-var tabDown = false;
-
 Game.init = function(){
     Client.connect();
     console.log('Game.init');
@@ -429,6 +427,10 @@ Game.updateHUD = function(player){
     player.nameHover.y = (this.game.camera.height / 2) - 60;
     player.nameHover.fixedToCamera = true;
 
+    player.scoreHover.setText('Score: ' + Client.score);
+    player.scoreHover.x = (this.game.camera.width / 2) - (player.scoreHover.width / 2);
+    player.scoreHover.y = (this.game.camera.height / 2) - 90;
+    player.scoreHover.fixedToCamera = true;
 
     // if(player.prevHealth != player.health || player.prevAmmo != Client.ammo) {
         Game.playerHUD["bullets"] = Client.ammo;
@@ -492,8 +494,9 @@ function showPlayerNames() {
         if (Game.playerMap[i] != null && i !== Client.id) {
             Game.playerMap[i].nameHover.visible = true;
             Game.playerMap[i].nameHover.setText(Game.playerMap[i].name);
-            Game.playerMap[i].nameHover.x = Game.playerMap[i].x - (Game.playerMap[i].width / 2);
+            Game.playerMap[i].nameHover.x = Game.playerMap[i].x - (Game.playerMap[i].nameHover.width / 2);
             Game.playerMap[i].nameHover.y = Game.playerMap[i].y - 60;
+            Game.playerMap[i].scoreHover.visible = true;
         }
     }
 }
@@ -502,6 +505,7 @@ function removePlayerNames() {
     for (var i in Game.playerMap) {
         if (Game.playerMap[i] != null && Game.playerMap[i].nameHover != null && i !== Client.id) {
             Game.playerMap[i].nameHover.visible = false;
+            Game.playerMap[i].scoreHover.visible = false;
         }
     }
 }
@@ -628,6 +632,7 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
     Game.playerMap[id] = newPlayer;
     Game.playerMap[id].shield = Game.add.text(0, 0, '', { font: '35px Arial', fill: '#fff' });
     Game.playerMap[id].nameHover = Game.add.text(0, 0, '', {font: '20px Arial', fill: '#fff'});
+    Game.playerMap[id].scoreHover = Game.add.text(0, 0, '', {font: '20px Arial', fill: '#fff'});
     Game.playerMap[id].healthBar = Game.add.graphics(0,0);
     Game.playerMap[id].prevHealth = -1;
 

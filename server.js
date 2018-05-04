@@ -13,7 +13,7 @@ app.get('/',function(req,res){
 });
 
 server.lastPlayerId = 0;
-
+server.modify = false;
 server.listen(process.env.PORT || 8081,function(){
     console.log('Listening on '+server.address().port);
 });
@@ -25,19 +25,26 @@ io.on('connection',function(socket){
     });*/
 
     socket.on('newplayer',function(data){
-        socket.player = {
-            id: server.lastPlayerId++,
-            name: data.name,
-            x: randomInt(4100,4600),
-            y: randomInt(3600,4100),
-            rotation: (-90)*(3.14/180), // start upward -- convert degrees to radians??
-            health: 100,
-            score: 0,
-            weaponId: randomInt(0,3),
-            ammo: 0,
-            shipName: 'unassignedShip',
-            focused: true
-        };
+        while (1) {
+            if (!server.modify) {
+                server.modify = true;
+                socket.player = {
+                    id: server.lastPlayerId++,
+                    name: data.name,
+                    x: randomInt(4100, 4600),
+                    y: randomInt(3600, 4100),
+                    rotation: (-90) * (3.14 / 180), // start upward -- convert degrees to radians??
+                    health: 100,
+                    score: 0,
+                    weaponId: randomInt(0, 3),
+                    ammo: 0,
+                    shipName: 'unassignedShip',
+                    focused: true
+                };
+                server.modify = false;
+                break;
+            }
+        }
 
         console.log('Player '+socket.player.id+' ('+socket.player.name+') connected');
         socket./*broadcast.*/emit('newplayer',socket.player);
