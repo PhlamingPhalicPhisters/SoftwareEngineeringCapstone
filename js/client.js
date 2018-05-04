@@ -13,6 +13,22 @@ Client.ammo = 0;
 //     Client.socket.emit('setname',{name: Client.name});
 // };
 
+Client.disconnect = function () {
+    Client.socket.disconnect();
+};
+
+Client.connect = function() {
+
+    Client.socket = Client.socket.close();
+    Client.socket = Client.socket.open();
+// Client.socket;
+    Client.player;
+    //Client.name='';
+    Client.id = -1;
+    Client.weaponId = -1;
+    Client.ammo = 0;
+};
+
 Client.setClientName = function(name){
     Client.name = name;
     console.log('Client.name--'+Client.name);
@@ -70,8 +86,9 @@ Client.socket.on('newplayer',function(data){
         //Game.addNewPlayer(data.id,data.x,data.y,data.rotation);
         console.log('asscream');
         console.log(data.health);
-        Game.addNewPlayer(data.id, data.x, data.y, data.rotation, data.shipName);
-        Game.setDeathBehavior(data.id);
+        Game.addNewPlayer(data.id, data.x, data.y, data.rotation, data.shipName, data.name);
+        if (data.id === Client.id)
+            Game.setDeathBehavior(data.id);
     }
 });
 
@@ -80,7 +97,7 @@ Client.socket.on('allplayers',function(data){
     //console.log(data);
     for(var i = 0; i < data.length; i++){
         if (data[i].id !== Client.id) {
-            console.log("Ship Name of an existing ship being sent to new player" + data.shipName);
+            console.log("Ship Name of an existing ship being sent to new player" + data[i].shipName);
 
             Game.updateAmmo(data[i].id, data[i].ammo, data[i].weaponId);
             Game.addNewPlayer(data[i].id, data[i].x, data[i].y, data[i].rotation, data[i].shipName, data[i].name);
@@ -103,15 +120,15 @@ Client.socket.on('move', function(data) {
     Game.movePlayer(data.id, data.x, data.y);
 });
 
-Client.sendTransform = function(x, y, rotation) {
+Client.sendTransform = function(x, y, rotation, health) {
     //console.log('Client sendTransform');
     //console.log(x+','+y+','+rotation);
-    Client.socket.emit('transform', {x: x, y: y, rotation: rotation});
+    Client.socket.emit('transform', {x: x, y: y, rotation: rotation, health: health});
 };
 
 Client.socket.on('updateTransform', function(data) {
     //console.log('Client updateTransform');
-    Game.updateTransform(data.id, data.x, data.y, data.rotation);
+    Game.updateTransform(data.id, data.x, data.y, data.rotation, data.health);
 });
 
 Client.sendAcceleration = function(direction) {
@@ -173,8 +190,8 @@ Client.changeAmmo = function(ammo) {
     Client.socket.emit('changeAmmo', ammo);
 };
 
-Client.askTransform = function() {
-    Client.socket.emit('askTransform');
+Client.askUpdate = function() {
+    Client.socket.emit('askUpdate');
 };
 
 Client.socket.on('returnTransform', function(data) {
@@ -186,9 +203,9 @@ Client.setFocus = function(focused) {
 };
 
 Client.socket.on('askCoordinates', function(data) {
-    Client.socket.emit('returnCoordinates', {x: Game.playerMap[data.id].x, y: Game.playerMap[data.id].y, rotation: Game.playerMap[data.id].rotation, id: data.socketID});
+    Client.socket.emit('returnCoordinates', {x: Game.playerMap[data.id].x, y: Game.playerMap[data.id].y, rotation: Game.playerMap[data.id].rotation, id: data.socketID, health: Game.playerMap[data.id].health});
 });
 
 Client.socket.on('updateCoordinates', function(data) {
-    Game.updateTransform(Client.id, data.x, data.y, data.rotation);
+    Game.updateTransform(Client.id, data.x, data.y, data.rotation, data.health);
 });
