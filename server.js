@@ -171,7 +171,10 @@ function getAllPlayers(){
     var players = [];
     Object.keys(io.sockets.connected).forEach(function(socketID){
         var player = io.sockets.connected[socketID].player;
-        if(player) players.push(player);
+        if(player) {
+            players.push(player);
+            //console.log('ShipName: ' + player.shipName);
+        }
     });
     return players;
 }

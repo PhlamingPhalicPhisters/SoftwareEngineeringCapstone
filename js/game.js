@@ -174,7 +174,7 @@ Game.create = function(){
     /*cursors = game.input.keyboard.createCursorKeys();
     game.input.keyboard.addKeyCapture([Phaser.Keyboard.SPACEBAR]);*/
     console.log("Got to creation");
-
+    Game.playerDestroyed = false;
 };
 
 /*
@@ -205,17 +205,25 @@ Game.update = function()
         // Game.physics.arcade.collide(dustGroup, playerArray, Game.collectEvent);
         Game.physics.arcade.overlap(safeZoneLayer, playerArray, Game.safeZoneEvent);
 
-    for(var q in Game.bulletArray)
-        for(var p in playerArray)
-            Game.physics.arcade.collideHandler(playerArray[p], Game.bulletArray[q], function(player, bullet){player.damage(bullet.damage); bullet.destroy();});
-
-    for(var r in Game.bulletArray)
-        Game.physics.arcade.collideHandler(Game.bulletArray[r], layer, function(theBullet, theLayer){
-            // console.log('before bullet.destroy()');
-            // theBullet.body = null;
-            // theBullet.destroy();
-            // console.log('after bullet.destroy()');
+    if(typeof Game.ammoMap[Client.getPlayerID()] !== 'undefined' && Client.getPlayerID() !== -1 && Game.localPlayerInstantiated){
+        Game.ammoMap[Client.getPlayerID()].forEach(function(bullet) {
+            for (var p in playerArray) {
+                if(playerArray[p] !== Game.playerMap[Client.getPlayerID()]) {
+                    Game.physics.arcade.overlap(playerArray[p], bullet, function (player, bullet) {
+                        player.damage(bullet.damage);
+                        bullet.body.velocity = 0;
+                    });
+                }
+            }
+            Game.physics.arcade.collide(layer, bullet, function(bullet){bullet.body.velocity = 0;});
         });
+        Game.ammoMap[Client.getPlayerID()].forEach(function(bullet){
+            if(bullet.body.velocity === 0){
+                bullet.destroy();
+            }
+        });
+    }
+    else{}
 
     /*for (var i in Game.ammoMap) {
         for(var p in playerArray) {
@@ -305,18 +313,7 @@ Game.updateCollect = function(id, value)
     Game.playerHUD["currency"] = value;
 };
 
-Game.bulletDamage = function(player, ammo){
-    //var bullet = ammo.getFirstExists(false);
-    player.damage(ammo.damage);
-    ammo.destroy();
-};
 
-Game.bulletDestroy = function(heck, blasty){
-
-    blasty.destroy(this);
-
-    //ammo.destroy();
-};
 
 /*Game.render = function(){
     if (Game.allPlayersAdded) {
@@ -387,6 +384,7 @@ Game.updateAmmo = function(id, ammo, weaponId) {
     Game.ammoMap[id].setAll('scale.y', 0.5);
     Game.ammoMap[id].setAll('anchor.x', 0.5);
     Game.ammoMap[id].setAll('anchor.y', 0.5);
+    //Game.ammoMap[id].setAll('bounce', 0, 0);
     Game.ammoMap[id].forEach(function(bullet) {
         bullet.body.setSize(bullet.width * Game.ammoMap[id].scale.x,
             bullet.height * Game.ammoMap[id].scale.y);
@@ -394,8 +392,8 @@ Game.updateAmmo = function(id, ammo, weaponId) {
         //console.log(Game.bulletArray.length);
     });    // rescale bodies
     Game.ammoMap[id].bulletTime = 0;
-    if (Game.ammoMap.length === Game.playerMap)
-        Game.bulletsCreated = true;
+    //if (Game.ammoMap.length === Game.playerMap)
+    //    Game.bulletsCreated = true;
 };
 
 // Sync position and rotation of remote instances of player
@@ -437,8 +435,11 @@ Game.updateHUD = function(player){
 
 Game.updateHealthBar = function(player) {
     //player.damage(.05);
-
-    if (player.prevHealth != player.health){
+    if(player.health === 0){
+        Game.playerKilled(player);
+        player.healthBar.clear();
+    }
+    else if (player.prevHealth != player.health){
         player.healthBar.clear();
         var x = player.health / 100;
         var xHealth = (player.health / 100) * 100;
@@ -485,7 +486,14 @@ Game.updatePlayerShip = function(id, shipName){
 Game.removePlayer = function(id){
     console.log('Game.removePlayer '+id+'--'+Game.playerMap[id].name);
     Game.playerMap[id].destroy();
+    Game.playerDestroyed = true;
     delete Game.playerMap[id];
+};
+
+Game.playerKilled = function(thePlayer){
+    thePlayer.destroy();
+    Game.playerDestroyed = true;
+    delete thePlayer;
 };
 
 Game.getCoordinates = function(layer, pointer) {
@@ -533,12 +541,16 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
 
     // Create player sprite and assign the player a unique ship
     // If it is a new player
-    if(shipName == 'unassignedShip' && id == Client.getPlayerID()){
+    //console.log(shipName.length);
+    //console.log(String('unassignedShip').length);
+    //console.log(shipName === 'unassignedShip' && id === Client.id);
+    if(shipName === 'unassignedShip'){//} && id === Client.id/*Client.getPlayerID()*/){
         var shipSelectionString = assignShip(id + 1);
         console.log(name + '\'s shipName: '+shipSelectionString);
         newPlayer = game.add.sprite(x,y,shipSelectionString);
         console.log('if statement - shipSelectionString: ' + shipSelectionString);
-        Client.sendShipChange(shipSelectionString);
+        if (id === Client.id)
+            Client.sendShipChange(shipSelectionString);
     }
     // If it is an existing player
     else{
@@ -564,7 +576,7 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
     newPlayer.body.collideWorldBounds = true;
     // newPlayer.body.anchor(0.5,0.5);
     //newPlayer.body.setSize(newPlayer.width, newPlayer.height, 0.5, 0.5);                   //collisions to work
-    newPlayer.body.bounce.setTo(.5, .5);
+    //newPlayer.body.bounce.setTo(.5, .5);
     newPlayer.body.drag.set(100);
     newPlayer.body.maxVelocity.set(200);
 
@@ -603,6 +615,7 @@ Game.setDeathBehavior = function(id) {
     Game.playerMap[id].events.onKilled.add(function() {
         Client.disconnect();
         game.state.start('Menu');
+        game.state.clearCurrentState();
     });
 };
 
