@@ -1,5 +1,4 @@
-<<<<<<< HEAD
-=======
+
 /*var game = new Phaser.Game(16*32, 600, Phaser.AUTO, document.getElementById('game'));
 game.state.add('Game',Game);
 game.state.start('Game');*/
@@ -166,7 +165,7 @@ Game.create = function(){
     /*cursors = game.input.keyboard.createCursorKeys();
     game.input.keyboard.addKeyCapture([Phaser.Keyboard.SPACEBAR]);*/
     console.log("Got to creation");
-
+    Game.playerDestroyed = false;
 };
 
 /*
@@ -195,12 +194,25 @@ Game.update = function()
         Game.physics.arcade.collide(playerArray, playerArray);
         Game.physics.arcade.collide(layer, playerArray);
 
-    for(var q in Game.bulletArray)
-        for(var p in playerArray)
-            Game.physics.arcade.collideHandler(playerArray[p], Game.bulletArray[q], function(player, bullet){player.damage(bullet.damage); bullet.destroy();});
-
-    for(var r in Game.bulletArray)
-        Game.physics.arcade.collide(layer, Game.bulletArray[r], function(theLayer, theBullet){theBullet.destroy();});
+    if(typeof Game.ammoMap[Client.getPlayerID()] !== 'undefined' && Client.getPlayerID() !== -1 && Game.localPlayerInstantiated){
+        Game.ammoMap[Client.getPlayerID()].forEach(function(bullet) {
+            for (var p in playerArray) {
+                if(playerArray[p] !== Game.playerMap[Client.getPlayerID()]) {
+                    Game.physics.arcade.overlap(playerArray[p], bullet, function (player, bullet) {
+                        player.damage(bullet.damage);
+                        bullet.body.velocity = 0;
+                    });
+                }
+            }
+            Game.physics.arcade.collide(layer, bullet, function(bullet){bullet.body.velocity = 0;});
+        });
+        Game.ammoMap[Client.getPlayerID()].forEach(function(bullet){
+            if(bullet.body.velocity === 0){
+                bullet.destroy();
+            }
+        });
+    }
+    else{}
 
     /*for (var i in Game.ammoMap) {
         for(var p in playerArray) {
@@ -280,18 +292,7 @@ Game.update = function()
 
 
 
-Game.bulletDamage = function(player, ammo){
-    //var bullet = ammo.getFirstExists(false);
-    player.damage(ammo.damage);
-    ammo.destroy();
-};
 
-Game.bulletDestroy = function(heck, blasty){
-
-    blasty.destroy(this);
-
-    //ammo.destroy();
-};
 
 /*Game.render = function(){
     if (Game.allPlayersAdded) {
@@ -362,6 +363,7 @@ Game.updateAmmo = function(id, ammo, weaponId) {
     Game.ammoMap[id].setAll('scale.y', 0.5);
     Game.ammoMap[id].setAll('anchor.x', 0.5);
     Game.ammoMap[id].setAll('anchor.y', 0.5);
+    //Game.ammoMap[id].setAll('bounce', 0, 0);
     Game.ammoMap[id].forEach(function(bullet) {
         bullet.body.setSize(bullet.width * Game.ammoMap[id].scale.x,
             bullet.height * Game.ammoMap[id].scale.y);
@@ -412,8 +414,11 @@ Game.updateHUD = function(player){
 
 Game.updateHealthBar = function(player) {
     //player.damage(.05);
-
-    if (player.prevHealth != player.health){
+    if(player.health === 0){
+        Game.playerKilled(player);
+        player.healthBar.clear();
+    }
+    else if (player.prevHealth != player.health){
         player.healthBar.clear();
         var x = player.health / 100;
         var xHealth = (player.health / 100) * 100;
@@ -460,7 +465,14 @@ Game.updatePlayerShip = function(id, shipName){
 Game.removePlayer = function(id){
     console.log('Game.removePlayer '+id+'--'+Game.playerMap[id].name);
     Game.playerMap[id].destroy();
+    Game.playerDestroyed = true;
     delete Game.playerMap[id];
+};
+
+Game.playerKilled = function(thePlayer){
+    thePlayer.destroy();
+    Game.playerDestroyed = true;
+    delete thePlayer;
 };
 
 Game.getCoordinates = function(layer, pointer) {
@@ -546,7 +558,7 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name){
     newPlayer.body.collideWorldBounds = true;
     // newPlayer.body.anchor(0.5,0.5);
     //newPlayer.body.setSize(newPlayer.width, newPlayer.height, 0.5, 0.5);                   //collisions to work
-    newPlayer.body.bounce.setTo(.5, .5);
+    //newPlayer.body.bounce.setTo(.5, .5);
     newPlayer.body.drag.set(100);
     newPlayer.body.maxVelocity.set(200);
 
@@ -629,4 +641,3 @@ Game.componentToHex = function(c) {
     var hex = c.toString(16);
     return hex.length == 1 ? "0" + hex : hex;
 };
->>>>>>> origin/master
