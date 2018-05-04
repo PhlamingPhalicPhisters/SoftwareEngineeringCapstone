@@ -198,12 +198,11 @@ window.addEventListener("focus", function(event) {
 
 Game.update = function()
 {
-
-        // Establish collision detection between groups
-        Game.physics.arcade.collide(playerArray, playerArray);
-        Game.physics.arcade.collide(layer, playerArray);
-        // Game.physics.arcade.collide(dustGroup, playerArray, Game.collectEvent);
-        Game.physics.arcade.overlap(safeZoneLayer, playerArray, Game.safeZoneEvent);
+    // Establish collision detection between groups
+    Game.physics.arcade.collide(playerArray, playerArray);
+    Game.physics.arcade.collide(layer, playerArray);
+    // Game.physics.arcade.collide(dustGroup, playerArray, Game.collectEvent);
+    Game.physics.arcade.overlap(bullet, playerArray, Game.safeZoneEvent);       // TODODODODODO - SWAP WITH SAFEZONE
 
     if(typeof Game.ammoMap[Client.getPlayerID()] !== 'undefined' && Client.getPlayerID() !== -1 && Game.localPlayerInstantiated){
         Game.ammoMap[Client.getPlayerID()].forEach(function(bullet) {
@@ -308,9 +307,10 @@ Game.safeZoneEvent = function(safeZoneLayer, player){
     //Game.updateHUD(player);
 };
 
-Game.updateCollect = function(id, value)
+Game.updateScore = function(id, value)
 {
-    Game.playerHUD["currency"] = value;
+    Game.playerMap[id].score = value;
+    // Game.playerHUD["currency"] = value;
 };
 
 
@@ -420,14 +420,15 @@ Game.updateHUD = function(player){
     player.nameHover.fixedToCamera = true;
 
 
-    if(player.prevHealth != player.health || player.prevAmmo != Client.ammo) {
+    // if(player.prevHealth != player.health || player.prevAmmo != Client.ammo) {
         Game.playerHUD["bullets"] = Client.ammo;
         player.prevAmmo = Client.ammo;
+        Game.playerHUD["currency"] = player.score;
         player.shield.setText('Shield:\n' +
             'Bullets: ' + Game.playerHUD["bullets"] + '\n' +
             'Boost: ' + Game.playerHUD["boost"] + '\n' +
             'Currency: ' + Game.playerHUD["currency"], {font: '100px Arial', fill: '#fff'});
-    }
+    // }
 
 
     Game.updateHealthBar(player);
@@ -584,7 +585,8 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
     newPlayer.heal(100);
 
     // Set the player's score
-    Game.playerHUD["currency"] = score;
+    // Game.playerHUD["currency"] = score;
+    newPlayer.score = score;
 
    /* newPlayer.shield.setText('Shield:\n' +
         'Bullets: ' + Game.playerHUD["bullets"] + '\n' +

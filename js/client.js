@@ -6,6 +6,7 @@ Client.name='';
 Client.id = -1;
 Client.weaponId = -1;
 Client.ammo = 0;
+Client.score = 0;
 
 // Client.connect = function(){
 //     console.log('Client.connect()--Client.name = '+Client.name);
@@ -27,6 +28,7 @@ Client.connect = function() {
     Client.id = -1;
     Client.weaponId = -1;
     Client.ammo = 0;
+    Client.score = 0;
 };
 
 Client.setClientName = function(name){
@@ -191,13 +193,14 @@ Client.changeAmmo = function(ammo) {
 };
 
 Client.sendCollect = function(value) {
+    Client.score += value;
     Client.socket.emit('collect', {id: Client.id, value: value});
 };
 
-Client.socket.on('updateCollect',function(data)
+Client.socket.on('updateScore',function(data)
 {
     if (game.state.current === 'Game') {
-        Game.updateCollect(data.id, data.score);
+        Game.updateScore(data.id, data.score);
     }
 });
 

@@ -100,8 +100,8 @@ io.on('connection',function(socket){
         socket.on('collect',function(data)
         {
             socket.player.score += data.value;
-            socket.broadcast.emit('updateCollect', data);
-            socket.emit('updateCollect', {id: socket.player.id, score: socket.player.score});
+            socket.broadcast.emit('updateScore', data);
+            socket.emit('updateScore', {id: socket.player.id, score: socket.player.score});
         });
 
         socket.on('requestTime', function() {
