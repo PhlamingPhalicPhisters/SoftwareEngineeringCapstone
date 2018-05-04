@@ -24,6 +24,8 @@ Game.bulletArray = [];
 //It is used when assigning new players a ship
 const numberOfShipSprites = 9;
 
+var tabDown = false;
+
 Game.init = function(){
     Client.connect();
     console.log('Game.init');
@@ -272,6 +274,13 @@ Game.update = function()
         Client.sendRotation(0);
     }
 
+    if (game.input.keyboard.isDown(Phaser.Keyboard.SHIFT)) {
+        showPlayerNames();
+    }
+    else {
+        removePlayerNames();
+    }
+
     // Get firing input
     if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR))
     {
@@ -445,6 +454,7 @@ Game.updateTransform = function(id, x, y, rotation, health) {
         player.y = y;
         player.rotation = rotation;
         player.health = health;
+
         Game.playerMap[id] = player;
         // console.log('player name='+Game.playerMap[id].name);
         if (id === Client.id && player.health <= 0) {
@@ -453,6 +463,25 @@ Game.updateTransform = function(id, x, y, rotation, health) {
     }
 
 };
+
+function showPlayerNames() {
+    for (var i in Game.playerMap) {
+        if (Game.playerMap[i] != null && i !== Client.id) {
+            Game.playerMap[i].nameHover.visible = true;
+            Game.playerMap[i].nameHover.setText(Game.playerMap[i].name);
+            Game.playerMap[i].nameHover.x = Game.playerMap[i].x - (Game.playerMap[i].width / 2);
+            Game.playerMap[i].nameHover.y = Game.playerMap[i].y - 60;
+        }
+    }
+}
+
+function removePlayerNames() {
+    for (var i in Game.playerMap) {
+        if (Game.playerMap[i] != null && Game.playerMap[i].nameHover != null && i !== Client.id) {
+            Game.playerMap[i].nameHover.visible = false;
+        }
+    }
+}
 
 // Update the ship of another player
 Game.updatePlayerShip = function(id, shipName){
@@ -576,6 +605,7 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name){
     Game.playerMap[id].nameHover = Game.add.text(0, 0, '', {font: '20px Arial', fill: '#fff'});
     Game.playerMap[id].healthBar = Game.add.graphics(0,0);
     Game.playerMap[id].prevHealth = -1;
+
     //Game.createHealthBar(Game.playerMap[id]);
     playerArray.push(newPlayer);
     if (!Game.localPlayerInstantiated) {
@@ -585,7 +615,6 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name){
     // Set local camera to follow local player sprite
     this.game.camera.follow(Game.playerMap[Client.getPlayerID()], Phaser.Camera.FOLLOW_LOCKON);
     this.game.renderer.renderSession.roundPixels = true;
-
 
 };
 
