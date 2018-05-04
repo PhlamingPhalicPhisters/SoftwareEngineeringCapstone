@@ -23,7 +23,7 @@ Client.connect = function() {
     Client.socket = Client.socket.open();
 // Client.socket;
     Client.player;
-    Client.name='';
+    //Client.name='';
     Client.id = -1;
     Client.weaponId = -1;
     Client.ammo = 0;
@@ -86,8 +86,9 @@ Client.socket.on('newplayer',function(data){
         //Game.addNewPlayer(data.id,data.x,data.y,data.rotation);
         console.log('asscream');
         console.log(data.health);
-        Game.addNewPlayer(data.id, data.x, data.y, data.rotation, data.shipName);
-        Game.setDeathBehavior(data.id);
+        Game.addNewPlayer(data.id, data.x, data.y, data.rotation, data.shipName, data.name);
+        if (data.id === Client.id)
+            Game.setDeathBehavior(data.id);
     }
 });
 
@@ -96,7 +97,7 @@ Client.socket.on('allplayers',function(data){
     //console.log(data);
     for(var i = 0; i < data.length; i++){
         if (data[i].id !== Client.id) {
-            console.log("Ship Name of an existing ship being sent to new player" + data.shipName);
+            console.log("Ship Name of an existing ship being sent to new player" + data[i].shipName);
 
             Game.updateAmmo(data[i].id, data[i].ammo, data[i].weaponId);
             Game.addNewPlayer(data[i].id, data[i].x, data[i].y, data[i].rotation, data[i].shipName, data[i].name);

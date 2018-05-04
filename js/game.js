@@ -367,8 +367,8 @@ Game.updateAmmo = function(id, ammo, weaponId) {
         //console.log(Game.bulletArray.length);
     });    // rescale bodies
     Game.ammoMap[id].bulletTime = 0;
-    if (Game.ammoMap.length === Game.playerMap)
-        Game.bulletsCreated = true;
+    //if (Game.ammoMap.length === Game.playerMap)
+    //    Game.bulletsCreated = true;
 };
 
 // Sync position and rotation of remote instances of player
@@ -511,11 +511,15 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name){
 
     // Create player sprite and assign the player a unique ship
     // If it is a new player
-    if(shipName == 'unassignedShip' && id == Client.getPlayerID()){
+    //console.log(shipName.length);
+    //console.log(String('unassignedShip').length);
+    //console.log(shipName === 'unassignedShip' && id === Client.id);
+    if(shipName === 'unassignedShip'){//} && id === Client.id/*Client.getPlayerID()*/){
         var shipSelectionString = assignShip(id + 1);
         newPlayer = game.add.sprite(x,y,shipSelectionString);
         console.log('if statement - shipSelectionString: ' + shipSelectionString);
-        Client.sendShipChange(shipSelectionString);
+        if (id === Client.id)
+            Client.sendShipChange(shipSelectionString);
     }
     // If it is an existing player
     else{
@@ -575,6 +579,7 @@ Game.setDeathBehavior = function(id) {
     Game.playerMap[id].events.onKilled.add(function() {
         Client.disconnect();
         game.state.start('Menu');
+        game.state.clearCurrentState();
     });
 };
 
