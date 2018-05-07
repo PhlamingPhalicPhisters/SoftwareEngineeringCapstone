@@ -13,8 +13,8 @@ var weaponArray = [];
 function addWeapon(lifespan, velocity, bulletTime, damage) {
     weaponArray.push({lifespan: lifespan, velocity: velocity, bulletTime: bulletTime, damage: damage});
 }
-addWeapon(2000, 1000, 50, 6);
-addWeapon(2000, 1750, 65, 2);
+addWeapon(2000, 700, 50, 6);
+addWeapon(2000, 900, 65, 2);
 addWeapon(2000, 500, 75, 10);
 
 Game.ammoMap = {};
