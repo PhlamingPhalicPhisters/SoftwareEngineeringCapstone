@@ -20,6 +20,8 @@ addWeapon(2000, 500, 75, 10);
 Game.ammoMap = {};
 Game.bulletArray = [];
 
+var ammoArray = [];
+
 //This variable represents the amount of ships in the game
 //It is used when assigning new players a ship
 const numberOfShipSprites = 9;
@@ -194,25 +196,32 @@ Game.update = function()
         Game.physics.arcade.collide(playerArray, playerArray);
         Game.physics.arcade.collide(layer, playerArray);
 
-    if(typeof Game.ammoMap[Client.getPlayerID()] !== 'undefined' && Client.getPlayerID() !== -1 && Game.localPlayerInstantiated){
-        Game.ammoMap[Client.getPlayerID()].forEach(function(bullet) {
-            for (var p in playerArray) {
-                if(playerArray[p] !== Game.playerMap[Client.getPlayerID()]) {
+    if(!document.hidden && typeof Game.ammoMap[Client.getPlayerID()] !== 'undefined' && Client.getPlayerID() !== -1 && Game.localPlayerInstantiated) {
+        for (var q in Game.ammoMap) {
+            Game.ammoMap[q].forEach(function (bullet) {
+                for (var p in playerArray) {
+                    if(playerArray[p].id != q) {
                     Game.physics.arcade.overlap(playerArray[p], bullet, function (player, bullet) {
-                        player.damage(bullet.damage);
-                        bullet.body.velocity = 0;
+                            bullet.body.velocity = 0;
+                            player.damage(bullet.damage);
                     });
+                     }
                 }
-            }
-            Game.physics.arcade.collide(layer, bullet, function(bullet){bullet.body.velocity = 0;});
-        });
-        Game.ammoMap[Client.getPlayerID()].forEach(function(bullet){
-            if(bullet.body.velocity === 0){
-                bullet.destroy();
-            }
+                Game.physics.arcade.collide(layer, bullet, function (bullet) {
+                    bullet.body.velocity = 0;
+                });
+            });
+        }
+        for (var w in Game.ammoMap) {
+                Game.ammoMap[w].forEach(function (bullet) {
+                    if (bullet.body != null && bullet.body.velocity == 0) {
+                        bullet.destroy();
+                    }
         });
     }
-    else{}
+    }
+
+
 
     /*for (var i in Game.ammoMap) {
         for(var p in playerArray) {
@@ -288,6 +297,7 @@ Game.update = function()
 
     // Sync the transform of remote instances of this player
     Game.sendTransform();
+
 };
 
 
@@ -367,7 +377,7 @@ Game.updateAmmo = function(id, ammo, weaponId) {
     Game.ammoMap[id].forEach(function(bullet) {
         bullet.body.setSize(bullet.width * Game.ammoMap[id].scale.x,
             bullet.height * Game.ammoMap[id].scale.y);
-        Game.bulletArray.push(bullet);
+        ammoArray.push(bullet);
         //console.log(Game.bulletArray.length);
     });    // rescale bodies
     Game.ammoMap[id].bulletTime = 0;
@@ -571,6 +581,7 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name){
     // Local player should be instantiated first before remote players
 
     // Local player should be instantiated first before remote players
+    newPlayer.id = id;
     Game.playerMap[id] = newPlayer;
     Game.playerMap[id].shield = Game.add.text(0, 0, '', { font: '35px Arial', fill: '#fff' });
     Game.playerMap[id].nameHover = Game.add.text(0, 0, '', {font: '20px Arial', fill: '#fff'});
