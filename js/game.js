@@ -59,13 +59,13 @@ Game.preload = function() {
     this.game.load.image('ship7','assets/sprites/ship7.png');
     this.game.load.image('ship8','assets/sprites/ship8.png');
 
+    // Load dust assets
+    this.game.load.image('dust', 'assets/sprites/bullet2.png');
+
     // Load weapon assets
     this.game.load.image('bullet', 'assets/sprites/general-bullet.png');
     this.game.load.image('bullet1', 'assets/sprites/bullet1.png');
     this.game.load.image('bullet2', 'assets/sprites/bullet2.png');
-
-    // Load dust assets
-    //this game.load.image('dust', TODODODODODO);
 
     this.game.load.image('ship0', 'assets/sprites/general-bullet.png');
 };
@@ -74,7 +74,7 @@ Game.preload = function() {
 function loadStart() {
     game.add.sprite(game.world.centerX,game.world.centerY, 'shipload');
     game.stage.backgroundColor = '#000000';
-    game.add.text(game.world.centerX+40,game.world.centerY, 'Loading...', { fill: '#ffffff' });
+    game.add.text(game.world.centerX+40,game.world.lecenterY, 'Loading...', { fill: '#ffffff' });
     //var sprite = game.add.sprite(game.world.centerX,game.world.centerY,'loadingSprite');
     //sprite.animations.add('spin');
     //sprite.animations.play('spin',10,true);
@@ -90,8 +90,6 @@ var thisPlayer;
 //     "boost": 0,
 //     "currency": 0
 // };
-
-
 
 var bullet;
 Game.create = function(){
@@ -176,6 +174,12 @@ Game.create = function(){
     game.input.keyboard.addKeyCapture([Phaser.Keyboard.SPACEBAR]);*/
     console.log("Got to creation");
     Game.playerDestroyed = false;
+
+    //generate dust for the player
+    generateDustForClient();
+    console.log("Testing the dust list to verify that it loaded correctly, " +
+        "dust x position: " + dustList[100].positionx);
+
 };
 
 /*
@@ -202,12 +206,13 @@ Game.update = function()
     // Establish collision detection between groups
     Game.physics.arcade.collide(playerArray, playerArray);
     Game.physics.arcade.collide(layer, playerArray);
-    // Game.physics.arcade.collide(dustGroup, playerArray, Game.collectEvent);
     Game.physics.arcade.overlap(bullet, playerArray, Game.safeZoneEvent);       // TODODODODODO - SWAP WITH SAFEZONE
 
+    //Bullet Collisions
     if(typeof Game.ammoMap[Client.getPlayerID()] !== 'undefined' && Client.getPlayerID() !== -1 && Game.localPlayerInstantiated){
         Game.ammoMap[Client.getPlayerID()].forEach(function(bullet) {
             for (var p in playerArray) {
+                //Make sure bullets dont hurt yourself
                 if(playerArray[p] !== Game.playerMap[Client.getPlayerID()]) {
                     Game.physics.arcade.overlap(playerArray[p], bullet, function (player, bullet) {
                         player.damage(bullet.damage);
@@ -215,6 +220,7 @@ Game.update = function()
                     });
                 }
             }
+            //Bullets hit enemies
             Game.physics.arcade.collide(layer, bullet, function(bullet){bullet.body.velocity = 0;});
         });
         Game.ammoMap[Client.getPlayerID()].forEach(function(bullet){
@@ -224,6 +230,18 @@ Game.update = function()
         });
     }
     else{}
+
+    for(var d in dustList){
+        for(var p in playerArray){
+            Game.physics.arcade.overlap(dustList[d], playerArray[p], dustCollision);
+        }
+    }
+
+    // for(var d in dustList) {
+    //     Game.physics.arcade.overlap(dustList[d], layer, moveDust);
+    // }
+
+
 
     /*for (var i in Game.ammoMap) {
         for(var p in playerArray) {
@@ -305,6 +323,8 @@ Game.update = function()
     }
 
     // Sync the transform of remote instances of this player
+    // Send transform also handles the amount of health and the hud display
+    // Inside of the health tracker when a player dies dust is dropped
     Game.sendTransform();
 };
 
@@ -526,6 +546,9 @@ Game.removePlayer = function(id){
 };
 
 Game.playerKilled = function(thePlayer){
+    //Generate the dust dropped from death
+    generateDustOnDeath(thePlayer.x, thePlayer.y);
+    //Remove the player
     thePlayer.destroy();
     Game.playerDestroyed = true;
     delete thePlayer;
@@ -645,7 +668,6 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
     // Set local camera to follow local player sprite
     this.game.camera.follow(Game.playerMap[Client.getPlayerID()], Phaser.Camera.FOLLOW_LOCKON);
     this.game.renderer.renderSession.roundPixels = true;
-
 };
 
 Game.setDeathBehavior = function(id) {
