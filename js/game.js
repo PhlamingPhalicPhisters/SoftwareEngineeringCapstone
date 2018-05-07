@@ -192,20 +192,20 @@ window.addEventListener("focus", function(event) {
 Game.update = function()
 {
 
-        // Establish collision detection between groups
-        Game.physics.arcade.collide(playerArray, playerArray);
-        Game.physics.arcade.collide(layer, playerArray);
+    // Establish collision detection between groups
+    Game.physics.arcade.collide(playerArray, playerArray);
+    Game.physics.arcade.collide(layer, playerArray);
 
     if(!document.hidden && typeof Game.ammoMap[Client.getPlayerID()] !== 'undefined' && Client.getPlayerID() !== -1 && Game.localPlayerInstantiated) {
         for (var q in Game.ammoMap) {
             Game.ammoMap[q].forEach(function (bullet) {
                 for (var p in playerArray) {
                     if(playerArray[p].id != q) {
-                    Game.physics.arcade.overlap(playerArray[p], bullet, function (player, bullet) {
+                        Game.physics.arcade.overlap(playerArray[p], bullet, function (player, bullet) {
                             bullet.body.velocity = 0;
                             player.damage(bullet.damage);
-                    });
-                     }
+                        });
+                    }
                 }
                 Game.physics.arcade.collide(layer, bullet, function (bullet) {
                     bullet.body.velocity = 0;
@@ -213,12 +213,12 @@ Game.update = function()
             });
         }
         for (var w in Game.ammoMap) {
-                Game.ammoMap[w].forEach(function (bullet) {
-                    if (bullet.body != null && bullet.body.velocity == 0) {
-                        bullet.destroy();
-                    }
-        });
-    }
+            Game.ammoMap[w].forEach(function (bullet) {
+                if (bullet.body != null && bullet.body.velocity == 0) {
+                    bullet.destroy();
+                }
+            });
+        }
     }
 
 
@@ -574,10 +574,10 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name){
 
     newPlayer.heal(100);
 
-   /* newPlayer.shield.setText('Shield:\n' +
-        'Bullets: ' + playerHUD["bullets"] + '\n' +
-        'Boost: ' + playerHUD["boost"] + '\n' +
-        'Currency: ' + playerHUD["currency"], { font: '100px Arial', fill: '#fff' }); */
+    /* newPlayer.shield.setText('Shield:\n' +
+         'Bullets: ' + playerHUD["bullets"] + '\n' +
+         'Boost: ' + playerHUD["boost"] + '\n' +
+         'Currency: ' + playerHUD["currency"], { font: '100px Arial', fill: '#fff' }); */
     // Local player should be instantiated first before remote players
 
     // Local player should be instantiated first before remote players
