@@ -147,8 +147,8 @@ Game.create = function(){
     map.createLayer('Backgroundlayer');
     // safeZoneLayer = map.createLayer('Zonelayer');
     Game.safeZone = game.add.sprite(3500,3500,'safe_zone');
-    Game.safeZone.width = 500;
-    Game.safeZone.height = 500;
+    Game.safeZone.width = 1000;
+    Game.safeZone.height = 1000;
     Game.safeZone.anchor.setTo(0.5,0.5);
     Game.safeZone.alpha = 0.3;
     layer = map.createLayer('Groundlayer');
@@ -373,7 +373,7 @@ Game.update = function()
 
 Game.enterSafeZone = function(safeZone, player){
     Game.isSafe = true;
-    Client.sendCollect(5);
+    // Client.sendCollect(5);
 };
 
 Game.exitSafeZone = function() {
