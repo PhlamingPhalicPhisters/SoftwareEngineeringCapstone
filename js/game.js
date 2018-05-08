@@ -1,7 +1,5 @@
 var Game = {};
 
-var playerArray = [];
-
 var layer;
 var safeZoneLayer;
 
@@ -9,14 +7,15 @@ var weaponArray = [];
 function addWeapon(lifespan, velocity, bulletTime, damage) {
     weaponArray.push({lifespan: lifespan, velocity: velocity, bulletTime: bulletTime, damage: damage});
 }
-addWeapon(2000, 1000, 50, 6);
-addWeapon(2000, 1750, 65, 2);
+addWeapon(2000, 700, 50, 6);
+addWeapon(2000, 900, 65, 2);
 addWeapon(2000, 500, 75, 10);
 
 Game.ammoMap = {};
-Game.bulletArray = [];
+var firedBullets = new Map();
+var playerMap = new Map();
+var bulletID = 0;
 
-var ammoArray = [];
 
 //This variable represents the amount of ships in the game
 //It is used when assigning new players a ship
@@ -89,15 +88,7 @@ function loadStart() {
 };
 
 var sprite;
-var cursors;
-var thisPlayer;
-//var lastServerTime;
-// var playerHUD = {
-//     "health": 0,
-//     "bullets": 0,
-//     "boost": 0,
-//     "currency": 0
-// };
+
 
 var bullet;
 Game.create = function(){
@@ -220,59 +211,49 @@ window.addEventListener("focus", function(event) {
 Game.update = function()
 {
     // Establish collision detection between groups
-    Game.physics.arcade.collide(playerArray, playerArray);
-    Game.physics.arcade.collide(layer, playerArray);
-    Game.physics.arcade.overlap(bullet, playerArray, Game.safeZoneEvent);       // TODODODODODO - SWAP WITH SAFEZONE
-    if (Game.physics.arcade.overlap(Game.safeZone, Game.playerMap[Client.id], Game.enterSafeZone)){}
+
+    playerMap.forEach(function (player) {
+        Game.physics.arcade.collide(Game.playerMap[Client.getPlayerID()], player);
+    });
+
+    playerMap.forEach(function (player) {
+        Game.physics.arcade.overlap(dustList, player, dustCollision);
+    });
+
+    Game.physics.arcade.collide(layer, Game.playerMap[Client.getPlayerID()]);
+
+    //Game.physics.arcade.overlap(bullet, playerArray, Game.safeZoneEvent);       // TODODODODODO - SWAP WITH SAFEZONE, (playerArray no longer exists)
+    if (Game.physics.arcade.overlap(Game.safeZone, Game.playerMap[Client.getPlayerID()], Game.enterSafeZone)){}
     else {
         Game.exitSafeZone();
     }
 
-    //Bullet Collisions
-    if(!document.hidden && typeof Game.ammoMap[Client.getPlayerID()] !== 'undefined' && Client.getPlayerID() !== -1 && Game.localPlayerInstantiated) {
-        for (var q in Game.ammoMap) {
-            Game.ammoMap[q].forEach(function (bullet) {
-                for (var p in playerArray) {
-                    if(playerArray[p].id != q) {
-                        //console.log(q + " " + playerArray[p].id);
-                        Game.physics.arcade.overlap(playerArray[p], bullet, function (player, bullet) {
-                            bullet.body.velocity = 0;
+    //Bullet collision
+    var bulletErase = [];
+    if(firedBullets.size > 0 && !document.hidden && typeof Game.ammoMap[Client.getPlayerID()] !== 'undefined' && Client.getPlayerID() !== -1) {
+        firedBullets.forEach(function (bullet) {
+            playerMap.forEach(function (player, key) {
+                if(key != bullet.player) {
+                    Game.physics.arcade.overlap(player, bullet, function (player, bullet) {
+                            bulletErase.push(bullet);
                             player.damage(bullet.damage);
-                        });
-                    }
-                }
-                Game.physics.arcade.collide(layer, bullet, function (bullet) {
-                    bullet.body.velocity = 0;
-                });
-            });
-        }
-        for (var w in Game.ammoMap) {
-            Game.ammoMap[w].forEach(function (bullet) {
-                if (bullet.body != null && bullet.body.velocity == 0) {
-                    bullet.destroy();
+                    });
                 }
             });
+            Game.physics.arcade.overlap(bullet, Game.safeZone, function (bullet) {
+                bulletErase.push(bullet);
+            });
+            Game.physics.arcade.collide(layer, bullet, function (bullet) {
+                bulletErase.push(bullet);
+            });
+        });
+
+        for(var e in bulletErase){
+            firedBullets.delete(bulletErase[e].id);
+            bulletErase[e].destroy();
         }
     }
 
-    for(var d in dustList){
-        for(var p in playerArray){
-            Game.physics.arcade.overlap(dustList[d], playerArray[p], dustCollision);
-        }
-    }
-
-    // for(var d in dustList) {
-    //     Game.physics.arcade.overlap(dustList[d], layer, moveDust);
-    // }
-
-
-
-    /*for (var i in Game.ammoMap) {
-        for(var p in playerArray) {
-            Game.physics.arcade.collide(playerArray[p], Game.ammoMap[i], Game.bulletDamage);
-        }
-        Game.physics.arcade.collide(layer, Game.ammoMap[i], Game.bulletDestroy);
-    }*/
 
     // Get forward/backward input
     if (Game.cursors.up.isDown)
@@ -336,7 +317,7 @@ Game.update = function()
     {
         //Client.sendShoot();
         //fireBullet(bulletInfo);
-        fireBullet();
+        fireBullet(Client.getPlayerID());
     }
 
     if (game.input.keyboard.isDown(Phaser.Keyboard.SHIFT)
@@ -371,6 +352,15 @@ Game.update = function()
 };
 
 
+/*Game.render = function(){
+    if (Game.allPlayersAdded) {
+        game.debug.body(Game.playerMap[Client.getPlayerID()]);
+    }
+    game.debug.body(bullet);
+    game.debug.text(game.time.fps, 2, 14, "#00ff00");
+};*/
+
+
 Game.enterSafeZone = function(safeZone, player){
     Game.isSafe = true;
     // Client.sendCollect(5);
@@ -393,12 +383,13 @@ Game.updateScore = function(id, value) {
 //     game.debug.text(game.time.fps, 2, 14, "#00ff00");
 // };
 
+
 Game.updateName = function(id, name){  //This never gets called?
     Game.playerMap[id].name = name;
     //console.log("It the name boi: " + Game.playerMap[id].name);
 };
 
-function fireBullet() {
+function fireBullet(id) {
     if (game.time.now > Game.ammoMap[Client.id].bulletTime && Client.weaponId !== -1) {
         var bullet = Game.ammoMap[Client.id].getFirstExists(false);
 
@@ -410,7 +401,12 @@ function fireBullet() {
             bullet.damage = weaponArray[Client.weaponId].damage;
             game.physics.arcade.velocityFromRotation(Game.playerMap[Client.player.id].rotation, weaponArray[Client.weaponId].velocity, bullet.body.velocity);
             Game.ammoMap[Client.id].bulletTime = game.time.now + weaponArray[Client.weaponId].bulletTime;
+            bullet.id = bulletID;
+            bullet.player = id;
+            firedBullets.set(bullet.id, bullet);
+            bulletID++;
             bullet.events.onKilled.add(function() {
+                firedBullets.delete(bullet.id);
                 bullet.destroy();
             }, this);
             Client.changeAmmo(Client.ammo);
@@ -428,8 +424,13 @@ Game.updateBullets = function(x, y, rotation, weaponId, id) {
             bullet.lifespan = weaponArray[weaponId].lifespan;
             bullet.damage = weaponArray[weaponId].damage;
             bullet.rotation = rotation;
+            bullet.id = bulletID;
+            bullet.player = id;
+            firedBullets.set(bullet.id, bullet);
+            bulletID++;
             game.physics.arcade.velocityFromRotation(rotation, weaponArray[weaponId].velocity, bullet.body.velocity);
             bullet.events.onKilled.add(function() {
+                firedBullets.delete(bullet.id);
                 bullet.destroy();
             }, this);
         }
@@ -454,12 +455,16 @@ Game.updateAmmo = function(id, ammo, weaponId) {
     Game.ammoMap[id].forEach(function(bullet) {
         bullet.body.setSize(bullet.width * Game.ammoMap[id].scale.x,
             bullet.height * Game.ammoMap[id].scale.y);
-        Game.bulletArray.push(bullet);
-        //console.log(Game.bulletArray.length);
     });    // rescale bodies
     Game.ammoMap[id].bulletTime = 0;
+
+    if (Game.ammoMap.length === Game.playerMap)
+        Game.bulletsCreated = true;
+    Game.bulletsCreated = true;
+
     //if (Game.ammoMap.length === Game.playerMap)
     //    Game.bulletsCreated = true;
+
 };
 
 // Sync position and rotation of remote instances of player
@@ -473,9 +478,11 @@ Game.sendTransform = function() {
         var player = Game.playerMap[Client.getPlayerID()];
 
         Game.updateHUD(player);
+
         Client.sendTransform(player.x, player.y, player.rotation, player.health);
     }
 };
+
 
 
 Game.updateHUD = function(player){
@@ -496,14 +503,14 @@ Game.updateHUD = function(player){
     player.scoreHover.fixedToCamera = true;
 
     // if(player.prevHealth != player.health || player.prevAmmo != Client.ammo) {
-        Game.playerHUD["boost"] = player.boost;
-        Game.playerHUD["bullets"] = Client.ammo;
-        player.prevAmmo = Client.ammo;
-        Game.playerHUD["currency"] = player.score;
-        player.shield.setText('Shield:\n' +
-            'Bullets: ' + Game.playerHUD["bullets"] + '\n' +
-            'Boost: ' + Game.playerHUD["boost"] + '\n' +
-            'Currency: ' + Game.playerHUD["currency"], {font: '100px Arial', fill: '#fff'});
+    Game.playerHUD["boost"] = player.boost;
+    Game.playerHUD["bullets"] = Client.ammo;
+    player.prevAmmo = Client.ammo;
+    Game.playerHUD["currency"] = player.score;
+    player.shield.setText('Shield:\n' +
+        'Bullets: ' + Game.playerHUD["bullets"] + '\n' +
+        'Boost: ' + Game.playerHUD["boost"] + '\n' +
+        'Currency: ' + Game.playerHUD["currency"], {font: '100px Arial', fill: '#fff'});
     // }
 
 
@@ -624,10 +631,9 @@ Game.updateTransform = function(id, x, y, rotation, health) {
         Game.playerMap[id] = player;
         // console.log('player name='+Game.playerMap[id].name);
         if (id === Client.id && player.health <= 0) {
-            Game.playerMap[id].kill();
+            Game.playerMap[id].destroy();
         }
     }
-
 };
 
 function showPlayerNames() {
@@ -681,6 +687,8 @@ Game.updatePlayerShip = function(id, shipName){
 Game.removePlayer = function(id){
     console.log('Game.removePlayer '+id+'--'+Game.playerMap[id].name);
     Game.playerMap[id].shipTrail.destroy();
+    generateDustOnDeath(Game.playerMap[id].x, Game.playerMap[id].y);
+    playerMap.delete(id);
     Game.playerMap[id].destroy();
     Game.playerDestroyed = true;
     delete Game.playerMap[id];
@@ -689,7 +697,9 @@ Game.removePlayer = function(id){
 Game.playerKilled = function(thePlayer){
     //Generate the dust dropped from death
     generateDustOnDeath(thePlayer.x, thePlayer.y);
-    //Remove the player
+    //Game.playerMap[thePlayer.id].shipTrail.destroy();
+    //Remove the players
+    playerMap.delete(thePlayer.id);
     thePlayer.destroy();
     Game.playerDestroyed = true;
     delete thePlayer;
@@ -712,7 +722,7 @@ Game.movePlayer = function(id, x, y) {
 };
 
 Game.setPlayerAcceleration = function(acceleration, isBoost){
-    if (Game.allPlayersAdded && Game.playerMap[Client.id].body !== null) {
+    if (Game.allPlayersAdded && Game.playerMap[Client.getPlayerID()].body !== null) {
         if (isBoost && Game.playerMap[Client.id].boost >= Game.boostCost) {
             Game.playerMap[Client.id].body.maxVelocity.set(Game.maxBoostVelocity);
             // Game.playBoostPFX();
@@ -746,7 +756,8 @@ Game.stopBoostPFX = function() {
 };
 
 Game.setPlayerRotation = function(id, angVelocity){
-    Game.playerMap[id].body.angularVelocity = angVelocity;
+    if(Game.playerMap[id].body !== null)
+        Game.playerMap[id].body.angularVelocity = angVelocity;
 };
 
 Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
@@ -817,6 +828,12 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
     // Initialize player's health
     newPlayer.heal(100);
 
+
+    /* newPlayer.shield.setText('Shield:\n' +
+         'Bullets: ' + playerHUD["bullets"] + '\n' +
+         'Boost: ' + playerHUD["boost"] + '\n' +
+         'Currency: ' + playerHUD["currency"], { font: '100px Arial', fill: '#fff' }); */
+
     // Set the player's score
     // Game.playerHUD["currency"] = score;
     newPlayer.boost = 100;
@@ -828,6 +845,7 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
          'Bullets: ' + Game.playerHUD["bullets"] + '\n' +
          'Boost: ' + Game.playerHUD["boost"] + '\n' +
          'Currency: ' + Game.playerHUD["currency"], { font: '100px Arial', fill: '#fff' }); */
+
     // Local player should be instantiated first before remote players
 
     // Local player should be instantiated first before remote players
@@ -841,7 +859,7 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
     Game.playerMap[id].prevHealth = -1;
 
     //Game.createHealthBar(Game.playerMap[id]);
-    playerArray.push(newPlayer);
+    playerMap.set(newPlayer.id, newPlayer);
     if (!Game.localPlayerInstantiated) {
         Game.localPlayerInstantiated = true;
     }
