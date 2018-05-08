@@ -737,10 +737,6 @@ Game.updatePlayerShip = function(id, shipName){
 
 Game.removePlayer = function(id){
     console.log('Game.removePlayer '+id+'--'+Game.playerMap[id].name);
-    if (id === Client.id)
-    {
-        Client.setClientScores(Game.playerMap[id].score);
-    }
     Game.removeFromLeaderboard(id);
     Game.playerMap[id].shipTrail.destroy();
     generateDustOnDeath(Game.playerMap[id].x, Game.playerMap[id].y);
@@ -753,6 +749,7 @@ Game.removePlayer = function(id){
 Game.playerKilled = function(thePlayer){
     //Generate the dust dropped from death
     generateDustOnDeath(thePlayer.x, thePlayer.y);
+
     //Game.playerMap[thePlayer.id].shipTrail.destroy();
     //Remove the players
     playerMap.delete(thePlayer.id);
@@ -929,6 +926,7 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
 
 Game.setDeathBehavior = function(id) {
     Game.playerMap[id].events.onKilled.add(function() {
+        Client.setClientScores(Game.playerMap[id].score);
         Client.disconnect();
         game.state.start('Menu');
         game.state.clearCurrentState();
