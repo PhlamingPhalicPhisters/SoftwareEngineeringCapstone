@@ -28,8 +28,8 @@ io.on('connection',function(socket){
                 socket.player = {
                     id: incrementID(),
                     name: data.name,
-                    x: randomInt(4100, 4600),
-                    y: randomInt(3600, 4100),
+                    x: randomInt(3000, 4000),
+                    y: randomInt(3000, 4000),
                     rotation: (-90) * (3.14 / 180), // start upward -- convert degrees to radians??
                     health: 100,
                     score: 0,
@@ -100,7 +100,7 @@ io.on('connection',function(socket){
         socket.on('collect',function(data)
         {
             socket.player.score += data.value;
-            socket.broadcast.emit('updateScore', data);
+            socket.broadcast.emit('updateScore', {id: socket.player.id, score: socket.player.score});
             socket.emit('updateScore', {id: socket.player.id, score: socket.player.score});
         });
 

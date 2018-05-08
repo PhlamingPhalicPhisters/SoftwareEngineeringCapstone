@@ -1,8 +1,3 @@
-/*var game = new Phaser.Game(16*32, 600, Phaser.AUTO, document.getElementById('game'));
-
-game.state.add('Game',Game);
-game.state.start('Game');*/
-
 var Game = {};
 
 var playerArray = [];
@@ -21,6 +16,8 @@ addWeapon(2000, 500, 75, 10);
 Game.ammoMap = {};
 Game.bulletArray = [];
 
+var ammoArray = [];
+
 //This variable represents the amount of ships in the game
 //It is used when assigning new players a ship
 const numberOfShipSprites = 9;
@@ -34,8 +31,18 @@ Game.init = function(){
     // Run game in background
     this.game.stage.disableVisibilityChange = true;
 
-    Game.playerSize = 64;   // sq. px. size
-    Game.isSafe = false;    // local player is in safe zone
+    Game.leaderboard = [null, null, null, null, null, null];
+
+    Game.playerSize = 64;           // sq. px. size
+    Game.isSafe = false;            // local player is in safe zone
+    Game.maxNormVelocity = 200;         // maximum body acceleration
+    Game.maxBoostVelocity = 400;    // maximum body acceleration when boosting
+    Game.normalAccel = 100;         // normal player acceleration speed
+    Game.boostAccelMult = 10;        // boost acceleration multiplier
+    Game.normalAngVel = 300;        // normal player rotation speed
+    Game.boostRotMult = 0.5;        // boost rotation mutliplier
+    Game.boostCost = .01;           // how much boost costs when active
+    Game.refillBoostCost = 100;     // how much it costs to refill boost in the safe zone
 };
 
 
@@ -48,6 +55,7 @@ Game.preload = function() {
     // Load map assets
     this.game.load.tilemap('map', 'assets/map/bigtilestest.json', null, Phaser.Tilemap.TILED_JSON);
     this.game.load.image('tiles', 'assets/map/largetilesheet.png');
+    this.game.load.image('safe_zone', 'assets/map/safe_zone.png');
 
     // Load ship assets
     this.game.load.image('ship1','assets/sprites/ship1.png');
@@ -59,13 +67,13 @@ Game.preload = function() {
     this.game.load.image('ship7','assets/sprites/ship7.png');
     this.game.load.image('ship8','assets/sprites/ship8.png');
 
+    // Load dust assets
+    this.game.load.image('dust', 'assets/sprites/bullet2.png');
+
     // Load weapon assets
     this.game.load.image('bullet', 'assets/sprites/general-bullet.png');
     this.game.load.image('bullet1', 'assets/sprites/bullet1.png');
     this.game.load.image('bullet2', 'assets/sprites/bullet2.png');
-
-    // Load dust assets
-    //this game.load.image('dust', TODODODODODO);
 
     this.game.load.image('ship0', 'assets/sprites/general-bullet.png');
 };
@@ -91,8 +99,6 @@ var thisPlayer;
 //     "currency": 0
 // };
 
-
-
 var bullet;
 Game.create = function(){
     console.log('Game.create');
@@ -111,6 +117,7 @@ Game.create = function(){
     Game.physics.startSystem(Phaser.Physics.ARCADE);
 
     // Create reference list of all players in game
+    Game.shipTrails = game.add.group();
     Game.playerMap = {};
     Game.allPlayersAdded = false;
     Game.localPlayerInstantiated = false;
@@ -138,14 +145,21 @@ Game.create = function(){
 
     //Order of these statments impacts the order of render
     map.createLayer('Backgroundlayer');
-    safeZoneLayer = map.createLayer('Zonelayer');
+    // safeZoneLayer = map.createLayer('Zonelayer');
+    Game.safeZone = game.add.sprite(3500,3500,'safe_zone');
+    Game.safeZone.width = 1000;
+    Game.safeZone.height = 1000;
+    Game.safeZone.anchor.setTo(0.5,0.5);
+    Game.safeZone.alpha = 0.3;
     layer = map.createLayer('Groundlayer');
     map.setCollisionBetween(0, 4000, true, 'Groundlayer');
-    map.setCollisionBetween(0, 1, true, 'Zonelayer');
+    // map.setCollisionBetween(0, 1, true, 'Zonelayer');
     layer.resizeWorld();
 
     // Enable Phaser Arcade game physics engine
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
+    Game.safeZone.enableBody = true;
+    Game.physics.enable(Game.safeZone, Phaser.Physics.ARCADE);
 
     // Create Local player & all active remote players
     Client.askNewPlayer();
@@ -176,6 +190,12 @@ Game.create = function(){
     game.input.keyboard.addKeyCapture([Phaser.Keyboard.SPACEBAR]);*/
     console.log("Got to creation");
     Game.playerDestroyed = false;
+
+    //generate dust for the player
+    generateDustForClient();
+    console.log("Testing the dust list to verify that it loaded correctly, " +
+        "dust x position: " + dustList[100].positionx);
+    Game.playerDestroyed = false;
 };
 
 /*
@@ -202,28 +222,50 @@ Game.update = function()
     // Establish collision detection between groups
     Game.physics.arcade.collide(playerArray, playerArray);
     Game.physics.arcade.collide(layer, playerArray);
-    // Game.physics.arcade.collide(dustGroup, playerArray, Game.collectEvent);
     Game.physics.arcade.overlap(bullet, playerArray, Game.safeZoneEvent);       // TODODODODODO - SWAP WITH SAFEZONE
-
-    if(typeof Game.ammoMap[Client.getPlayerID()] !== 'undefined' && Client.getPlayerID() !== -1 && Game.localPlayerInstantiated){
-        Game.ammoMap[Client.getPlayerID()].forEach(function(bullet) {
-            for (var p in playerArray) {
-                if(playerArray[p] !== Game.playerMap[Client.getPlayerID()]) {
-                    Game.physics.arcade.overlap(playerArray[p], bullet, function (player, bullet) {
-                        player.damage(bullet.damage);
-                        bullet.body.velocity = 0;
-                    });
-                }
-            }
-            Game.physics.arcade.collide(layer, bullet, function(bullet){bullet.body.velocity = 0;});
-        });
-        Game.ammoMap[Client.getPlayerID()].forEach(function(bullet){
-            if(bullet.body.velocity === 0){
-                bullet.destroy();
-            }
-        });
+    if (Game.physics.arcade.overlap(Game.safeZone, Game.playerMap[Client.id], Game.enterSafeZone)){}
+    else {
+        Game.exitSafeZone();
     }
-    else{}
+
+    //Bullet Collisions
+    if(!document.hidden && typeof Game.ammoMap[Client.getPlayerID()] !== 'undefined' && Client.getPlayerID() !== -1 && Game.localPlayerInstantiated) {
+        for (var q in Game.ammoMap) {
+            Game.ammoMap[q].forEach(function (bullet) {
+                for (var p in playerArray) {
+                    if(playerArray[p].id != q) {
+                        console.log(q + " " + playerArray[p].id);
+                        Game.physics.arcade.overlap(playerArray[p], bullet, function (player, bullet) {
+                            bullet.body.velocity = 0;
+                            player.damage(bullet.damage);
+                        });
+                    }
+                }
+                Game.physics.arcade.collide(layer, bullet, function (bullet) {
+                    bullet.body.velocity = 0;
+                });
+            });
+        }
+        for (var w in Game.ammoMap) {
+            Game.ammoMap[w].forEach(function (bullet) {
+                if (bullet.body != null && bullet.body.velocity == 0) {
+                    bullet.destroy();
+                }
+            });
+        }
+    }
+
+    for(var d in dustList){
+        for(var p in playerArray){
+            Game.physics.arcade.overlap(dustList[d], playerArray[p], dustCollision);
+        }
+    }
+
+    // for(var d in dustList) {
+    //     Game.physics.arcade.overlap(dustList[d], layer, moveDust);
+    // }
+
+
 
     /*for (var i in Game.ammoMap) {
         for(var p in playerArray) {
@@ -235,19 +277,18 @@ Game.update = function()
     // Get forward/backward input
     if (Game.cursors.up.isDown)
     {
-        Client.sendAcceleration(1);
-        // game.physics.arcade.accelerationFromRotation(Game.playerMap[Client.id].rotation,
-        //     200, Game.playerMap[Client.id].body.acceleration);
+        // Client.sendAcceleration(1);
+        Game.setPlayerAcceleration(Game.normalAccel, game.input.keyboard.isDown(Phaser.Keyboard.SHIFT))
     }
     else if (Game.cursors.down.isDown)
     {
-        Client.sendAcceleration(-1);
-        // game.physics.arcade.accelerationFromRotation(Game.playerMap[Client.id].rotation,
-        //     -200, Game.playerMap[Client.id].body.acceleration);
+        // Client.sendAcceleration(-1);
+        Game.setPlayerAcceleration(-Game.normalAccel, game.input.keyboard.isDown(Phaser.Keyboard.SHIFT))
     }
     else
     {
-        Client.sendAcceleration(0);
+        // Client.sendAcceleration(0);
+        Game.setPlayerAcceleration(0, false);
     }
     if (Game.cursors.left.isDown && Game.cursors.right.isDown) {
         /*var angVelocity = Game.playerMap[Client.player.id].body.angularVelocity;// Game.playerMap[Client.id].body.angularVelocity = 300;
@@ -283,7 +324,7 @@ Game.update = function()
         Client.sendRotation(0);
     }
 
-    if (game.input.keyboard.isDown(Phaser.Keyboard.SHIFT)) {
+    if (game.input.keyboard.isDown(Phaser.KeyCode.Q) || game.input.keyboard.isDown(Phaser.KeyCode.L)) {
         showPlayerNames();
     }
     else {
@@ -291,7 +332,7 @@ Game.update = function()
     }
 
     // Get firing input
-    if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR))
+    if (!Game.isSafe && game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR))
     {
         //Client.sendShoot();
         //fireBullet(bulletInfo);
@@ -304,35 +345,55 @@ Game.update = function()
 
     }
 
+    if (Game.isSafe)
+    {
+        Game.showBasePrompts();
+
+        if (game.input.keyboard.isDown(Phaser.KeyCode.E))
+        {
+            //Game.requestShipUpgrade();
+        }
+        if (game.input.keyboard.isDown(Phaser.KeyCode.R))
+        {
+            Game.reloadWeapon();
+            Game.refillBoost();
+        }
+    }
+    else
+    {
+        Game.unshowBasePrompts();
+    }
+
     // Sync the transform of remote instances of this player
+    // Send transform also handles the amount of health and the hud display
+    // Inside of the health tracker when a player dies dust is dropped
     Game.sendTransform();
 };
 
 
-Game.safeZoneEvent = function(safeZoneLayer, player){
-    console.log('overlap w/ safeZoneLayer');
-    Client.sendCollect(5);
-    //Game.updateHUD(player);
+Game.enterSafeZone = function(safeZone, player){
+    Game.isSafe = true;
+    // Client.sendCollect(5);
 };
 
-Game.updateScore = function(id, value)
-{
+Game.exitSafeZone = function() {
+    Game.isSafe = false;
+};
+
+Game.updateScore = function(id, value) {
     Game.playerMap[id].score = value;
     // Game.playerHUD["currency"] = value;
 };
 
+// Game.render = function(){
+//     if (Game.allPlayersAdded) {
+//         game.debug.body(Game.playerMap[Client.getPlayerID()]);
+//     }
+//     game.debug.body(bullet);
+//     game.debug.text(game.time.fps, 2, 14, "#00ff00");
+// };
 
-
-/*Game.render = function(){
-    if (Game.allPlayersAdded) {
-        game.debug.body(Game.playerMap[Client.getPlayerID()]);
-    }
-    game.debug.body(bullet);
-    game.debug.text(game.time.fps, 2, 14, "#00ff00");
-};*/
-
-Game.updateName = function(id, name)    //This never gets called?
-{
+Game.updateName = function(id, name){  //This never gets called?
     Game.playerMap[id].name = name;
     //console.log("It the name boi: " + Game.playerMap[id].name);
 };
@@ -358,7 +419,6 @@ function fireBullet() {
     }
 }
 
-
 Game.updateBullets = function(x, y, rotation, weaponId, id) {
     if (!document.hidden && typeof Game.ammoMap[id] !== 'undefined') {
         var bullet = Game.ammoMap[id].getFirstExists(false);
@@ -375,8 +435,6 @@ Game.updateBullets = function(x, y, rotation, weaponId, id) {
         }
     }
 };
-
-
 
 Game.updateAmmo = function(id, ammo, weaponId) {
     Game.ammoMap[id] = game.add.group();
@@ -408,7 +466,12 @@ Game.updateAmmo = function(id, ammo, weaponId) {
 Game.sendTransform = function() {
     //console.log('Game sendTransform');
     if(Client.getPlayerID() !== -1 && Game.localPlayerInstantiated && Game.focused/*&& Game.playerMap.length > 0*/) {
+        Game.playerMap[Client.getPlayerID()].shipTrail.x = Game.playerMap[Client.getPlayerID()].x;
+        Game.playerMap[Client.getPlayerID()].shipTrail.y = Game.playerMap[Client.getPlayerID()].y;
+        // Game.playerMap[Client.getPlayerID()].shipTrail.rotation = Game.playerMap[Client.getPlayerID()].rotation;
+
         var player = Game.playerMap[Client.getPlayerID()];
+
         Game.updateHUD(player);
         Client.sendTransform(player.x, player.y, player.rotation, player.health);
     }
@@ -433,6 +496,7 @@ Game.updateHUD = function(player){
     player.scoreHover.fixedToCamera = true;
 
     // if(player.prevHealth != player.health || player.prevAmmo != Client.ammo) {
+        Game.playerHUD["boost"] = player.boost;
         Game.playerHUD["bullets"] = Client.ammo;
         player.prevAmmo = Client.ammo;
         Game.playerHUD["currency"] = player.score;
@@ -444,6 +508,10 @@ Game.updateHUD = function(player){
 
 
     Game.updateHealthBar(player);
+    if (Game.allPlayersAdded)
+    {
+        Game.updateLeaderboard();
+    }
 };
 
 Game.updateHealthBar = function(player) {
@@ -452,7 +520,22 @@ Game.updateHealthBar = function(player) {
         Game.playerKilled(player);
         player.healthBar.clear();
     }
-    else if (player.prevHealth != player.health){
+    else if (Game.isSafe){
+        player.healthBar.safe = true;
+        player.healthBar.clear();
+        var x = player.health / 100;
+        var xHealth = (player.health / 100) * 100;
+        var color = Game.rgbToHex(0, 255, 0);
+        //Game.healthBar.x = 10;
+        //Game.healthBar.y = 10;
+        player.healthBar.beginFill(color);
+        player.healthBar.lineStyle(30, color, 1);
+        player.healthBar.moveTo(0, 0);
+        player.healthBar.lineTo((1.5 * xHealth), 0);
+        player.healthBar.endFill();
+    }
+    else if (player.prevHealth != player.health || player.healthBar.safe){
+        player.healthBar.safe = false;
         player.healthBar.clear();
         var x = player.health / 100;
         var xHealth = (player.health / 100) * 100;
@@ -465,10 +548,63 @@ Game.updateHealthBar = function(player) {
         player.healthBar.lineTo((1.5 * xHealth), 0);
         player.healthBar.endFill();
     }
+
     player.healthBar.x = player.shield.x + 120;
     player.healthBar.y = player.shield.y + 20;
     player.prevHealth = player.health;
     player.healthBar.fixedToCamera = true;
+};
+
+
+Game.updateLeaderboard = function() {
+    Game.checkLeaderboard();
+
+    // TEXT CODE
+};
+
+Game.checkLeaderboard = function() {
+    for (var p in Game.playerMap) {
+        if (Game.leaderboard[1] === null ||
+            (Game.playerMap[p].score > Game.leaderboard[1].score
+                && Game.leaderboard[1] !== Game.playerMap[p]))
+        {
+            Game.leaderboard[2] = Game.leaderboard[1];
+            Game.leaderboard[3] = Game.leaderboard[2];
+            Game.leaderboard[4] = Game.leaderboard[3];
+            Game.leaderboard[5] = Game.leaderboard[4];
+            Game.leaderboard[1] = Game.playerMap[p];
+        }
+        else if (Game.leaderboard[2] === null ||
+            (Game.playerMap[p].score > Game.leaderboard[2].score
+                && Game.leaderboard[2] !== Game.playerMap[p]))
+        {
+            Game.leaderboard[3] = Game.leaderboard[2];
+            Game.leaderboard[4] = Game.leaderboard[3];
+            Game.leaderboard[5] = Game.leaderboard[4];
+            Game.leaderboard[2] = Game.playerMap[p];
+        }
+        else if (Game.leaderboard[3] === null ||
+            (Game.playerMap[p].score > Game.leaderboard[3].score
+                && Game.leaderboard[3] !== Game.playerMap[p]))
+        {
+            Game.leaderboard[4] = Game.leaderboard[3];
+            Game.leaderboard[5] = Game.leaderboard[4];
+            Game.leaderboard[3] = Game.playerMap[p];
+        }
+        else if (Game.leaderboard[4] === null ||
+            (Game.playerMap[p].score > Game.leaderboard[4].score
+                && Game.leaderboard[4] !== Game.playerMap[p]))
+        {
+            Game.leaderboard[5] = Game.leaderboard[4];
+            Game.leaderboard[4] = Game.playerMap[p];
+        }
+        else if (Game.leaderboard[5] === null ||
+            (Game.playerMap[p].score > Game.leaderboard[5].score
+                && Game.leaderboard[5] !== Game.playerMap[p]))
+        {
+            Game.leaderboard[5] = Game.playerMap[p];
+        }
+    }
 };
 
 // Update the position and rotation of a given remote player
@@ -479,6 +615,11 @@ Game.updateTransform = function(id, x, y, rotation, health) {
         player.y = y;
         player.rotation = rotation;
         player.health = health;
+
+        // Update player's trail emitter
+        player.shipTrail.x = x;
+        player.shipTrail.y = y;
+        // player.shipTrail.rotation = rotation;
 
         Game.playerMap[id] = player;
         // console.log('player name='+Game.playerMap[id].name);
@@ -497,6 +638,9 @@ function showPlayerNames() {
             Game.playerMap[i].nameHover.x = Game.playerMap[i].x - (Game.playerMap[i].nameHover.width / 2);
             Game.playerMap[i].nameHover.y = Game.playerMap[i].y - 60;
             Game.playerMap[i].scoreHover.visible = true;
+            Game.playerMap[i].scoreHover.setText(Game.playerMap[i].score);
+            Game.playerMap[i].scoreHover.x = Game.playerMap[i].x - (Game.playerMap[i].scoreHover.width / 2);
+            Game.playerMap[i].scoreHover.y = Game.playerMap[i].y - 90;
         }
     }
 }
@@ -510,6 +654,22 @@ function removePlayerNames() {
     }
 }
 
+Game.showBasePrompts = function(){
+
+};
+
+Game.unshowBasePrompts = function(){
+
+};
+
+Game.reloadWeapon = function(){
+
+};
+
+Game.refillBoost = function(){
+
+};
+
 // Update the ship of another player
 Game.updatePlayerShip = function(id, shipName){
     if (Game.allPlayersAdded){
@@ -520,12 +680,16 @@ Game.updatePlayerShip = function(id, shipName){
 
 Game.removePlayer = function(id){
     console.log('Game.removePlayer '+id+'--'+Game.playerMap[id].name);
+    Game.playerMap[id].shipTrail.destroy();
     Game.playerMap[id].destroy();
     Game.playerDestroyed = true;
     delete Game.playerMap[id];
 };
 
 Game.playerKilled = function(thePlayer){
+    //Generate the dust dropped from death
+    generateDustOnDeath(thePlayer.x, thePlayer.y);
+    //Remove the player
     thePlayer.destroy();
     Game.playerDestroyed = true;
     delete thePlayer;
@@ -547,21 +711,38 @@ Game.movePlayer = function(id, x, y) {
     tween.start();
 };
 
-Game.setPlayerAcceleration = function(id, direction){
-    if (direction === 1)
-    {
-        game.physics.arcade.accelerationFromRotation(Game.playerMap[id].rotation,
-            200, Game.playerMap[id].body.acceleration);
+Game.setPlayerAcceleration = function(acceleration, isBoost){
+    if (Game.allPlayersAdded) {
+        if (isBoost && Game.playerMap[Client.id].boost >= Game.boostCost) {
+            Game.playerMap[Client.id].body.maxVelocity.set(Game.maxBoostVelocity);
+            // Game.playBoostPFX();
+
+            // console.log('we boostin');
+            Game.playerMap[Client.id].boost -= Game.boostCost;
+            // game.physics.arcade.velocityFromRotation(rotation, weaponArray[weaponId].velocity, bullet.body.velocity);
+            game.physics.arcade.accelerationFromRotation(Game.playerMap[Client.id].rotation,
+                acceleration * Game.boostAccelMult, Game.playerMap[Client.id].body.acceleration);
+        }
+        else {
+            Game.playerMap[Client.id].body.maxVelocity.set(Game.maxNormVelocity);
+            // Game.stopBoostPFX();
+
+            game.physics.arcade.accelerationFromRotation(Game.playerMap[Client.id].rotation,
+                acceleration, Game.playerMap[Client.id].body.acceleration);
+        }
+        /*if (Game.playerMap[Client.id].body.velocity === Game.playerMap[Client.id].body.maxVelocity)
+        {
+            console.log('at max velocity of '+Game.playerMap[Client.id].body.maxVelocity);
+        }*/
     }
-    else if (direction == -1)
-    {
-        game.physics.arcade.accelerationFromRotation(Game.playerMap[id].rotation,
-            -200, Game.playerMap[id].body.acceleration);
-    }
-    else
-    {
-        Game.playerMap[id].body.acceleration.set(0);
-    }
+};
+
+Game.playBoostPFX = function() {
+    Game.playerMap[Client.id].shipTrail.start(false, 5000, 10);
+};
+
+Game.stopBoostPFX = function() {
+    Game.playerMap[Client.id].shipTrail.kill();
 };
 
 Game.setPlayerRotation = function(id, angVelocity){
@@ -570,6 +751,8 @@ Game.setPlayerRotation = function(id, angVelocity){
 
 Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
     console.log('Game.addNewPlayer '+id+'--'+name+'--'+shipName);
+
+    Game.shipTrails[id] = game.add.emitter(x, y + Game.playerSize/2, 400);
 
     var newPlayer;
 
@@ -581,17 +764,17 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
     //console.log(shipName === 'unassignedShip' && id === Client.id);
     if(shipName === 'unassignedShip'){//} && id === Client.id/*Client.getPlayerID()*/){
         var shipSelectionString = assignShip(id + 1);
-        console.log(name + '\'s shipName: '+shipSelectionString);
+        // console.log(name + '\'s shipName: '+shipSelectionString);
         newPlayer = game.add.sprite(x,y,shipSelectionString);
-        console.log('if statement - shipSelectionString: ' + shipSelectionString);
+        // console.log('if statement - shipSelectionString: ' + shipSelectionString);
         if (id === Client.id)
             Client.sendShipChange(shipSelectionString);
     }
     // If it is an existing player
     else{
-        console.log(name+'\'s shipName: '+shipName);
+        // console.log(name+'\'s shipName: '+shipName);
         newPlayer = game.add.sprite(x,y,shipName);
-        console.log('else statement - shipSelectionString: ' + shipName);
+        // console.log('else statement - shipSelectionString: ' + shipName);
     }
 
     // make all ships the same width & height
@@ -613,27 +796,48 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
     //newPlayer.body.setSize(newPlayer.width, newPlayer.height, 0.5, 0.5);                   //collisions to work
     //newPlayer.body.bounce.setTo(.5, .5);
     newPlayer.body.drag.set(100);
-    newPlayer.body.maxVelocity.set(200);
+    newPlayer.body.maxVelocity.set(Game.maxNormVelocity);
+
+    //  Add an emitter for the ship's trail
+    newPlayer.shipTrail = Game.shipTrails[id];
+    newPlayer.shipTrail.gravity = 0;
+    newPlayer.shipTrail.z = -1000;
+    newPlayer.shipTrail.width = 10;
+    newPlayer.shipTrail.makeParticles('bullet');
+    newPlayer.shipTrail.setXSpeed(30, -30);
+    newPlayer.shipTrail.setYSpeed(30, -30);
+    // newPlayer.shipTrail.setRotation(50,-50);
+    newPlayer.shipTrail.setAlpha(1, 0.01, 800);
+    newPlayer.shipTrail.setScale(0.05, 0.4, 0.05, 0.4, 2000, Phaser.Easing.Quintic.Out);
+    // newPlayer.addChild(newPlayer.shipTrail);
+    // newPlayer.shipTrail.rotation = rotation;
+    newPlayer.shipTrail.start(false, 2000, 10);
+
 
     // Initialize player's health
     newPlayer.heal(100);
 
     // Set the player's score
     // Game.playerHUD["currency"] = score;
+    newPlayer.boost = 100;
     newPlayer.score = score;
+    // newPlayer.isSafe = true;
+    newPlayer.isMoving = false;
 
-   /* newPlayer.shield.setText('Shield:\n' +
-        'Bullets: ' + Game.playerHUD["bullets"] + '\n' +
-        'Boost: ' + Game.playerHUD["boost"] + '\n' +
-        'Currency: ' + Game.playerHUD["currency"], { font: '100px Arial', fill: '#fff' }); */
+    /* newPlayer.shield.setText('Shield:\n' +
+         'Bullets: ' + Game.playerHUD["bullets"] + '\n' +
+         'Boost: ' + Game.playerHUD["boost"] + '\n' +
+         'Currency: ' + Game.playerHUD["currency"], { font: '100px Arial', fill: '#fff' }); */
     // Local player should be instantiated first before remote players
 
     // Local player should be instantiated first before remote players
+    newPlayer.id = id;
     Game.playerMap[id] = newPlayer;
     Game.playerMap[id].shield = Game.add.text(0, 0, '', { font: '35px Arial', fill: '#fff' });
     Game.playerMap[id].nameHover = Game.add.text(0, 0, '', {font: '20px Arial', fill: '#fff'});
     Game.playerMap[id].scoreHover = Game.add.text(0, 0, '', {font: '20px Arial', fill: '#fff'});
     Game.playerMap[id].healthBar = Game.add.graphics(0,0);
+    Game.playerMap[id].healthBar.safe = false;
     Game.playerMap[id].prevHealth = -1;
 
     //Game.createHealthBar(Game.playerMap[id]);
@@ -645,7 +849,6 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
     // Set local camera to follow local player sprite
     this.game.camera.follow(Game.playerMap[Client.getPlayerID()], Phaser.Camera.FOLLOW_LOCKON);
     this.game.renderer.renderSession.roundPixels = true;
-
 };
 
 Game.setDeathBehavior = function(id) {
@@ -659,6 +862,7 @@ Game.setDeathBehavior = function(id) {
 Game.createHealthBar = function(player){
     player.healthBar = Game.add.graphics(0,0);
     player.healthBar.clear();
+    player.healthBar.safe = false;
     var xHealth = (player.health / 100) * 100;
     player.prevHealth = xHealth;
     var color = Game.rgbToHex(255, 0, 0);
