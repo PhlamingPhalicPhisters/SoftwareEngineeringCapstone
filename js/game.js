@@ -229,6 +229,7 @@ Game.update = function()
     }
 
     //Bullet Collisions
+
     if(!document.hidden && typeof Game.ammoMap[Client.getPlayerID()] !== 'undefined' && Client.getPlayerID() !== -1 && Game.localPlayerInstantiated) {
         for (var q in Game.ammoMap) {
             Game.ammoMap[q].forEach(function (bullet) {
@@ -255,12 +256,7 @@ Game.update = function()
         }
     }
 
-    for(var d in dustList){
-        for(var p in playerArray){
-            Game.physics.arcade.overlap(dustList[d], playerArray[p], dustCollision);
-        }
-    }
-
+    Game.physics.arcade.overlap(dustList, playerArray, dustCollision);
     // for(var d in dustList) {
     //     Game.physics.arcade.overlap(dustList[d], layer, moveDust);
     // }
