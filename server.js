@@ -25,26 +25,19 @@ io.on('connection',function(socket){
     });*/
 
     socket.on('newplayer',function(data){
-        while (1) {
-            if (!server.modify) {
-                server.modify = true;
-                socket.player = {
-                    id: server.lastPlayerId++,
-                    name: data.name !== '' ? data.name : 'Player'+server.lastPlayerId,
-                    x: randomInt(3000, 4000),
-                    y: randomInt(3000, 4000),
-                    rotation: (-90) * (3.14 / 180), // start upward -- convert degrees to radians??
-                    health: 100,
-                    score: 0,
-                    weaponId: randomInt(0, 3),
-                    ammo: 0,
-                    shipName: 'unassignedShip',
-                    focused: true
-                };
-                server.modify = false;
-                break;
-            }
-        }
+        socket.player = {
+            id: server.lastPlayerId++,//incrementID(),
+            name: data.name !== '' ? data.name : 'Player'+server.lastPlayerId,
+            x: randomInt(3000, 4000),
+            y: randomInt(3000, 4000),
+            rotation: (-90) * (3.14 / 180), // start upward -- convert degrees to radians??
+            health: 100,
+            score: 0,
+            weaponId: randomInt(0, 3),
+            ammo: 0,
+            shipName: 'unassignedShip',
+            focused: true
+        };
 
         console.log('Player '+socket.player.id+' ('+socket.player.name+') connected');
         socket./*broadcast.*/emit('newplayer',socket.player);
@@ -149,6 +142,10 @@ io.on('connection',function(socket){
         console.log('test received');
     });
 });
+
+function incrementID() {
+    return server.lastPlayerId + 1;
+}
 
 function findFocused(sID, id) {
     Object.keys(io.sockets.connected).forEach(function(socketID) {

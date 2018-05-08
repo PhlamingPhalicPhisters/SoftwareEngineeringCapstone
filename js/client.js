@@ -25,7 +25,7 @@ Client.connect = function() {
     Client.socket = Client.socket.close();
     Client.socket = Client.socket.open();
 // Client.socket;
-    Client.player;
+    //Client.player;
     //Client.name='';
     Client.id = -1;
     Client.weaponId = -1;
