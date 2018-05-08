@@ -56,6 +56,8 @@ Menu.create = function()
     Menu.titleImg = null;
     Menu.nameInput = null;
     Menu.button = null;
+    Menu.highScore = null;
+    Menu.lastScore = null;
     Menu.addGraphics();
 
     onColorUpdate(Menu.titleImg);
@@ -122,6 +124,11 @@ Menu.addGraphics = function()
     var imgHeight = Menu.titleImg.height;
     Menu.titleImg.width = window.innerWidth*0.6;
     Menu.titleImg.height = Menu.titleImg.width * (imgHeight/imgWidth);
+
+    Menu.highScore = game.add.text(window.innerWidth/2, window.innerHeight/2-125, 'High Score: '+Client.highScore, { font: '35px Arial', fill: '#fff' });
+    Menu.lastScore = game.add.text(window.innerWidth/2, window.innerHeight/2-50, 'Last Score: '+Client.lastScore, { font: '35px Arial', fill: '#fff' });
+    Menu.highScore.anchor.set(0.5);
+    Menu.lastScore.anchor.set(0.5);
 
     var tempName;
     if (Menu.nameInput !== null)

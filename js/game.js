@@ -731,6 +731,10 @@ Game.updatePlayerShip = function(id, shipName){
 
 Game.removePlayer = function(id){
     console.log('Game.removePlayer '+id+'--'+Game.playerMap[id].name);
+    if (id === Client.id)
+    {
+        Client.setClientScores(Game.playerMap[id].score);
+    }
     Game.removeFromLeaderboard(id);
     Game.playerMap[id].shipTrail.destroy();
     Game.playerMap[id].destroy();
