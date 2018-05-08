@@ -107,7 +107,7 @@ io.on('connection',function(socket){
         socket.on('collect',function(data)
         {
             socket.player.score += data.value;
-            socket.broadcast.emit('updateScore', data);
+            socket.broadcast.emit('updateScore', {id: socket.player.id, score: socket.player.score});
             socket.emit('updateScore', {id: socket.player.id, score: socket.player.score});
         });
 
