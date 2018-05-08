@@ -16,6 +16,8 @@ addWeapon(2000, 500, 75, 10);
 Game.ammoMap = {};
 Game.bulletArray = [];
 
+var ammoArray = [];
+
 //This variable represents the amount of ships in the game
 //It is used when assigning new players a ship
 const numberOfShipSprites = 9;
@@ -65,13 +67,13 @@ Game.preload = function() {
     this.game.load.image('ship7','assets/sprites/ship7.png');
     this.game.load.image('ship8','assets/sprites/ship8.png');
 
+    // Load dust assets
+    this.game.load.image('dust', 'assets/sprites/bullet2.png');
+
     // Load weapon assets
     this.game.load.image('bullet', 'assets/sprites/general-bullet.png');
     this.game.load.image('bullet1', 'assets/sprites/bullet1.png');
     this.game.load.image('bullet2', 'assets/sprites/bullet2.png');
-
-    // Load dust assets
-    //this game.load.image('dust', TODODODODODO);
 
     this.game.load.image('ship0', 'assets/sprites/general-bullet.png');
 };
@@ -96,8 +98,6 @@ var thisPlayer;
 //     "boost": 0,
 //     "currency": 0
 // };
-
-
 
 var bullet;
 Game.create = function(){
@@ -190,6 +190,12 @@ Game.create = function(){
     game.input.keyboard.addKeyCapture([Phaser.Keyboard.SPACEBAR]);*/
     console.log("Got to creation");
     Game.playerDestroyed = false;
+
+    //generate dust for the player
+    generateDustForClient();
+    console.log("Testing the dust list to verify that it loaded correctly, " +
+        "dust x position: " + dustList[100].positionx);
+    Game.playerDestroyed = false;
 };
 
 /*
@@ -216,31 +222,50 @@ Game.update = function()
     // Establish collision detection between groups
     Game.physics.arcade.collide(playerArray, playerArray);
     Game.physics.arcade.collide(layer, playerArray);
-    // Game.physics.arcade.collide(dustGroup, playerArray, Game.collectEvent);
+    Game.physics.arcade.overlap(bullet, playerArray, Game.safeZoneEvent);       // TODODODODODO - SWAP WITH SAFEZONE
     if (Game.physics.arcade.overlap(Game.safeZone, Game.playerMap[Client.id], Game.enterSafeZone)){}
     else {
         Game.exitSafeZone();
     }
 
-    if(typeof Game.ammoMap[Client.getPlayerID()] !== 'undefined' && Client.getPlayerID() !== -1 && Game.localPlayerInstantiated){
-        Game.ammoMap[Client.getPlayerID()].forEach(function(bullet) {
-            for (var p in playerArray) {
-                if(playerArray[p] !== Game.playerMap[Client.getPlayerID()]) {
-                    Game.physics.arcade.overlap(playerArray[p], bullet, function (player, bullet) {
-                        player.damage(bullet.damage);
-                        bullet.body.velocity = 0;
-                    });
+    //Bullet Collisions
+    if(!document.hidden && typeof Game.ammoMap[Client.getPlayerID()] !== 'undefined' && Client.getPlayerID() !== -1 && Game.localPlayerInstantiated) {
+        for (var q in Game.ammoMap) {
+            Game.ammoMap[q].forEach(function (bullet) {
+                for (var p in playerArray) {
+                    if(playerArray[p].id != q) {
+                        console.log(q + " " + playerArray[p].id);
+                        Game.physics.arcade.overlap(playerArray[p], bullet, function (player, bullet) {
+                            bullet.body.velocity = 0;
+                            player.damage(bullet.damage);
+                        });
+                    }
                 }
-            }
-            Game.physics.arcade.collide(layer, bullet, function(bullet){bullet.body.velocity = 0;});
-        });
-        Game.ammoMap[Client.getPlayerID()].forEach(function(bullet){
-            if(bullet.body.velocity === 0){
-                bullet.destroy();
-            }
-        });
+                Game.physics.arcade.collide(layer, bullet, function (bullet) {
+                    bullet.body.velocity = 0;
+                });
+            });
+        }
+        for (var w in Game.ammoMap) {
+            Game.ammoMap[w].forEach(function (bullet) {
+                if (bullet.body != null && bullet.body.velocity == 0) {
+                    bullet.destroy();
+                }
+            });
+        }
     }
-    else{}
+
+    for(var d in dustList){
+        for(var p in playerArray){
+            Game.physics.arcade.overlap(dustList[d], playerArray[p], dustCollision);
+        }
+    }
+
+    // for(var d in dustList) {
+    //     Game.physics.arcade.overlap(dustList[d], layer, moveDust);
+    // }
+
+
 
     /*for (var i in Game.ammoMap) {
         for(var p in playerArray) {
@@ -340,6 +365,8 @@ Game.update = function()
     }
 
     // Sync the transform of remote instances of this player
+    // Send transform also handles the amount of health and the hud display
+    // Inside of the health tracker when a player dies dust is dropped
     Game.sendTransform();
 };
 
@@ -660,6 +687,9 @@ Game.removePlayer = function(id){
 };
 
 Game.playerKilled = function(thePlayer){
+    //Generate the dust dropped from death
+    generateDustOnDeath(thePlayer.x, thePlayer.y);
+    //Remove the player
     thePlayer.destroy();
     Game.playerDestroyed = true;
     delete thePlayer;
@@ -681,22 +711,6 @@ Game.movePlayer = function(id, x, y) {
     tween.start();
 };
 
-/*Game.setPlayerAcceleration = function(id, direction){
-    if (direction === 1)
-    {
-        game.physics.arcade.accelerationFromRotation(Game.playerMap[id].rotation,
-            200, Game.playerMap[id].body.acceleration);
-    }
-    else if (direction == -1)
-    {
-        game.physics.arcade.accelerationFromRotation(Game.playerMap[id].rotation,
-            -200, Game.playerMap[id].body.acceleration);
-    }
-    else
-    {
-        Game.playerMap[id].body.acceleration.set(0);
-    }
-};*/
 Game.setPlayerAcceleration = function(acceleration, isBoost){
     if (Game.allPlayersAdded) {
         if (isBoost && Game.playerMap[Client.id].boost >= Game.boostCost) {
@@ -762,7 +776,6 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
         newPlayer = game.add.sprite(x,y,shipName);
         // console.log('else statement - shipSelectionString: ' + shipName);
     }
-    newPlayer.z = 1000;
 
     // make all ships the same width & height
     newPlayer.width = Game.playerSize;
@@ -811,13 +824,14 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
     // newPlayer.isSafe = true;
     newPlayer.isMoving = false;
 
-   /* newPlayer.shield.setText('Shield:\n' +
-        'Bullets: ' + Game.playerHUD["bullets"] + '\n' +
-        'Boost: ' + Game.playerHUD["boost"] + '\n' +
-        'Currency: ' + Game.playerHUD["currency"], { font: '100px Arial', fill: '#fff' }); */
+    /* newPlayer.shield.setText('Shield:\n' +
+         'Bullets: ' + Game.playerHUD["bullets"] + '\n' +
+         'Boost: ' + Game.playerHUD["boost"] + '\n' +
+         'Currency: ' + Game.playerHUD["currency"], { font: '100px Arial', fill: '#fff' }); */
     // Local player should be instantiated first before remote players
 
     // Local player should be instantiated first before remote players
+    newPlayer.id = id;
     Game.playerMap[id] = newPlayer;
     Game.playerMap[id].shield = Game.add.text(0, 0, '', { font: '35px Arial', fill: '#fff' });
     Game.playerMap[id].nameHover = Game.add.text(0, 0, '', {font: '20px Arial', fill: '#fff'});
@@ -835,7 +849,6 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
     // Set local camera to follow local player sprite
     this.game.camera.follow(Game.playerMap[Client.getPlayerID()], Phaser.Camera.FOLLOW_LOCKON);
     this.game.renderer.renderSession.roundPixels = true;
-
 };
 
 Game.setDeathBehavior = function(id) {
