@@ -75,7 +75,7 @@ Game.preload = function() {
     this.game.load.image('bullet1', 'assets/sprites/bullet1.png');
     this.game.load.image('bullet2', 'assets/sprites/bullet2.png');
 
-    this.game.load.image('ship0', 'assets/sprites/general-bullet.png');
+    //this.game.load.image('ship0', 'assets/sprites/general-bullet.png');
 };
 
 //Helper function for the loading screen
@@ -234,7 +234,7 @@ Game.update = function()
             Game.ammoMap[q].forEach(function (bullet) {
                 for (var p in playerArray) {
                     if(playerArray[p].id != q) {
-                        console.log(q + " " + playerArray[p].id);
+                        // console.log(q + " " + playerArray[p].id);
                         Game.physics.arcade.overlap(playerArray[p], bullet, function (player, bullet) {
                             bullet.body.velocity = 0;
                             player.damage(bullet.damage);
@@ -485,12 +485,13 @@ Game.updateHUD = function(player){
     player.shield.x = (this.game.camera.width / 2) - ((window.innerWidth / 2) - 20);
     player.shield.y = (this.game.camera.height / 2) - ((window.innerHeight / 2) - 20);
     player.shield.fixedToCamera = true;
-    player.nameHover.setText(Client.name);
+
+    player.nameHover.setText(player.name);
     player.nameHover.x = (this.game.camera.width / 2) - (player.nameHover.width / 2);
     player.nameHover.y = (this.game.camera.height / 2) - 60;
     player.nameHover.fixedToCamera = true;
 
-    player.scoreHover.setText('Score: ' + Client.score);
+    player.scoreHover.setText('Score: ' + player.score);
     player.scoreHover.x = (this.game.camera.width / 2) - (player.scoreHover.width / 2);
     player.scoreHover.y = (this.game.camera.height / 2) - 90;
     player.scoreHover.fixedToCamera = true;
@@ -558,8 +559,7 @@ Game.updateHealthBar = function(player) {
 
 Game.updateLeaderboard = function() {
     Game.checkLeaderboard();
-
-    // TEXT CODE
+    Game.setLeaderboard();
 };
 
 Game.checkLeaderboard = function() {
@@ -568,43 +568,94 @@ Game.checkLeaderboard = function() {
             (Game.playerMap[p].score > Game.leaderboard[1].score
                 && Game.leaderboard[1] !== Game.playerMap[p]))
         {
-            Game.leaderboard[2] = Game.leaderboard[1];
-            Game.leaderboard[3] = Game.leaderboard[2];
-            Game.leaderboard[4] = Game.leaderboard[3];
+            console.log('#1 = '+Game.playerMap[p].name);
+            Game.removeFromLeaderboard(p);
             Game.leaderboard[5] = Game.leaderboard[4];
+            Game.leaderboard[4] = Game.leaderboard[3];
+            Game.leaderboard[3] = Game.leaderboard[2];
+            Game.leaderboard[2] = Game.leaderboard[1];
             Game.leaderboard[1] = Game.playerMap[p];
         }
         else if (Game.leaderboard[2] === null ||
             (Game.playerMap[p].score > Game.leaderboard[2].score
                 && Game.leaderboard[2] !== Game.playerMap[p]))
         {
-            Game.leaderboard[3] = Game.leaderboard[2];
-            Game.leaderboard[4] = Game.leaderboard[3];
-            Game.leaderboard[5] = Game.leaderboard[4];
-            Game.leaderboard[2] = Game.playerMap[p];
+            if (Game.leaderboard[1] !== Game.playerMap[p])
+            {
+                console.log('#2 = ' + Game.playerMap[p].name);
+                Game.removeFromLeaderboard(p);
+                Game.leaderboard[5] = Game.leaderboard[4];
+                Game.leaderboard[4] = Game.leaderboard[3];
+                Game.leaderboard[3] = Game.leaderboard[2];
+                Game.leaderboard[2] = Game.playerMap[p];
+            }
         }
         else if (Game.leaderboard[3] === null ||
             (Game.playerMap[p].score > Game.leaderboard[3].score
                 && Game.leaderboard[3] !== Game.playerMap[p]))
         {
-            Game.leaderboard[4] = Game.leaderboard[3];
-            Game.leaderboard[5] = Game.leaderboard[4];
-            Game.leaderboard[3] = Game.playerMap[p];
+            if (Game.leaderboard[1] !== Game.playerMap[p]
+                && Game.leaderboard[2] !== Game.playerMap[p])
+            {
+                console.log('#3 = ' + Game.playerMap[p].name);
+                Game.removeFromLeaderboard(p);
+                Game.leaderboard[5] = Game.leaderboard[4];
+                Game.leaderboard[4] = Game.leaderboard[3];
+                Game.leaderboard[3] = Game.playerMap[p];
+            }
         }
         else if (Game.leaderboard[4] === null ||
             (Game.playerMap[p].score > Game.leaderboard[4].score
                 && Game.leaderboard[4] !== Game.playerMap[p]))
         {
-            Game.leaderboard[5] = Game.leaderboard[4];
-            Game.leaderboard[4] = Game.playerMap[p];
+            if (Game.leaderboard[1] !== Game.playerMap[p]
+                && Game.leaderboard[2] !== Game.playerMap[p]
+                && Game.leaderboard[3] !== Game.playerMap[p])
+            {
+                console.log('#4 = ' + Game.playerMap[p].name);
+                Game.removeFromLeaderboard(p);
+                Game.leaderboard[5] = Game.leaderboard[4];
+                Game.leaderboard[4] = Game.playerMap[p];
+            }
         }
         else if (Game.leaderboard[5] === null ||
             (Game.playerMap[p].score > Game.leaderboard[5].score
                 && Game.leaderboard[5] !== Game.playerMap[p]))
         {
-            Game.leaderboard[5] = Game.playerMap[p];
+            if (Game.leaderboard[1] !== Game.playerMap[p]
+                && Game.leaderboard[2] !== Game.playerMap[p]
+                && Game.leaderboard[3] !== Game.playerMap[p]
+                && Game.leaderboard[4] !== Game.playerMap[p])
+            {
+                console.log('#5 = ' + Game.playerMap[p].name);
+                Game.removeFromLeaderboard(p);
+                Game.leaderboard[5] = Game.playerMap[p];
+            }
         }
     }
+};
+
+Game.removeFromLeaderboard = function(id) {
+    for(var i in Game.leaderboard)
+    {
+        if (Game.leaderboard[i] === Game.playerMap[id])
+        {
+            Game.leaderboard[i] = null;
+        }
+    }
+};
+
+Game.setLeaderboard = function() {
+    Game.playerMap[Client.id].scoreboard.x = (this.game.camera.width / 2) + ((window.innerWidth / 2) - 500);
+    Game.playerMap[Client.id].scoreboard.y = (this.game.camera.height / 2) - ((window.innerHeight / 2) - 20);
+    Game.playerMap[Client.id].scoreboard.fixedToCamera = true;
+
+    Game.playerMap[Client.id].scoreboard.setText(
+        '#1 '+ (Game.leaderboard[1] !== null ? Game.leaderboard[1].score+' - '+Game.leaderboard[1].name : '_______')+
+        '\n#2 ' + (Game.leaderboard[2] !== null ? Game.leaderboard[2].score+' - '+Game.leaderboard[2].name : '_______')+
+        '\n#3 ' + (Game.leaderboard[3] !== null ? Game.leaderboard[3].score+' - '+Game.leaderboard[3].name : '_______')+
+        '\n#4 ' + (Game.leaderboard[4] !== null ? Game.leaderboard[4].score+' - '+Game.leaderboard[4].name : '_______')+
+        '\n#5 ' + (Game.leaderboard[5] !== null ? Game.leaderboard[5].score+' - '+Game.leaderboard[5].name : '_______'));
 };
 
 // Update the position and rotation of a given remote player
@@ -680,6 +731,7 @@ Game.updatePlayerShip = function(id, shipName){
 
 Game.removePlayer = function(id){
     console.log('Game.removePlayer '+id+'--'+Game.playerMap[id].name);
+    Game.removeFromLeaderboard(id);
     Game.playerMap[id].shipTrail.destroy();
     Game.playerMap[id].destroy();
     Game.playerDestroyed = true;
@@ -839,6 +891,8 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
     Game.playerMap[id].healthBar = Game.add.graphics(0,0);
     Game.playerMap[id].healthBar.safe = false;
     Game.playerMap[id].prevHealth = -1;
+    Game.playerMap[id].scoreboard = Game.add.text(0, 0, '', { font: '35px Arial', fill: '#fff'/*, boundsAlignH: 'right'*/ });
+
 
     //Game.createHealthBar(Game.playerMap[id]);
     playerArray.push(newPlayer);

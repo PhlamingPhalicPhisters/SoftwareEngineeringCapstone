@@ -32,6 +32,7 @@ Client.connect = function() {
 };
 
 Client.setClientName = function(name){
+
     Client.name = name;
     console.log('Client.name--'+Client.name);
 };
@@ -68,6 +69,7 @@ Client.socket.on('newplayer',function(data){
     if (game.state.current === 'Game') {
         if (Client.id === -1) {
             Client.id = data.id;
+            Client.name = data.name;
             console.log('Client.id: ' + data.id + '--' + data.name);
         }
 

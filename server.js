@@ -30,7 +30,7 @@ io.on('connection',function(socket){
                 server.modify = true;
                 socket.player = {
                     id: server.lastPlayerId++,
-                    name: data.name,
+                    name: data.name !== '' ? data.name : 'Player'+server.lastPlayerId,
                     x: randomInt(3000, 4000),
                     y: randomInt(3000, 4000),
                     rotation: (-90) * (3.14 / 180), // start upward -- convert degrees to radians??
