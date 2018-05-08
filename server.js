@@ -25,11 +25,8 @@ io.on('connection',function(socket){
     });*/
 
     socket.on('newplayer',function(data){
-        while (1) {
-            if (!server.modify) {
-                server.modify = true;
                 socket.player = {
-                    id: server.lastPlayerId++,
+                    id: incrementID(),
                     name: data.name,
                     x: randomInt(4100, 4600),
                     y: randomInt(3600, 4100),
@@ -41,10 +38,6 @@ io.on('connection',function(socket){
                     shipName: 'unassignedShip',
                     focused: true
                 };
-                server.modify = false;
-                break;
-            }
-        }
 
         console.log('Player '+socket.player.id+' ('+socket.player.name+') connected');
         socket./*broadcast.*/emit('newplayer',socket.player);
@@ -149,6 +142,10 @@ io.on('connection',function(socket){
         console.log('test received');
     });
 });
+
+function incrementID() {
+    return server.lastPlayerId + 1;
+}
 
 function findFocused(sID, id) {
     Object.keys(io.sockets.connected).forEach(function(socketID) {
