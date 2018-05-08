@@ -26,7 +26,7 @@ io.on('connection',function(socket){
 
     socket.on('newplayer',function(data){
                 socket.player = {
-                    id: incrementID(),
+                    id: server.lastPlayerId++,//incrementID(),
                     name: data.name,
                     x: randomInt(3000, 4000),
                     y: randomInt(3000, 4000),

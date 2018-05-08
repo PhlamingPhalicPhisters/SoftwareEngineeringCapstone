@@ -234,7 +234,7 @@ Game.update = function()
             Game.ammoMap[q].forEach(function (bullet) {
                 for (var p in playerArray) {
                     if(playerArray[p].id != q) {
-                        console.log(q + " " + playerArray[p].id);
+                        //console.log(q + " " + playerArray[p].id);
                         Game.physics.arcade.overlap(playerArray[p], bullet, function (player, bullet) {
                             bullet.body.velocity = 0;
                             player.damage(bullet.damage);
@@ -404,7 +404,7 @@ function fireBullet() {
 
         if (bullet && Client.ammo > 0) {
             Client.ammo--;
-            bullet.reset(Game.playerMap[Client.getPlayerID()].body.x + Game.playerMap[Client.player.id].width/2, Game.playerMap[Client.player.id].body.y + Game.playerMap[Client.player.id].height/2);
+            bullet.reset(Game.playerMap[Client.getPlayerID()].body.x + Game.playerMap[Client.player.id].width/2 + (Game.playerMap[Client.player.id].width/2 * Math.cos(Game.playerMap[Client.player.id].rotation)), Game.playerMap[Client.player.id].body.y + Game.playerMap[Client.player.id].height/2 + (Game.playerMap[Client.player.id].height/2 * Math.sin(Game.playerMap[Client.player.id].rotation)));
             bullet.lifespan = weaponArray[Client.weaponId].lifespan;
             bullet.rotation = Game.playerMap[Client.player.id].rotation;
             bullet.damage = weaponArray[Client.weaponId].damage;
@@ -424,7 +424,7 @@ Game.updateBullets = function(x, y, rotation, weaponId, id) {
         var bullet = Game.ammoMap[id].getFirstExists(false);
 
         if (bullet) {
-            bullet.reset(x, y);
+            bullet.reset(x + (Game.playerMap[id].width/2 * Math.cos(Game.playerMap[id].rotation)), y + (Game.playerMap[id].height/2 * Math.sin(Game.playerMap[id].rotation)));
             bullet.lifespan = weaponArray[weaponId].lifespan;
             bullet.damage = weaponArray[weaponId].damage;
             bullet.rotation = rotation;
@@ -466,8 +466,8 @@ Game.updateAmmo = function(id, ammo, weaponId) {
 Game.sendTransform = function() {
     //console.log('Game sendTransform');
     if(Client.getPlayerID() !== -1 && Game.localPlayerInstantiated && Game.focused/*&& Game.playerMap.length > 0*/) {
-        Game.playerMap[Client.getPlayerID()].shipTrail.x = Game.playerMap[Client.getPlayerID()].x;
-        Game.playerMap[Client.getPlayerID()].shipTrail.y = Game.playerMap[Client.getPlayerID()].y;
+        Game.playerMap[Client.getPlayerID()].shipTrail.x = Game.playerMap[Client.getPlayerID()].x - (Game.playerMap[Client.getPlayerID()].width/2 * Math.cos(Game.playerMap[Client.getPlayerID()].rotation));
+        Game.playerMap[Client.getPlayerID()].shipTrail.y = Game.playerMap[Client.getPlayerID()].y - (Game.playerMap[Client.getPlayerID()].height/2 * Math.sin(Game.playerMap[Client.getPlayerID()].rotation));
         // Game.playerMap[Client.getPlayerID()].shipTrail.rotation = Game.playerMap[Client.getPlayerID()].rotation;
 
         var player = Game.playerMap[Client.getPlayerID()];
@@ -617,8 +617,8 @@ Game.updateTransform = function(id, x, y, rotation, health) {
         player.health = health;
 
         // Update player's trail emitter
-        player.shipTrail.x = x;
-        player.shipTrail.y = y;
+        player.shipTrail.x = x - (Game.playerMap[id].width/2 * Math.cos(Game.playerMap[id].rotation));
+        player.shipTrail.y = y - (Game.playerMap[id].height/2 * Math.sin(Game.playerMap[id].rotation));
         // player.shipTrail.rotation = rotation;
 
         Game.playerMap[id] = player;
@@ -712,7 +712,7 @@ Game.movePlayer = function(id, x, y) {
 };
 
 Game.setPlayerAcceleration = function(acceleration, isBoost){
-    if (Game.allPlayersAdded) {
+    if (Game.allPlayersAdded && Game.playerMap[Client.id].body !== null) {
         if (isBoost && Game.playerMap[Client.id].boost >= Game.boostCost) {
             Game.playerMap[Client.id].body.maxVelocity.set(Game.maxBoostVelocity);
             // Game.playBoostPFX();
