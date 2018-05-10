@@ -213,17 +213,17 @@ Game.update = function()
     // Establish collision detection between groups
 
     playerMap.forEach(function (player) {
-        Game.physics.arcade.collide(Game.playerMap[Client.getPlayerID()], player);
+        Game.physics.arcade.collide(playerMap.get(Client.getPlayerID()), player);
     });
 
     playerMap.forEach(function (player) {
         Game.physics.arcade.overlap(dustList, player, dustCollision);
     });
 
-    Game.physics.arcade.collide(layer, Game.playerMap[Client.getPlayerID()]);
+    Game.physics.arcade.collide(layer, playerMap.get(Client.getPlayerID()));
 
     //Game.physics.arcade.overlap(bullet, playerArray, Game.safeZoneEvent);       // TODODODODODO - SWAP WITH SAFEZONE, (playerArray no longer exists)
-    if (Game.physics.arcade.overlap(Game.safeZone, Game.playerMap[Client.getPlayerID()], Game.enterSafeZone)){}
+    if (Game.physics.arcade.overlap(Game.safeZone, playerMap.get(Client.getPlayerID()), Game.enterSafeZone)){}
     else {
         Game.exitSafeZone();
     }
@@ -371,7 +371,7 @@ Game.exitSafeZone = function() {
 };
 
 Game.updateScore = function(id, value) {
-    Game.playerMap[id].score = value;
+    playerMap.get(id).score = value;
     // Game.playerHUD["currency"] = value;
 };
 
@@ -385,7 +385,7 @@ Game.updateScore = function(id, value) {
 
 
 Game.updateName = function(id, name){  //This never gets called?
-    Game.playerMap[id].name = name;
+    playerMap.get(id).name = name;
     //console.log("It the name boi: " + Game.playerMap[id].name);
 };
 
@@ -395,11 +395,11 @@ function fireBullet(id) {
 
         if (bullet && Client.ammo > 0) {
             Client.ammo--;
-            bullet.reset(Game.playerMap[Client.getPlayerID()].body.x + Game.playerMap[Client.player.id].width/2 + (Game.playerMap[Client.player.id].width/2 * Math.cos(Game.playerMap[Client.player.id].rotation)), Game.playerMap[Client.player.id].body.y + Game.playerMap[Client.player.id].height/2 + (Game.playerMap[Client.player.id].height/2 * Math.sin(Game.playerMap[Client.player.id].rotation)));
+            bullet.reset(playerMap.get(Client.getPlayerID()).body.x + playerMap.get(Client.player.id).width/2 + (playerMap.get(Client.player.id).width/2 * Math.cos(playerMap.get(Client.player.id).rotation)), playerMap.get(Client.player.id).body.y + playerMap.get(Client.player.id).height/2 + (playerMap.get(Client.player.id).height/2 * Math.sin(playerMap.get(Client.player.id).rotation)));
             bullet.lifespan = weaponArray[Client.weaponId].lifespan;
-            bullet.rotation = Game.playerMap[Client.player.id].rotation;
+            bullet.rotation = playerMap.get(Client.player.id).rotation;
             bullet.damage = weaponArray[Client.weaponId].damage;
-            game.physics.arcade.velocityFromRotation(Game.playerMap[Client.player.id].rotation, weaponArray[Client.weaponId].velocity, bullet.body.velocity);
+            game.physics.arcade.velocityFromRotation(playerMap.get(Client.player.id).rotation, weaponArray[Client.weaponId].velocity, bullet.body.velocity);
             Game.ammoMap[Client.id].bulletTime = game.time.now + weaponArray[Client.weaponId].bulletTime;
             bullet.id = bulletID;
             bullet.player = id;
@@ -410,7 +410,7 @@ function fireBullet(id) {
                 bullet.destroy();
             }, this);
             Client.changeAmmo(Client.ammo);
-            Client.sendFire(Game.playerMap[Client.player.id].body.x + Game.playerMap[Client.player.id].width/2, Game.playerMap[Client.player.id].body.y + Game.playerMap[Client.player.id].height/2, Game.playerMap[Client.player.id].rotation, Client.weaponId, Client.id);
+            Client.sendFire(playerMap.get(Client.player.id).body.x + playerMap.get(Client.player.id).width/2, playerMap.get(Client.player.id).body.y + playerMap.get(Client.player.id).height/2, playerMap.get(Client.player.id).rotation, Client.weaponId, Client.id);
         }
     }
 }
@@ -420,7 +420,7 @@ Game.updateBullets = function(x, y, rotation, weaponId, id) {
         var bullet = Game.ammoMap[id].getFirstExists(false);
 
         if (bullet) {
-            bullet.reset(x + (Game.playerMap[id].width/2 * Math.cos(Game.playerMap[id].rotation)), y + (Game.playerMap[id].height/2 * Math.sin(Game.playerMap[id].rotation)));
+            bullet.reset(x + (playerMap.get(id).width/2 * Math.cos(playerMap.get(id).rotation)), y + (playerMap.get(id).height/2 * Math.sin(playerMap.get(id).rotation)));
             bullet.lifespan = weaponArray[weaponId].lifespan;
             bullet.damage = weaponArray[weaponId].damage;
             bullet.rotation = rotation;
@@ -458,8 +458,6 @@ Game.updateAmmo = function(id, ammo, weaponId) {
     });    // rescale bodies
     Game.ammoMap[id].bulletTime = 0;
 
-    if (Game.ammoMap.length === Game.playerMap)
-        Game.bulletsCreated = true;
     Game.bulletsCreated = true;
 
     //if (Game.ammoMap.length === Game.playerMap)
@@ -471,11 +469,11 @@ Game.updateAmmo = function(id, ammo, weaponId) {
 Game.sendTransform = function() {
     //console.log('Game sendTransform');
     if(Client.getPlayerID() !== -1 && Game.localPlayerInstantiated && Game.focused/*&& Game.playerMap.length > 0*/) {
-        Game.playerMap[Client.getPlayerID()].shipTrail.x = Game.playerMap[Client.getPlayerID()].x - (Game.playerMap[Client.getPlayerID()].width/2 * Math.cos(Game.playerMap[Client.getPlayerID()].rotation));
-        Game.playerMap[Client.getPlayerID()].shipTrail.y = Game.playerMap[Client.getPlayerID()].y - (Game.playerMap[Client.getPlayerID()].height/2 * Math.sin(Game.playerMap[Client.getPlayerID()].rotation));
+        playerMap.get(Client.getPlayerID()).shipTrail.x = playerMap.get(Client.getPlayerID()).x - (playerMap.get(Client.getPlayerID()).width/2 * Math.cos(playerMap.get(Client.getPlayerID()).rotation));
+        playerMap.get(Client.getPlayerID()).shipTrail.y = playerMap.get(Client.getPlayerID()).y - (playerMap.get(Client.getPlayerID()).height/2 * Math.sin(playerMap.get(Client.getPlayerID()).rotation));
         // Game.playerMap[Client.getPlayerID()].shipTrail.rotation = Game.playerMap[Client.getPlayerID()].rotation;
 
-        var player = Game.playerMap[Client.getPlayerID()];
+        var player = playerMap.get(Client.getPlayerID());
 
         Game.updateHUD(player);
 
@@ -617,21 +615,21 @@ Game.checkLeaderboard = function() {
 // Update the position and rotation of a given remote player
 Game.updateTransform = function(id, x, y, rotation, health) {
     if (Game.allPlayersAdded) {
-        var player = Game.playerMap[id];
+        var player = playerMap.get(id);
         player.x = x;
         player.y = y;
         player.rotation = rotation;
         player.health = health;
 
         // Update player's trail emitter
-        player.shipTrail.x = x - (Game.playerMap[id].width/2 * Math.cos(Game.playerMap[id].rotation));
-        player.shipTrail.y = y - (Game.playerMap[id].height/2 * Math.sin(Game.playerMap[id].rotation));
+        player.shipTrail.x = x - (playerMap.get(id).width/2 * Math.cos(playerMap.get(id).rotation));
+        player.shipTrail.y = y - (playerMap.get(id).height/2 * Math.sin(playerMap.get(id).rotation));
         // player.shipTrail.rotation = rotation;
 
-        Game.playerMap[id] = player;
+        playerMap.set(id, player);
         // console.log('player name='+Game.playerMap[id].name);
         if (id === Client.id && player.health <= 0) {
-            Game.playerMap[id].destroy();
+            Game.playerKilled(playerMap.get(id));
         }
     }
 };
@@ -680,18 +678,18 @@ Game.refillBoost = function(){
 Game.updatePlayerShip = function(id, shipName){
     if (Game.allPlayersAdded){
         console.log('we got to update playership, the player id is: '+ id + " " + shipName);
-        Game.playerMap[id].loadTexture(shipName); // loadTexture draws the new sprite
+        playerMap.get(id).loadTexture(shipName); // loadTexture draws the new sprite
     }
 };
 
 Game.removePlayer = function(id){
-    console.log('Game.removePlayer '+id+'--'+Game.playerMap[id].name);
-    Game.playerMap[id].shipTrail.destroy();
-    generateDustOnDeath(Game.playerMap[id].x, Game.playerMap[id].y);
+    console.log('Game.removePlayer '+id+'--'+playerMap.get(id).name);
+    playerMap.get(id).shipTrail.destroy();
+    generateDustOnDeath(playerMap.get(id).x, playerMap.get(id).y);
     playerMap.delete(id);
-    Game.playerMap[id].destroy();
+    playerMap.get(id).destroy();
     Game.playerDestroyed = true;
-    delete Game.playerMap[id];
+    delete playerMap.get(id);
 };
 
 Game.playerKilled = function(thePlayer){
@@ -711,7 +709,7 @@ Game.getCoordinates = function(layer, pointer) {
 
 Game.movePlayer = function(id, x, y) {
     //console.log(Game.playerMap.length);
-    var player = Game.playerMap[id];
+    var player = playerMap.get(id);
     var distance = Phaser.Math.distance(player.x, player.y, x, y);
     var duration = distance * 1;
     this.game.tweens.remove(player.tween);
@@ -722,23 +720,23 @@ Game.movePlayer = function(id, x, y) {
 };
 
 Game.setPlayerAcceleration = function(acceleration, isBoost){
-    if (Game.allPlayersAdded && Game.playerMap[Client.getPlayerID()].body !== null) {
-        if (isBoost && Game.playerMap[Client.id].boost >= Game.boostCost) {
-            Game.playerMap[Client.id].body.maxVelocity.set(Game.maxBoostVelocity);
+    if (Game.allPlayersAdded && playerMap.get(Client.getPlayerID()).body !== null) {
+        if (isBoost && playerMap.get(Client.id).boost >= Game.boostCost) {
+            playerMap.get(Client.id).body.maxVelocity.set(Game.maxBoostVelocity);
             // Game.playBoostPFX();
 
             // console.log('we boostin');
-            Game.playerMap[Client.id].boost -= Game.boostCost;
+            playerMap.get(Client.id).boost -= Game.boostCost;
             // game.physics.arcade.velocityFromRotation(rotation, weaponArray[weaponId].velocity, bullet.body.velocity);
-            game.physics.arcade.accelerationFromRotation(Game.playerMap[Client.id].rotation,
-                acceleration * Game.boostAccelMult, Game.playerMap[Client.id].body.acceleration);
+            game.physics.arcade.accelerationFromRotation(playerMap.get(Client.id).rotation,
+                acceleration * Game.boostAccelMult, playerMap.get(Client.id).body.acceleration);
         }
         else {
-            Game.playerMap[Client.id].body.maxVelocity.set(Game.maxNormVelocity);
+            playerMap.get(Client.id).body.maxVelocity.set(Game.maxNormVelocity);
             // Game.stopBoostPFX();
 
-            game.physics.arcade.accelerationFromRotation(Game.playerMap[Client.id].rotation,
-                acceleration, Game.playerMap[Client.id].body.acceleration);
+            game.physics.arcade.accelerationFromRotation(playerMap.get(Client.id).rotation,
+                acceleration, playerMap.get(Client.id).body.acceleration);
         }
         /*if (Game.playerMap[Client.id].body.velocity === Game.playerMap[Client.id].body.maxVelocity)
         {
@@ -748,16 +746,16 @@ Game.setPlayerAcceleration = function(acceleration, isBoost){
 };
 
 Game.playBoostPFX = function() {
-    Game.playerMap[Client.id].shipTrail.start(false, 5000, 10);
+    playerMap.get(Client.id).shipTrail.start(false, 5000, 10);
 };
 
 Game.stopBoostPFX = function() {
-    Game.playerMap[Client.id].shipTrail.kill();
+    playerMap.get(Client.id).shipTrail.kill();
 };
 
 Game.setPlayerRotation = function(id, angVelocity){
-    if(Game.playerMap[id].body !== null)
-        Game.playerMap[id].body.angularVelocity = angVelocity;
+    if(playerMap.get(id).body !== null)
+        playerMap.get(id).body.angularVelocity = angVelocity;
 };
 
 Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
@@ -850,13 +848,14 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
 
     // Local player should be instantiated first before remote players
     newPlayer.id = id;
+    newPlayer.shield = Game.add.text(0, 0, '', { font: '35px Arial', fill: '#fff' });
+    newPlayer.nameHover = Game.add.text(0, 0, '', {font: '20px Arial', fill: '#fff'});
+    newPlayer.scoreHover = Game.add.text(0, 0, '', {font: '20px Arial', fill: '#fff'});
+    newPlayer.healthBar = Game.add.graphics(0,0);
+    newPlayer.healthBar.safe = false;
+    newPlayer.prevHealth = -1;
+
     Game.playerMap[id] = newPlayer;
-    Game.playerMap[id].shield = Game.add.text(0, 0, '', { font: '35px Arial', fill: '#fff' });
-    Game.playerMap[id].nameHover = Game.add.text(0, 0, '', {font: '20px Arial', fill: '#fff'});
-    Game.playerMap[id].scoreHover = Game.add.text(0, 0, '', {font: '20px Arial', fill: '#fff'});
-    Game.playerMap[id].healthBar = Game.add.graphics(0,0);
-    Game.playerMap[id].healthBar.safe = false;
-    Game.playerMap[id].prevHealth = -1;
 
     //Game.createHealthBar(Game.playerMap[id]);
     playerMap.set(newPlayer.id, newPlayer);
@@ -865,12 +864,12 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
     }
 
     // Set local camera to follow local player sprite
-    this.game.camera.follow(Game.playerMap[Client.getPlayerID()], Phaser.Camera.FOLLOW_LOCKON);
+    this.game.camera.follow(playerMap.get(id), Phaser.Camera.FOLLOW_LOCKON);
     this.game.renderer.renderSession.roundPixels = true;
 };
 
 Game.setDeathBehavior = function(id) {
-    Game.playerMap[id].events.onKilled.add(function() {
+    playerMap.get(id).events.onKilled.add(function() {
         Client.disconnect();
         game.state.start('Menu');
         game.state.clearCurrentState();
