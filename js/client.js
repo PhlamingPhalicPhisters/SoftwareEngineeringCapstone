@@ -7,6 +7,8 @@ Client.id = -1;
 Client.weaponId = -1;
 Client.ammo = 0;
 Client.score = 0;
+Client.highScore = 0;
+Client.lastScore = 0;
 
 // Client.connect = function(){
 //     console.log('Client.connect()--Client.name = '+Client.name);
@@ -32,6 +34,7 @@ Client.connect = function() {
 };
 
 Client.setClientName = function(name){
+
     Client.name = name;
     console.log('Client.name--'+Client.name);
 };
@@ -68,6 +71,7 @@ Client.socket.on('newplayer',function(data){
     if (game.state.current === 'Game') {
         if (Client.id === -1) {
             Client.id = data.id;
+            Client.name = data.name;
             console.log('Client.id: ' + data.id + '--' + data.name);
         }
 
@@ -107,6 +111,14 @@ Client.socket.on('allplayers',function(data){
     }
     Game.setAllPlayersAdded();
 });
+
+Client.setClientScores = function(score) {
+    Client.lastScore = score;
+    if (score > Client.highScore)
+    {
+        Client.highScore = score;
+    }
+};
 
 Client.socket.on('remove',function(id){
     if (game.state.current === 'Game') {

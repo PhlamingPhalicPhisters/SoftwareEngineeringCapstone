@@ -25,19 +25,19 @@ io.on('connection',function(socket){
     });*/
 
     socket.on('newplayer',function(data){
-                socket.player = {
-                    id: server.lastPlayerId++,//incrementID(),
-                    name: data.name,
-                    x: randomInt(3000, 4000),
-                    y: randomInt(3000, 4000),
-                    rotation: (-90) * (3.14 / 180), // start upward -- convert degrees to radians??
-                    health: 100,
-                    score: 0,
-                    weaponId: randomInt(0, 3),
-                    ammo: 0,
-                    shipName: 'unassignedShip',
-                    focused: true
-                };
+        socket.player = {
+            id: server.lastPlayerId++,//incrementID(),
+            name: data.name !== '' ? data.name : 'Player'+server.lastPlayerId,
+            x: randomInt(3000, 4000),
+            y: randomInt(3000, 4000),
+            rotation: (-90) * (3.14 / 180), // start upward -- convert degrees to radians??
+            health: 100,
+            score: 0,
+            weaponId: randomInt(0, 3),
+            ammo: 0,
+            shipName: 'unassignedShip',
+            focused: true
+        };
 
         console.log('Player '+socket.player.id+' ('+socket.player.name+') connected');
         socket./*broadcast.*/emit('newplayer',socket.player);
