@@ -19,7 +19,7 @@ var bulletID = 0;
 
 //This variable represents the amount of ships in the game
 //It is used when assigning new players a ship
-const numberOfShipSprites = 8;
+const numberOfShipSprites = 15;
 
 Game.init = function(){
     Client.connect();
@@ -52,35 +52,49 @@ Game.preload = function() {
     this.game.stage.disableVisibilityChange = true;
 
     // Load map assets
-    this.game.load.tilemap('map', 'assets/map/bigtilestest.json', null, Phaser.Tilemap.TILED_JSON);
+    this.game.load.tilemap('map', 'assets/map/neontest.json', null, Phaser.Tilemap.TILED_JSON);
     this.game.load.image('tiles', 'assets/map/largetilesheet.png');
-    this.game.load.image('safe_zone', 'assets/map/safe_zone.png');
+    this.game.load.image('safe_zone', 'assets/map/grid.png');
+    this.game.load.image('neon', 'assets/map/tilemapneonsmall.png');
 
     // Load ship assets
-    this.game.load.image('ship1','assets/sprites/ship1.png');
-    this.game.load.image('ship2','assets/sprites/ship2.png');
-    this.game.load.image('ship3','assets/sprites/ship3.png');
-    this.game.load.image('ship4','assets/sprites/ship4.png');
-    this.game.load.image('ship5','assets/sprites/ship5.png');
-    this.game.load.image('ship6','assets/sprites/ship6.png');
-    this.game.load.image('ship7','assets/sprites/ship7.png');
-    this.game.load.image('ship8','assets/sprites/ship8.png');
+    this.game.load.image('ship1','assets/sprites/neon/Ship1.png');
+    this.game.load.image('ship2','assets/sprites/neon/Ship2.png');
+    this.game.load.image('ship3','assets/sprites/neon/Ship3.png');
+    this.game.load.image('ship4','assets/sprites/neon/Ship4.png');
+    this.game.load.image('ship5','assets/sprites/neon/Ship5.png');
+    this.game.load.image('ship6','assets/sprites/neon/Ship6.png');
+    this.game.load.image('ship7','assets/sprites/neon/Ship7.png');
+    this.game.load.image('ship8','assets/sprites/neon/Ship8.png');
+    this.game.load.image('ship9','assets/sprites/neon/Ship9.png');
+    this.game.load.image('ship10','assets/sprites/neon/Ship10.png');
+    this.game.load.image('ship11','assets/sprites/neon/Ship11.png');
+    this.game.load.image('ship12','assets/sprites/neon/Ship12.png');
+    this.game.load.image('ship13','assets/sprites/neon/Ship13.png');
+    this.game.load.image('ship14','assets/sprites/neon/Ship14.png');
+    this.game.load.image('ship15','assets/sprites/neon/Ship15.png');
 
-    // Load dust assets
-    this.game.load.image('dust', 'assets/sprites/bullet2.png');
+    // Load dust asset
+    //thsis.game.load.spritesheet('dust', 'assets/sprites/neon/Dust.png',500,500,30);
+    this.game.load.image('dust', 'assets/sprites/neon/Dust Single.png');
+
+    // Load Particles
+    this.game.load.image('trail', 'assets/sprites/w_trail.png');
+    this.game.load.image('spark', 'asssets/sprites/neon/spark.png');
 
     // Load weapon assets
-    this.game.load.image('trail', 'assets/sprites/w_trail.png');
-    this.game.load.image('bullet', 'assets/sprites/general-bullet.png');
-    this.game.load.image('bullet1', 'assets/sprites/bullet1.png');
-    this.game.load.image('bullet2', 'assets/sprites/bullet2.png');
+    this.game.load.image('bullet', 'assets/sprites/neon/GreenShot.png');
+    this.game.load.image('bullet1', 'assets/sprites/neon/RedShot.png');
+    this.game.load.image('bullet2', 'assets/sprites/neon/BlueShot.png');
 
-    //this.game.load.image('ship0', 'assets/sprites/general-bullet.png');
+    this.game.load.image('ship0', 'assets/sprites/neon/squaresquare.png');
 };
 
 //Helper function for the loading screen
 function loadStart() {
-    game.add.sprite(game.world.centerX,game.world.centerY, 'shipload');
+    var shiploadsprite = game.add.sprite(game.world.centerX - 50,game.world.centerY - 25, 'shipload');
+    shiploadsprite.height = 75;
+    shiploadsprite.width = 75;
     game.stage.backgroundColor = '#000000';
     game.add.text(game.world.centerX+40,game.world.centerY, 'Loading...', { fill: '#ffffff' });
     //var sprite = game.add.sprite(game.world.centerX,game.world.centerY,'loadingSprite');
@@ -134,15 +148,16 @@ Game.create = function(){
     //Name of tilesheet in json, name in game.js
     var map = this.game.add.tilemap('map');
     map.addTilesetImage('largetilesheet','tiles');
+    map.addTilesetImage('tilemapneonsmall', 'neon');
 
     //Order of these statments impacts the order of render
     map.createLayer('Backgroundlayer');
     // safeZoneLayer = map.createLayer('Zonelayer');
-    Game.safeZone = game.add.sprite(3500,3500,'safe_zone');
-    Game.safeZone.width = 1000;
-    Game.safeZone.height = 1000;
+    Game.safeZone = game.add.sprite(3235,3240,'safe_zone');
+    Game.safeZone.width = 1205;
+    Game.safeZone.height = 1205;
     Game.safeZone.anchor.setTo(0.5,0.5);
-    Game.safeZone.alpha = 0.3;
+    Game.safeZone.alpha = 0.6;
     layer = map.createLayer('Groundlayer');
     map.setCollisionBetween(0, 4000, true, 'Groundlayer');
     // map.setCollisionBetween(0, 1, true, 'Zonelayer');
@@ -249,6 +264,11 @@ Game.update = function()
             });
         });
 
+    // for(var d in dustList){
+    //     for(var p in playerArray){
+            Game.physics.arcade.overlap(dustList, playerMap, dustCollision);
+    //     }
+    // }
         for(var e in bulletErase){
             firedBullets.delete(bulletErase[e].id);
             bulletErase[e].destroy();
@@ -448,8 +468,8 @@ Game.updateAmmo = function(id, ammo, weaponId) {
         Game.ammoMap[id].createMultiple(ammo, 'bullet1');
     if (weaponId === 2)
         Game.ammoMap[id].createMultiple(ammo, 'bullet2');
-    Game.ammoMap[id].setAll('scale.x', 0.5);
-    Game.ammoMap[id].setAll('scale.y', 0.5);
+    Game.ammoMap[id].setAll('scale.x', 1.5);
+    Game.ammoMap[id].setAll('scale.y', 1.5);
     Game.ammoMap[id].setAll('anchor.x', 0.5);
     Game.ammoMap[id].setAll('anchor.y', 0.5);
     //Game.ammoMap[id].setAll('bounce', 0, 0);
