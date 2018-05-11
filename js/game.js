@@ -80,7 +80,7 @@ Game.preload = function() {
 
     // Load Particles
     this.game.load.image('trail', 'assets/sprites/w_trail.png');
-    this.game.load.image('spark', 'asssets/sprites/neon/spark.png');
+    this.game.load.image('spark', 'assets/sprites/neon/spark.png');
 
     // Load weapon assets
     this.game.load.image('bullet', 'assets/sprites/neon/GreenShot.png');
