@@ -70,6 +70,7 @@ Game.preload = function() {
     this.game.load.image('dust', 'assets/sprites/bullet2.png');
 
     // Load weapon assets
+    this.game.load.image('trail', 'assets/sprites/w_trail.png');
     this.game.load.image('bullet', 'assets/sprites/general-bullet.png');
     this.game.load.image('bullet1', 'assets/sprites/bullet1.png');
     this.game.load.image('bullet2', 'assets/sprites/bullet2.png');
@@ -867,7 +868,7 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
     newPlayer.shipTrail.gravity = 0;
     newPlayer.shipTrail.z = -1000;
     newPlayer.shipTrail.width = 10;
-    newPlayer.shipTrail.makeParticles('bullet');
+    newPlayer.shipTrail.makeParticles('trail');
     newPlayer.shipTrail.setXSpeed(30, -30);
     newPlayer.shipTrail.setYSpeed(30, -30);
     // newPlayer.shipTrail.setRotation(50,-50);
