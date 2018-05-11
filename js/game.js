@@ -19,7 +19,7 @@ var bulletID = 0;
 
 //This variable represents the amount of ships in the game
 //It is used when assigning new players a ship
-const numberOfShipSprites = 9;
+const numberOfShipSprites = 8;
 
 Game.init = function(){
     Client.connect();
@@ -511,7 +511,7 @@ Game.updateHUD = function(player){
     player.shield.setText('Shield:\n' +
         'Bullets: ' + Game.playerHUD["bullets"] + '\n' +
         'Boost: ' + Game.playerHUD["boost"] + '\n' +
-        'Currency: ' + Game.playerHUD["currency"], {font: '100px Arial', fill: '#fff'});
+        'Currency: ' + Game.playerHUD["currency"], {font: '100px Lucida Console', fill: '#fff'});
     // }
 
 
@@ -557,8 +557,8 @@ Game.updateHealthBar = function(player) {
         player.healthBar.endFill();
     }
 
-    player.healthBar.x = player.shield.x + 120;
-    player.healthBar.y = player.shield.y + 20;
+    player.healthBar.x = player.shield.x + 150;
+    player.healthBar.y = player.shield.y + 18;
     player.prevHealth = player.health;
     player.healthBar.fixedToCamera = true;
 };
@@ -653,16 +653,16 @@ Game.removeFromLeaderboard = function(id) {
 };
 
 Game.setLeaderboard = function() {
-    Game.playerMap[Client.id].scoreboard.x = (this.game.camera.width / 2) + ((window.innerWidth / 2) - 500);
+    Game.playerMap[Client.id].scoreboard.x = (this.game.camera.width / 2) + ((window.innerWidth / 2) - 20);
     Game.playerMap[Client.id].scoreboard.y = (this.game.camera.height / 2) - ((window.innerHeight / 2) - 20);
     Game.playerMap[Client.id].scoreboard.fixedToCamera = true;
 
     Game.playerMap[Client.id].scoreboard.setText(
-        '#1 '+ (Game.leaderboard[1] !== null ? Game.leaderboard[1].score+' - '+Game.leaderboard[1].name : '_______')+
-        '\n#2 ' + (Game.leaderboard[2] !== null ? Game.leaderboard[2].score+' - '+Game.leaderboard[2].name : '_______')+
-        '\n#3 ' + (Game.leaderboard[3] !== null ? Game.leaderboard[3].score+' - '+Game.leaderboard[3].name : '_______')+
-        '\n#4 ' + (Game.leaderboard[4] !== null ? Game.leaderboard[4].score+' - '+Game.leaderboard[4].name : '_______')+
-        '\n#5 ' + (Game.leaderboard[5] !== null ? Game.leaderboard[5].score+' - '+Game.leaderboard[5].name : '_______'));
+        '#1 '+ (Game.leaderboard[1] !== null ? Game.leaderboard[1].score+'-'+Game.leaderboard[1].name : '_______')+
+        '\n#2 ' + (Game.leaderboard[2] !== null ? Game.leaderboard[2].score+'-'+Game.leaderboard[2].name : '_______')+
+        '\n#3 ' + (Game.leaderboard[3] !== null ? Game.leaderboard[3].score+'-'+Game.leaderboard[3].name : '_______')+
+        '\n#4 ' + (Game.leaderboard[4] !== null ? Game.leaderboard[4].score+'-'+Game.leaderboard[4].name : '_______')+
+        '\n#5 ' + (Game.leaderboard[5] !== null ? Game.leaderboard[5].score+'-'+Game.leaderboard[5].name : '_______'));
 };
 
 // Update the position and rotation of a given remote player
@@ -904,14 +904,14 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
     // Local player should be instantiated first before remote players
     newPlayer.id = id;
     Game.playerMap[id] = newPlayer;
-    Game.playerMap[id].shield = Game.add.text(0, 0, '', { font: '35px Arial', fill: '#fff' });
-    Game.playerMap[id].nameHover = Game.add.text(0, 0, '', {font: '20px Arial', fill: '#fff'});
-    Game.playerMap[id].scoreHover = Game.add.text(0, 0, '', {font: '20px Arial', fill: '#fff'});
+    Game.playerMap[id].shield = Game.add.text(0, 0, '', { font: '35px Lucida Console', fill: '#fff' });
+    Game.playerMap[id].nameHover = Game.add.text(0, 0, '', {font: '20px Lucida Console', fill: '#fff'});
+    Game.playerMap[id].scoreHover = Game.add.text(0, 0, '', {font: '20px Lucida Console', fill: '#fff'});
     Game.playerMap[id].healthBar = Game.add.graphics(0,0);
     Game.playerMap[id].healthBar.safe = false;
     Game.playerMap[id].prevHealth = -1;
-    Game.playerMap[id].scoreboard = Game.add.text(0, 0, '', { font: '35px Arial', fill: '#fff'/*, boundsAlignH: 'right'*/ });
-
+    Game.playerMap[id].scoreboard = Game.add.text(0, 0, '', { font: '35px Lucida Console', fill: '#fff'/*, boundsAlignH: 'right'*/ });
+    Game.playerMap[id].scoreboard.anchor.setTo(1, 0);
 
     //Game.createHealthBar(Game.playerMap[id]);
     playerMap.set(newPlayer.id, newPlayer);

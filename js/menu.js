@@ -8,7 +8,19 @@ Menu.menuConfig = {
 Menu.init = function()
 {
     console.log('Menu.init');
+
+    if (localStorage.highScore === undefined)
+    {
+        localStorage.highScore = 0;
+    }
+    if (localStorage.lastScore === undefined)
+    {
+        localStorage.lastScore = 0;
+    }
+
     this.game.stage.disableVisibilityChange = true;
+
+    Menu.maxNameLength = 13;   // Max length of the input player name
 };
 
 Menu.preload = function()
@@ -125,10 +137,23 @@ Menu.addGraphics = function()
     Menu.titleImg.width = window.innerWidth*0.6;
     Menu.titleImg.height = Menu.titleImg.width * (imgHeight/imgWidth);
 
-    Menu.highScore = game.add.text(window.innerWidth/2, window.innerHeight/2-125, 'High Score: '+Client.highScore, { font: '35px Arial', fill: '#fff' });
-    Menu.lastScore = game.add.text(window.innerWidth/2, window.innerHeight/2-50, 'Last Score: '+Client.lastScore, { font: '35px Arial', fill: '#fff' });
+    if (typeof(Storage) !== "undefined") {
+        // Code for localStorage/sessionStorage
+        Menu.highScore = game.add.text(window.innerWidth/2, window.innerHeight/2-window.innerHeight*0.125, 'High Score: '+localStorage.highScore, { font: '35px Lucida Console', fill: '#ff0' });
+        Menu.lastScore = game.add.text(window.innerWidth/2, window.innerHeight/2-window.innerHeight*0.05, 'Last Score: '+localStorage.lastScore, { font: '35px Lucida Console', fill: '#fff' });
+    } else {
+        // Sorry! No Web Storage support..
+        Menu.highScore = game.add.text(window.innerWidth/2, window.innerHeight/2-125, 'High Score: '+Client.highScore, { font: '35px Arial', fill: '#fff' });
+        Menu.lastScore = game.add.text(window.innerWidth/2, window.innerHeight/2-50, 'Last Score: '+Client.lastScore, { font: '35px Arial', fill: '#fff' });
+    }
     Menu.highScore.anchor.set(0.5);
     Menu.lastScore.anchor.set(0.5);
+    var scoreW = Menu.highScore.width;
+    var scoreH = Menu.highScore.height;
+    Menu.highScore.width = window.innerWidth*0.2;
+    Menu.highScore.height = Menu.highScore.width * (scoreH/scoreW);
+    Menu.lastScore.width = window.innerWidth*0.2;
+    Menu.lastScore.height = Menu.lastScore.width * (scoreH/scoreW);
 
     var tempName;
     if (Menu.nameInput !== null)
@@ -140,6 +165,7 @@ Menu.addGraphics = function()
         font: '30px Arial',
         fill: '#'+Math.floor(Math.random()*(16777215/2.5)).toString(16),  // random text color
         fontWeight: 'bold',
+        max: Menu.maxNameLength,
         width: inputWidth,
         padding: 8+window.innerHeight*.005,
         borderWidth: 5,
