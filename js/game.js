@@ -1,7 +1,6 @@
 var Game = {};
 
 var layer;
-var safeZoneLayer;
 
 var weaponArray = [];
 function addWeapon(lifespan, velocity, bulletTime, damage) {
@@ -761,6 +760,13 @@ Game.removePlayer = function(id){
     Game.removeFromLeaderboard(id);
     Game.playerMap[id].shipTrail.destroy();
     generateDustOnDeath(Game.playerMap[id].x, Game.playerMap[id].y);
+
+    //generating burst here... shouldnt be :)
+    var burst = game.add.emitter(Game.playerMap[id].x, Game.playerMap[id].y,100);
+    burst.makeParticles('spark');
+    console.log("make a particle burst");
+    burst.start(true, 3000, null, 10);
+
     playerMap.delete(id);
     Game.playerMap[id].destroy();
     Game.playerDestroyed = true;
@@ -770,7 +776,7 @@ Game.removePlayer = function(id){
 Game.playerKilled = function(thePlayer){
     //Generate the dust dropped from death
     generateDustOnDeath(thePlayer.x, thePlayer.y);
-
+    //newPlayer.shipTrail.start(false, 2000, 10);
     //Game.playerMap[thePlayer.id].shipTrail.destroy();
     //Remove the players
     playerMap.delete(thePlayer.id);
