@@ -6,9 +6,9 @@ var weaponArray = [];
 function addWeapon(lifespan, velocity, bulletTime, damage) {
     weaponArray.push({lifespan: lifespan, velocity: velocity, bulletTime: bulletTime, damage: damage});
 }
-addWeapon(2000, 700, 50, 6);
-addWeapon(2000, 900, 65, 2);
-addWeapon(2000, 500, 75, 10);
+addWeapon(2000, 900, 100, 6);
+addWeapon(2000, 900, 50, 2);
+addWeapon(2000, 900, 150, 10);
 
 Game.ammoMap = {};
 var firedBullets = new Map();
@@ -227,8 +227,8 @@ Game.update = function()
 {
     // Establish collision detection between groups
 
-    playerMap.forEach(function (player) {
-        Game.physics.arcade.collide(Game.playerMap[Client.getPlayerID()], player);
+    deathDustMap.forEach(function (dust) {
+        Game.physics.arcade.collide(dust, Game.playerMap[Client.getPlayerID()], dustCollisionDeath);
     });
 
     playerMap.forEach(function (player) {
@@ -236,6 +236,7 @@ Game.update = function()
     });
 
     Game.physics.arcade.collide(layer, Game.playerMap[Client.getPlayerID()]);
+
 
     //Game.physics.arcade.overlap(bullet, playerArray, Game.safeZoneEvent);       // TODODODODODO - SWAP WITH SAFEZONE, (playerArray no longer exists)
     if (Game.physics.arcade.overlap(Game.safeZone, Game.playerMap[Client.getPlayerID()], Game.enterSafeZone)){}
@@ -248,26 +249,23 @@ Game.update = function()
     if(firedBullets.size > 0 && !document.hidden && typeof Game.ammoMap[Client.getPlayerID()] !== 'undefined' && Client.getPlayerID() !== -1) {
         firedBullets.forEach(function (bullet) {
             playerMap.forEach(function (player, key) {
-                if(key != bullet.player) {
+                if(key !== bullet.player) {
                     Game.physics.arcade.overlap(player, bullet, function (player, bullet) {
-                            bulletErase.push(bullet);
-                            player.damage(bullet.damage);
+                        bulletErase.push(bullet);
+                        player.damage(bullet.damage);
                     });
                 }
             });
             Game.physics.arcade.overlap(bullet, Game.safeZone, function (bullet) {
                 bulletErase.push(bullet);
             });
-            Game.physics.arcade.collide(layer, bullet, function (bullet) {
-                bulletErase.push(bullet);
+            Game.physics.arcade.overlap(layer, bullet, function (bullet, layer) {
+                if(layer.index !== -1) {
+                    bulletErase.push(bullet);
+                }
             });
         });
 
-    // for(var d in dustList){
-    //     for(var p in playerArray){
-            Game.physics.arcade.overlap(dustList, playerMap, dustCollision);
-    //     }
-    // }
         for(var e in bulletErase){
             firedBullets.delete(bulletErase[e].id);
             bulletErase[e].destroy();
@@ -759,7 +757,7 @@ Game.removePlayer = function(id){
     console.log('Game.removePlayer '+id+'--'+Game.playerMap[id].name);
     Game.removeFromLeaderboard(id);
     Game.playerMap[id].shipTrail.destroy();
-    generateDustOnDeath(Game.playerMap[id].x, Game.playerMap[id].y);
+    generateDustOnDeath(Game.playerMap[id].x, Game.playerMap[id].y, Game.playerMap[id].score);
 
     //generating burst here... shouldnt be :)
     var burst = game.add.emitter(Game.playerMap[id].x, Game.playerMap[id].y,100);
@@ -775,10 +773,15 @@ Game.removePlayer = function(id){
 
 Game.playerKilled = function(thePlayer){
     //Generate the dust dropped from death
-    generateDustOnDeath(thePlayer.x, thePlayer.y);
-    //newPlayer.shipTrail.start(false, 2000, 10);
-    //Game.playerMap[thePlayer.id].shipTrail.destroy();
-    //Remove the players
+    Game.removeFromLeaderboard(id);
+    Game.playerMap[id].shipTrail.destroy();
+    generateDustOnDeath(Game.playerMap[id].x, Game.playerMap[id].y, Game.playerMap[id].score);
+
+    //generating burst here... shouldnt be :)
+    var burst = game.add.emitter(Game.playerMap[id].x, Game.playerMap[id].y,100);
+    burst.makeParticles('spark');
+    console.log("make a particle burst");
+    burst.start(true, 3000, null, 10);
     playerMap.delete(thePlayer.id);
     thePlayer.destroy();
     Game.playerDestroyed = true;

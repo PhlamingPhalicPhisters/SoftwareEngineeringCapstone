@@ -3,6 +3,8 @@
 
 //List of all dust items in the game (client side)
 var dustList = [];
+var deathDustMap = new Map();
+var deathDustID = 0;
 var worldBoudndX = 6336;
 var worldBoundY = 6336;
 var dust = function (id, startx, starty, value) {
@@ -25,7 +27,7 @@ var dust = function (id, startx, starty, value) {
     Game.physics.enable(dustObject, Phaser.Physics.ARCADE);
 
     return dustObject;
-}
+};
 
 //when dust is added
 function addDust (id, x, y, value) {
@@ -34,9 +36,17 @@ function addDust (id, x, y, value) {
 
 //Instead of removing dust we just move it to a new location
 function dustCollision(dustObject) {
-    Client.sendCollect(100);
+    Client.sendCollect(dustObject.value);
     moveDust(dustObject);
 }
+
+function dustCollisionDeath(dustObject) {
+    Client.sendCollect(dustObject.value);
+    deathDustMap.delete(dustObject.id);
+    dustObject.destroy();
+    delete dustObject;
+}
+
 function moveDust(dustObject){
     dustObject.x = randomInt(0,worldBoudndX);
     dustObject.y = randomInt(0,worldBoundY);
@@ -48,10 +58,10 @@ function generateDustForClient(){
     }
 }
 
-function generateDustOnDeath(x,y) {
-    var dropAmount = randomInt(0, 8);
+function generateDustOnDeath(x,y, amount) {
+    var dropAmount = amount / 100;
     for(var i = 0;  i < dropAmount; i++){
-        dust(0, x + i, y + i, 70);
+        deathDustMap.set(deathDustID, new dust(deathDustID++, x + 1, y + 1, 70));
     }
 }
 
