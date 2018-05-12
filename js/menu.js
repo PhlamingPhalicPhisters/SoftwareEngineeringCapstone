@@ -35,7 +35,7 @@ Menu.preload = function()
 
     if (!this.cache.checkKey(Phaser.Cache.IMAGE, 'shipload')) {
         //console.log('loading');
-        this.game.load.image('shipload', 'assets/sprites/ship1.png');
+        this.game.load.image('shipload', 'assets/sprites/neon/Ship11.png');
     }
     //this.game.load.spritesheet('loadingSprite','/assets/sprites/39/images/sprites.gif', 64,64,20);
 
