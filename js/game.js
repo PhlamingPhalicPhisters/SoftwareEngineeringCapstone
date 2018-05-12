@@ -81,10 +81,6 @@ Game.preload = function() {
     //thsis.game.load.spritesheet('dust', 'assets/sprites/neon/Dust.png',500,500,30);
     this.game.load.image('dust', 'assets/sprites/neon/Dust Single.png');
 
-    // Load weapon assets
-    this.game.load.image('bullet', 'assets/sprites/general-bullet.png');
-    this.game.load.image('bullet1', 'assets/sprites/bullet1.png');
-    this.game.load.image('bullet2', 'assets/sprites/bullet2.png');
     // Load Particles
     // this.game.load.image('trail', 'assets/sprites/w_trail.png');
     this.game.load.image('trail', 'assets/sprites/w_bubble.png');
@@ -113,7 +109,6 @@ function loadStart() {
 var sprite;
 
 
-var bullet;
 Game.create = function(){
     console.log('Game.create');
 
@@ -194,10 +189,6 @@ Game.create = function(){
         'left': Phaser.KeyCode.A, 'right': Phaser.KeyCode.D } );
     this.game.input.keyboard.addKeyCapture([Phaser.Keyboard.SPACEBAR]);
 
-    bullet = game.add.sprite(200,200,'bullet');
-    bullet.scale.setTo(0.5,0.5);
-    bullet.enableBody = true;
-    Game.physics.enable(bullet, Phaser.Physics.ARCADE);
     //bullet.body.setSize(bullet.width,bullet.height,0.5,0.5);
     // publicBulletInfo.bullets.bodies.setCircle(10);
     // Input
@@ -475,8 +466,8 @@ Game.updateAmmo = function(id, ammo, weaponId) {
         Game.ammoMap[id].createMultiple(ammo, 'bullet1');
     if (weaponId === 2)
         Game.ammoMap[id].createMultiple(ammo, 'bullet2');
-    Game.ammoMap[id].setAll('scale.x', 1.5);
-    Game.ammoMap[id].setAll('scale.y', 1.5);
+    Game.ammoMap[id].setAll('scale.x', 0.5);
+    Game.ammoMap[id].setAll('scale.y', 0.5);
     Game.ammoMap[id].setAll('anchor.x', 0.5);
     Game.ammoMap[id].setAll('anchor.y', 0.5);
     //Game.ammoMap[id].setAll('bounce', 0, 0);
