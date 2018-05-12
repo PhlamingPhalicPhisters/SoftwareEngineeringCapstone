@@ -35,6 +35,7 @@ Game.init = function(){
     Game.playerSize = 64;           // sq. px. size
     Game.isSafe = false;            // local player is in safe zone
     Game.maxNormVelocity = 200;         // maximum body acceleration
+    Game.maxBoost = 100;            // max boost capacity
     Game.maxBoostVelocity = 400;    // maximum body acceleration when boosting
     Game.normalAccel = 100;         // normal player acceleration speed
     Game.boostAccelMult = 10;        // boost acceleration multiplier
@@ -42,6 +43,9 @@ Game.init = function(){
     Game.boostRotMult = 0.5;        // boost rotation mutliplier
     Game.boostCost = .01;           // how much boost costs when active
     Game.refillBoostCost = 100;     // how much it costs to refill boost in the safe zone
+
+    Game.bulletReloadCostList = [100, 250, 500];
+    Game.boostRefillCost = 200;
 };
 
 
@@ -70,7 +74,8 @@ Game.preload = function() {
     this.game.load.image('dust', 'assets/sprites/bullet2.png');
 
     // Load weapon assets
-    this.game.load.image('trail', 'assets/sprites/w_trail.png');
+    // this.game.load.image('trail', 'assets/sprites/w_trail.png');
+    this.game.load.image('trail', 'assets/sprites/w_bubble.png');
     this.game.load.image('bullet', 'assets/sprites/general-bullet.png');
     this.game.load.image('bullet1', 'assets/sprites/bullet1.png');
     this.game.load.image('bullet2', 'assets/sprites/bullet2.png');
@@ -327,23 +332,23 @@ Game.update = function()
 
     }
 
-    if (Game.isSafe)
-    {
-        Game.showBasePrompts();
+    if (Game.allPlayersAdded) {
+        if (Game.isSafe) {
+            Game.showBasePrompts();
 
-        if (game.input.keyboard.isDown(Phaser.KeyCode.E))
-        {
-            //Game.requestShipUpgrade();
+            if (game.input.keyboard.isDown(Phaser.KeyCode.E)) {
+                //Game.requestShipUpgrade();
+            }
+            if (game.input.keyboard.isDown(Phaser.KeyCode.R)) {
+                Game.reloadWeapon();
+            }
+            if (game.input.keyboard.isDown(Phaser.KeyCode.B)) {
+                Game.refillBoost();
+            }
         }
-        if (game.input.keyboard.isDown(Phaser.KeyCode.R))
-        {
-            Game.reloadWeapon();
-            Game.refillBoost();
+        else {
+            Game.unshowBasePrompts();
         }
-    }
-    else
-    {
-        Game.unshowBasePrompts();
     }
 
     // Sync the transform of remote instances of this player
@@ -372,7 +377,9 @@ Game.exitSafeZone = function() {
 };
 
 Game.updateScore = function(id, value) {
-    Game.playerMap[id].score = value;
+    if (Game.playerMap[id].score !== null) {
+        Game.playerMap[id].score = value;
+    }
     // Game.playerHUD["currency"] = value;
 };
 
@@ -713,19 +720,38 @@ function removePlayerNames() {
 }
 
 Game.showBasePrompts = function(){
-
+    Game.playerMap[Client.id].safePromptHover.visible = true;
+    Game.playerMap[Client.id].safePromptHover.setText(
+        'Store [E]\n'
+        + 'Refill 1 bullet: '+Game.bulletReloadCostList[Client.weaponId]+'[R]\n'
+        + 'Refill 1 boost: '+Game.boostRefillCost+'[B]');
+    Game.playerMap[Client.id].safePromptHover.x = (this.game.camera.width / 2);
+    Game.playerMap[Client.id].safePromptHover.y = (this.game.camera.height / 2) + 60;
+    Game.playerMap[Client.id].safePromptHover.fixedToCamera = true;
 };
 
 Game.unshowBasePrompts = function(){
-
+    Game.playerMap[Client.id].safePromptHover.visible = false;
 };
 
 Game.reloadWeapon = function(){
-
+    if (Game.playerMap[Client.id].score >= Game.bulletReloadCostList[Client.weaponId])
+    {
+        Game.playerMap[Client.id].score -= Game.bulletReloadCostList[Client.weaponId]
+        Client.score++;
+    }
 };
 
 Game.refillBoost = function(){
-
+    if (Game.playerMap[Client.id].score >= Game.boostRefillCost && Game.playerMap[Client.id].boost < Game.maxBoost)
+    {
+        Client.sendCollect(-Game.boostRefillCost);
+        Game.playerMap[Client.id].boost++;
+        if (Game.playerMap[Client.id].boost > Game.maxBoost)
+        {
+            Game.playerMap[Client.id].boost = Game.maxBoost;
+        }
+    }
 };
 
 // Update the ship of another player
@@ -907,6 +933,8 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
     Game.playerMap[id] = newPlayer;
     Game.playerMap[id].shield = Game.add.text(0, 0, '', { font: '35px Lucida Console', fill: '#fff' });
     Game.playerMap[id].nameHover = Game.add.text(0, 0, '', {font: '20px Lucida Console', fill: '#fff'});
+    Game.playerMap[id].safePromptHover = Game.add.text(0, 0, '', {font: '20px Lucida Console', fill: '#fff', boundsAlignH: "center"});
+    Game.playerMap[id].safePromptHover.anchor.set(0.5,0.5);
     Game.playerMap[id].scoreHover = Game.add.text(0, 0, '', {font: '20px Lucida Console', fill: '#fff'});
     Game.playerMap[id].healthBar = Game.add.graphics(0,0);
     Game.playerMap[id].healthBar.safe = false;
