@@ -1039,12 +1039,12 @@ function burstLittle(x,y){
     //generating burst
     var burst = game.add.emitter(x, y,100);
     burst.makeParticles('spark');
-    //burst.start(true, 1000, null, 2);
+    burst.start(true, 1000, null, 2);
 }
 //called on player death
 function burst(x,y){
   //bullet burst
     var burst = game.add.emitter(x, y,20);
     burst.makeParticles('sparksmall');
-    //burst.start(true, 3000, null, 25);
+    burst.start(true, 3000, null, 25);
 };
