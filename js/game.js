@@ -85,6 +85,7 @@ Game.preload = function() {
     // this.game.load.image('trail', 'assets/sprites/w_trail.png');
     this.game.load.image('trail', 'assets/sprites/w_bubble.png');
     this.game.load.image('spark', 'assets/sprites/neon/spark.png');
+    this.game.load.image('sparksmall', 'assets/sprites/neon/bluespark.png');
 
     // Load weapon assets
     this.game.load.image('bullet', 'assets/sprites/neon/GreenShot.png');
@@ -250,20 +251,25 @@ Game.update = function()
             playerMap.forEach(function (player, key) {
                 if(key !== bullet.player) {
                     Game.physics.arcade.overlap(player, bullet, function (player, bullet) {
+                        burstLittle(bullet.x, bullet.y);
                         bulletErase.push(bullet);
                         player.damage(bullet.damage);
                     });
                 }
             });
             Game.physics.arcade.overlap(bullet, Game.safeZone, function (bullet) {
+                burstLittle(bullet.x, bullet.y);
                 bulletErase.push(bullet);
             });
             Game.physics.arcade.overlap(layer, bullet, function (bullet, layer) {
                 if(layer.index !== -1) {
+                    burstLittle(bullet.x, bullet.y);
                     bulletErase.push(bullet);
                 }
             });
         });
+
+        Game.physics.arcade.overlap(dustList, playerMap, dustCollision);
 
         for(var e in bulletErase){
             firedBullets.delete(bulletErase[e].id);
@@ -425,6 +431,7 @@ function fireBullet(id) {
             firedBullets.set(bullet.id, bullet);
             bulletID++;
             bullet.events.onKilled.add(function() {
+                burstLittle(bullet.x, bullet.y);
                 firedBullets.delete(bullet.id);
                 bullet.destroy();
             }, this);
@@ -449,6 +456,7 @@ Game.updateBullets = function(x, y, rotation, weaponId, id) {
             bulletID++;
             game.physics.arcade.velocityFromRotation(rotation, weaponArray[weaponId].velocity, bullet.body.velocity);
             bullet.events.onKilled.add(function() {
+                burstLittle(bullet.x, bullet.y);
                 firedBullets.delete(bullet.id);
                 bullet.destroy();
             }, this);
@@ -466,8 +474,8 @@ Game.updateAmmo = function(id, ammo, weaponId) {
         Game.ammoMap[id].createMultiple(ammo, 'bullet1');
     if (weaponId === 2)
         Game.ammoMap[id].createMultiple(ammo, 'bullet2');
-    Game.ammoMap[id].setAll('scale.x', 0.5);
-    Game.ammoMap[id].setAll('scale.y', 0.5);
+    Game.ammoMap[id].setAll('scale.x', 1.5);
+    Game.ammoMap[id].setAll('scale.y', 1.5);
     Game.ammoMap[id].setAll('anchor.x', 0.5);
     Game.ammoMap[id].setAll('anchor.y', 0.5);
     //Game.ammoMap[id].setAll('bounce', 0, 0);
@@ -779,12 +787,7 @@ Game.removePlayer = function(id){
     Game.playerMap[id].shipTrail.destroy();
     generateDustOnDeath(Game.playerMap[id].x, Game.playerMap[id].y, Game.playerMap[id].score);
 
-    //generating burst here... shouldnt be :)
-    var burst = game.add.emitter(Game.playerMap[id].x, Game.playerMap[id].y,100);
-    burst.makeParticles('spark');
-    console.log("make a particle burst");
-    burst.start(true, 3000, null, 10);
-
+    burst(Game.playerMap[id].x, Game.playerMap[id].y);
     playerMap.delete(id);
     Game.playerMap[id].destroy();
     Game.playerDestroyed = true;
@@ -796,12 +799,7 @@ Game.playerKilled = function(thePlayer){
     Game.removeFromLeaderboard(id);
     Game.playerMap[id].shipTrail.destroy();
     generateDustOnDeath(Game.playerMap[id].x, Game.playerMap[id].y, Game.playerMap[id].score);
-
-    //generating burst here... shouldnt be :)
-    var burst = game.add.emitter(Game.playerMap[id].x, Game.playerMap[id].y,100);
-    burst.makeParticles('spark');
-    console.log("make a particle burst");
-    burst.start(true, 3000, null, 10);
+    burst(Game.playerMap[id].x, Game.playerMap[id].y);
     playerMap.delete(thePlayer.id);
     thePlayer.destroy();
     Game.playerDestroyed = true;
@@ -1029,4 +1027,24 @@ Game.rgbToHex = function(r, g, b) {
 Game.componentToHex = function(c) {
     var hex = c.toString(16);
     return hex.length == 1 ? "0" + hex : hex;
+};
+
+//Particle methods:
+// if you want to increase performance edit the final argument of
+// bullet.start(true, 1000, null, 2
+// this is->   burst  lifetime    amout of particles
+
+//called on bullet removal
+function burstLittle(x,y){
+    //generating burst
+    var burst = game.add.emitter(x, y,100);
+    burst.makeParticles('spark');
+    //burst.start(true, 1000, null, 2);
+}
+//called on player death
+function burst(x,y){
+  //bullet burst
+    var burst = game.add.emitter(x, y,20);
+    burst.makeParticles('sparksmall');
+    //burst.start(true, 3000, null, 25);
 };
