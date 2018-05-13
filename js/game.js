@@ -33,18 +33,19 @@ Game.init = function(){
 
     Game.playerSize = 64;           // sq. px. size
     Game.isSafe = false;            // local player is in safe zone
-    Game.maxNormVelocity = 200;         // maximum body acceleration
-    Game.maxBoost = 100;            // max boost capacity
+    Game.maxNormVelocity = 200;     // maximum body acceleration
+    Game.maxBoost = 5000;           // max boost capacity
     Game.maxBoostVelocity = 400;    // maximum body acceleration when boosting
     Game.normalAccel = 100;         // normal player acceleration speed
-    Game.boostAccelMult = 10;        // boost acceleration multiplier
+    Game.boostAccelMult = 10;       // boost acceleration multiplier
     Game.normalAngVel = 300;        // normal player rotation speed
     Game.boostRotMult = 0.5;        // boost rotation mutliplier
-    Game.boostCost = .01;           // how much boost costs when active
+    Game.boostCost = 1;             // how much boost costs when active
     Game.refillBoostCost = 100;     // how much it costs to refill boost in the safe zone
 
-    Game.bulletReloadCostList = [100, 250, 500];
-    Game.boostRefillCost = 200;
+    Game.maxWeaponAmmo = [250, 500, 100];
+    Game.bulletReloadCostList = [50, 25, 100];
+    Game.boostRefillCost = 50;
 };
 
 
@@ -754,10 +755,14 @@ Game.unshowBasePrompts = function(){
 };
 
 Game.reloadWeapon = function(){
-    if (Game.playerMap[Client.id].score >= Game.bulletReloadCostList[Client.weaponId])
+    if (Game.playerMap[Client.id].score >= Game.bulletReloadCostList[Client.weaponId] && Client.ammo < Game.maxWeaponAmmo[Client.weaponId])
     {
-        Game.playerMap[Client.id].score -= Game.bulletReloadCostList[Client.weaponId]
-        Client.score++;
+        Client.sendCollect(-Game.bulletReloadCostList[Client.weaponId]);
+        Client.ammo++;
+        if (Client.ammo > Game.maxWeaponAmmo[Client.weaponId])
+        {
+            Client.ammo = Game.maxWeaponAmmo[Client.weaponId];
+        }
     }
 };
 
@@ -937,7 +942,7 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
 
     // Set the player's score
     // Game.playerHUD["currency"] = score;
-    newPlayer.boost = 100;
+    newPlayer.boost = Game.maxBoost;
     newPlayer.score = score;
     // newPlayer.isSafe = true;
     newPlayer.isMoving = false;
@@ -1039,7 +1044,7 @@ function burstLittle(x,y){
     //generating burst
     var burst = game.add.emitter(x, y,100);
     burst.makeParticles('spark');
-    burst.start(true, 1000, null, 2);
+    // burst.start(true, 1000, null, 2);
 }
 //called on player death
 function burst(x,y){
