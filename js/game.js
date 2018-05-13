@@ -1051,5 +1051,5 @@ function burst(x,y){
   //bullet burst
     var burst = game.add.emitter(x, y,20);
     burst.makeParticles('sparksmall');
-    burst.start(true, 3000, null, 25);
+    // burst.start(true, 3000, null, 25);
 };

@@ -214,6 +214,10 @@ Client.changeAmmo = function(ammo) {
 
 Client.sendCollect = function(value) {
     Client.score += value;
+    if (Client.score < 0)
+    {
+        Client.score = 0;
+    }
     Client.socket.emit('collect', {id: Client.id, value: value});
 };
 
