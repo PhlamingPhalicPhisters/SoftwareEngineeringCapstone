@@ -228,7 +228,7 @@ Game.update = function()
     // Establish collision detection between groups
 
     deathDustMap.forEach(function (dust) {
-        Game.physics.arcade.collide(dust, Game.playerMap[Client.getPlayerID()], dustCollisionDeath);
+        Game.physics.arcade.overlap(dust, Game.playerMap[Client.getPlayerID()], dustCollisionDeath);
     });
 
     playerMap.forEach(function (player) {
@@ -746,10 +746,11 @@ Game.unshowBasePrompts = function(){
 };
 
 Game.reloadWeapon = function(){
-    if (Game.playerMap[Client.id].score >= Game.bulletReloadCostList[Client.weaponId])
+    if (Client.score >= Game.bulletReloadCostList[Client.weaponId])
     {
-        Game.playerMap[Client.id].score -= Game.bulletReloadCostList[Client.weaponId]
-        Client.score++;
+        Game.playerMap[Client.getPlayerID()].score -= Game.bulletReloadCostList[Client.weaponId];
+        Client.score -= Game.bulletReloadCostList[Client.weaponId];
+        Client.ammo++;
     }
 };
 
