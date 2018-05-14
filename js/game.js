@@ -600,7 +600,7 @@ Game.updateHUD = function(player){
 Game.updateHealthBar = function(player) {
     //player.damage(.05);
     if(player.health === 0){
-        Game.playerKilled(player);
+        //Game.playerKilled(player);
         player.healthBar.clear();
     }
     else if (Game.isSafe){
@@ -853,14 +853,14 @@ Game.removePlayer = function(id){
 
 Game.playerKilled = function(thePlayer){
     //Generate the dust dropped from death
-    Game.removeFromLeaderboard(id);
-    Game.playerMap[id].shipTrail.destroy();
-    generateDustOnDeath(Game.playerMap[id].x, Game.playerMap[id].y, Game.playerMap[id].score);
-    burst(Game.playerMap[id].x, Game.playerMap[id].y);
+    /*Game.removeFromLeaderboard(thePlayer.id);
+    Game.playerMap[thePlayer.id].shipTrail.destroy();
+    generateDustOnDeath(Game.playerMap[thePlayer.id].x, Game.playerMap[thePlayer.id].y, Game.playerMap[thePlayer.id].score);
+    burst(Game.playerMap[thePlayer.id].x, Game.playerMap[thePlayer.id].y);
     playerMap.delete(thePlayer.id);
     thePlayer.destroy();
     Game.playerDestroyed = true;
-    delete thePlayer;
+    delete thePlayer;*/
 };
 
 Game.getCoordinates = function(layer, pointer) {
@@ -1033,6 +1033,16 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
 
 Game.setDeathBehavior = function(id) {
     Game.playerMap[id].events.onKilled.add(function() {
+        Game.removeFromLeaderboard(id);
+        Game.playerMap[id].shipTrail.destroy();
+        generateDustOnDeath(Game.playerMap[id].x, Game.playerMap[id].y, Game.playerMap[id].score);
+        burst(Game.playerMap[id].x, Game.playerMap[id].y);
+        playerMap.delete(id);
+        var player = Game.playerMap[id];
+        player.destroy();
+        Game.playerDestroyed = true;
+        delete player;
+
         Client.setClientScores(Game.playerMap[id].score);
         Client.disconnect();
         game.state.start('Menu');
