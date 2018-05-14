@@ -247,3 +247,7 @@ Client.socket.on('askCoordinates', function(data) {
 Client.socket.on('updateCoordinates', function(data) {
     Game.updateTransform(Client.id, data.x, data.y, data.rotation, data.health);
 });
+
+Client.socket.on('removeTrail', function(data) {
+    Game.setTrail(data.id, data.trailSet);
+});

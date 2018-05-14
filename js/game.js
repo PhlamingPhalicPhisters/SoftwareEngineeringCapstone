@@ -14,6 +14,10 @@ Game.ammoMap = {};
 var firedBullets = new Map();
 var playerMap = new Map();
 var bulletID = 0;
+var burstLittleEmitter;
+var burstBig;
+
+var shopMenu;
 
 
 //This variable represents the amount of ships in the game
@@ -46,6 +50,7 @@ Game.init = function(){
     Game.maxWeaponAmmo = [250, 500, 100];
     Game.bulletReloadCostList = [50, 25, 100];
     Game.boostRefillCost = 50;
+    Game.inShop = false;
 };
 
 
@@ -156,7 +161,8 @@ Game.create = function(){
     map.addTilesetImage('tilemapneonsmall', 'neon');
 
     //Order of these statments impacts the order of render
-    map.createLayer('Backgroundlayer');
+    var background = map.createLayer('Backgroundlayer');
+
     // safeZoneLayer = map.createLayer('Zonelayer');
     Game.safeZone = game.add.sprite(3235,3240,'safe_zone');
     Game.safeZone.width = 1205;
@@ -204,6 +210,14 @@ Game.create = function(){
     console.log("Testing the dust list to verify that it loaded correctly, " +
         "dust x position: " + dustList[100].positionx);
     Game.playerDestroyed = false;
+
+    burstLittleEmitter = game.add.emitter(0, 0,100);
+    burstLittleEmitter.makeParticles('spark');
+    burstBig = game.add.emitter(0, 0,20);
+    burstBig.makeParticles('sparksmall');
+
+
+    shopMenu = Game.add.graphics(0,0);
 };
 
 /*
@@ -230,7 +244,7 @@ Game.update = function()
     // Establish collision detection between groups
 
     deathDustMap.forEach(function (dust) {
-        Game.physics.arcade.collide(dust, Game.playerMap[Client.getPlayerID()], dustCollisionDeath);
+        Game.physics.arcade.overlap(dust, Game.playerMap[Client.getPlayerID()], dustCollisionDeath);
     });
 
     playerMap.forEach(function (player) {
@@ -252,19 +266,19 @@ Game.update = function()
             playerMap.forEach(function (player, key) {
                 if(key !== bullet.player) {
                     Game.physics.arcade.overlap(player, bullet, function (player, bullet) {
-                        burstLittle(bullet.x, bullet.y);
+                        //burstLittle(bullet.x, bullet.y);
                         bulletErase.push(bullet);
                         player.damage(bullet.damage);
                     });
                 }
             });
             Game.physics.arcade.overlap(bullet, Game.safeZone, function (bullet) {
-                burstLittle(bullet.x, bullet.y);
+                //burstLittle(bullet.x, bullet.y);
                 bulletErase.push(bullet);
             });
             Game.physics.arcade.overlap(layer, bullet, function (bullet, layer) {
                 if(layer.index !== -1) {
-                    burstLittle(bullet.x, bullet.y);
+                    //burstLittle(bullet.x, bullet.y);
                     bulletErase.push(bullet);
                 }
             });
@@ -280,12 +294,12 @@ Game.update = function()
 
 
     // Get forward/backward input
-    if (Game.cursors.up.isDown)
+    if (Game.cursors.up.isDown && !Game.inShop)
     {
         // Client.sendAcceleration(1);
         Game.setPlayerAcceleration(Game.normalAccel, game.input.keyboard.isDown(Phaser.Keyboard.SHIFT))
     }
-    else if (Game.cursors.down.isDown)
+    else if (Game.cursors.down.isDown && !Game.inShop)
     {
         // Client.sendAcceleration(-1);
         Game.setPlayerAcceleration(-Game.normalAccel, game.input.keyboard.isDown(Phaser.Keyboard.SHIFT))
@@ -295,7 +309,7 @@ Game.update = function()
         // Client.sendAcceleration(0);
         Game.setPlayerAcceleration(0, false);
     }
-    if (Game.cursors.left.isDown && Game.cursors.right.isDown) {
+    if (Game.cursors.left.isDown && Game.cursors.right.isDown && !Game.inShop) {
         /*var angVelocity = Game.playerMap[Client.player.id].body.angularVelocity;// Game.playerMap[Client.id].body.angularVelocity = 300;
         if (Game.cursors.left.isDown && angVelocity < 0) {
             Client.sendRotation(-300);
@@ -318,10 +332,10 @@ Game.update = function()
             Client.sendRotation(300);
         }
     }
-    else if (Game.cursors.left.isDown) {
+    else if (Game.cursors.left.isDown && !Game.inShop) {
         Client.sendRotation(-300);
     }
-    else if (Game.cursors.right.isDown) {
+    else if (Game.cursors.right.isDown && !Game.inShop) {
         Client.sendRotation(300);
     }
     else
@@ -329,7 +343,7 @@ Game.update = function()
         Client.sendRotation(0);
     }
 
-    if (game.input.keyboard.isDown(Phaser.KeyCode.Q) || game.input.keyboard.isDown(Phaser.KeyCode.L)) {
+    if ((game.input.keyboard.isDown(Phaser.KeyCode.Q) || game.input.keyboard.isDown(Phaser.KeyCode.L)) && !Game.inShop) {
         showPlayerNames();
     }
     else {
@@ -357,6 +371,15 @@ Game.update = function()
             if (game.input.keyboard.isDown(Phaser.KeyCode.E)) {
                 //Game.requestShipUpgrade();
             }
+            if (Game.inShop) {
+                Game.updateShop();
+                Game.playerMap[Client.id].body.maxVelocity.set(0);
+            }
+            else {
+                Game.clearShop();
+                if (Game.playerMap[Client.id].body.maxVelocity === 0)
+                    Game.playerMap[Client.id].body.maxVelocity.set(Game.maxNormVelocity);
+            }
             if (game.input.keyboard.isDown(Phaser.KeyCode.R)) {
                 Game.reloadWeapon();
             }
@@ -366,6 +389,10 @@ Game.update = function()
         }
         else {
             Game.unshowBasePrompts();
+            if (Game.inShop) {
+                Game.clearShop();
+                Game.inShop = false;
+            }
         }
     }
 
@@ -373,6 +400,29 @@ Game.update = function()
     // Send transform also handles the amount of health and the hud display
     // Inside of the health tracker when a player dies dust is dropped
     Game.sendTransform();
+};
+
+window.addEventListener("keypress", function(event) {
+    if (event.code === 'KeyE' && Game.isSafe) {
+        Game.inShop = !Game.inShop;
+    }
+});
+
+Game.updateShop = function() {
+    shopMenu.clear();
+    var color = Game.rgbToHex(50, 50, 50);
+    shopMenu.beginFill(color, 1);
+    shopMenu.moveTo(0, 0);
+    shopMenu.drawRect(window.innerWidth/8, window.innerHeight/8, window.innerWidth*3/4, window.innerHeight*3/4);
+    shopMenu.endFill();
+    shopMenu.x = 0;
+    shopMenu.y = 0;
+    Game.world.bringToTop(shopMenu);
+    shopMenu.fixedToCamera = true;
+};
+
+Game.clearShop = function() {
+    shopMenu.clear();
 };
 
 
@@ -431,7 +481,7 @@ function fireBullet(id) {
             bullet.player = id;
             firedBullets.set(bullet.id, bullet);
             bulletID++;
-            bullet.events.onKilled.add(function() {
+            bullet.events.onDestroy.add(function() {
                 burstLittle(bullet.x, bullet.y);
                 firedBullets.delete(bullet.id);
                 bullet.destroy();
@@ -456,7 +506,7 @@ Game.updateBullets = function(x, y, rotation, weaponId, id) {
             firedBullets.set(bullet.id, bullet);
             bulletID++;
             game.physics.arcade.velocityFromRotation(rotation, weaponArray[weaponId].velocity, bullet.body.velocity);
-            bullet.events.onKilled.add(function() {
+            bullet.events.onDestroy.add(function() {
                 burstLittle(bullet.x, bullet.y);
                 firedBullets.delete(bullet.id);
                 bullet.destroy();
@@ -519,16 +569,22 @@ Game.updateHUD = function(player){
 
     player.shield.x = (this.game.camera.width / 2) - ((window.innerWidth / 2) - 20);
     player.shield.y = (this.game.camera.height / 2) - ((window.innerHeight / 2) - 20);
+    Game.world.bringToTop(player.shield);
+    Game.world.moveDown(player.shield);
     player.shield.fixedToCamera = true;
 
     player.nameHover.setText(player.name);
     player.nameHover.x = (this.game.camera.width / 2) - (player.nameHover.width / 2);
     player.nameHover.y = (this.game.camera.height / 2) - 60;
+    Game.world.bringToTop(player.nameHover);
+    Game.world.moveDown(player.nameHover);
     player.nameHover.fixedToCamera = true;
 
     player.scoreHover.setText('Score: ' + player.score);
     player.scoreHover.x = (this.game.camera.width / 2) - (player.scoreHover.width / 2);
     player.scoreHover.y = (this.game.camera.height / 2) - 90;
+    Game.world.bringToTop(player.scoreHover);
+    Game.world.moveDown(player.scoreHover);
     player.scoreHover.fixedToCamera = true;
 
     // if(player.prevHealth != player.health || player.prevAmmo != Client.ammo) {
@@ -553,7 +609,7 @@ Game.updateHUD = function(player){
 Game.updateHealthBar = function(player) {
     //player.damage(.05);
     if(player.health === 0){
-        Game.playerKilled(player);
+        //Game.playerKilled(player);
         player.healthBar.clear();
     }
     else if (Game.isSafe){
@@ -588,6 +644,8 @@ Game.updateHealthBar = function(player) {
     player.healthBar.x = player.shield.x + 150;
     player.healthBar.y = player.shield.y + 18;
     player.prevHealth = player.health;
+    Game.world.bringToTop(player.healthBar);
+    Game.world.moveDown(player.healthBar);
     player.healthBar.fixedToCamera = true;
 };
 
@@ -683,6 +741,8 @@ Game.removeFromLeaderboard = function(id) {
 Game.setLeaderboard = function() {
     Game.playerMap[Client.id].scoreboard.x = (this.game.camera.width / 2) + ((window.innerWidth / 2) - 20);
     Game.playerMap[Client.id].scoreboard.y = (this.game.camera.height / 2) - ((window.innerHeight / 2) - 20);
+    Game.world.bringToTop(Game.playerMap[Client.id].scoreboard);
+    Game.world.moveDown(Game.playerMap[Client.id].scoreboard);
     Game.playerMap[Client.id].scoreboard.fixedToCamera = true;
 
     Game.playerMap[Client.id].scoreboard.setText(
@@ -713,6 +773,11 @@ Game.updateTransform = function(id, x, y, rotation, health) {
             Game.playerMap[id].destroy();
         }
     }
+};
+
+Game.setTrail = function(id, trailSet) {
+    var player = Game.playerMap[id];
+    player.shipTrail.visible = trailSet;
 };
 
 function showPlayerNames() {
@@ -792,7 +857,7 @@ Game.removePlayer = function(id){
     Game.playerMap[id].shipTrail.destroy();
     generateDustOnDeath(Game.playerMap[id].x, Game.playerMap[id].y, Game.playerMap[id].score);
 
-    burst(Game.playerMap[id].x, Game.playerMap[id].y);
+    //burst(Game.playerMap[id].x, Game.playerMap[id].y);
     playerMap.delete(id);
     Game.playerMap[id].destroy();
     Game.playerDestroyed = true;
@@ -801,14 +866,14 @@ Game.removePlayer = function(id){
 
 Game.playerKilled = function(thePlayer){
     //Generate the dust dropped from death
-    Game.removeFromLeaderboard(id);
-    Game.playerMap[id].shipTrail.destroy();
-    generateDustOnDeath(Game.playerMap[id].x, Game.playerMap[id].y, Game.playerMap[id].score);
-    burst(Game.playerMap[id].x, Game.playerMap[id].y);
+    /*Game.removeFromLeaderboard(thePlayer.id);
+    Game.playerMap[thePlayer.id].shipTrail.destroy();
+    generateDustOnDeath(Game.playerMap[thePlayer.id].x, Game.playerMap[thePlayer.id].y, Game.playerMap[thePlayer.id].score);
+    burst(Game.playerMap[thePlayer.id].x, Game.playerMap[thePlayer.id].y);
     playerMap.delete(thePlayer.id);
     thePlayer.destroy();
     Game.playerDestroyed = true;
-    delete thePlayer;
+    delete thePlayer;*/
 };
 
 Game.getCoordinates = function(layer, pointer) {
@@ -981,6 +1046,16 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
 
 Game.setDeathBehavior = function(id) {
     Game.playerMap[id].events.onKilled.add(function() {
+        Game.removeFromLeaderboard(id);
+        Game.playerMap[id].shipTrail.destroy();
+        generateDustOnDeath(Game.playerMap[id].x, Game.playerMap[id].y, Game.playerMap[id].score);
+        burst(Game.playerMap[id].x, Game.playerMap[id].y);
+        playerMap.delete(id);
+        var player = Game.playerMap[id];
+        player.destroy();
+        Game.playerDestroyed = true;
+        delete player;
+
         Client.setClientScores(Game.playerMap[id].score);
         Client.disconnect();
         game.state.start('Menu');
@@ -1042,14 +1117,14 @@ Game.componentToHex = function(c) {
 //called on bullet removal
 function burstLittle(x,y){
     //generating burst
-    var burst = game.add.emitter(x, y,100);
-    burst.makeParticles('spark');
-    // burst.start(true, 1000, null, 2);
+    burstLittleEmitter.x = x;
+    burstLittleEmitter.y = y;
+    burstLittleEmitter.start(true, 1000, null, 2);
 }
 //called on player death
 function burst(x,y){
   //bullet burst
-    var burst = game.add.emitter(x, y,20);
-    burst.makeParticles('sparksmall');
-    // burst.start(true, 3000, null, 25);
+    burstBig.x = x;
+    burstBig.y = y;
+    burstBig.start(true, 3000, null, 25);
 };

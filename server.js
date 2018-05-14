@@ -129,6 +129,8 @@ io.on('connection',function(socket){
         });
         socket.on('setFocus', function(data) {
             socket.player.focused = data;
+            socket.broadcast.emit('removeTrail', {id: socket.player.id, trailSet: data});
+            socket.emit('removeTrail', {id: socket.player.id, trailSet: data});
             //console.log('focused: ' + data);
         });
         socket.on('returnCoordinates', function(data) {
