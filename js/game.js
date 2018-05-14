@@ -594,7 +594,7 @@ Game.updateHUD = function(player){
     player.shield.setText('Shield:\n' +
         'Bullets: ' + Game.playerHUD["bullets"] + '\n' +
         'Boost: ' + Game.playerHUD["boost"] + '\n' +
-        'Currency: ' + Game.playerHUD["currency"], {font: '100px Lucida Console', fill: '#fff'});
+        'Dust: ' + Game.playerHUD["currency"], {font: '100px Lucida Console', fill: '#fff'});
     // }
 
 
@@ -1123,4 +1123,4 @@ function burst(x,y){
     burstBig.x = x;
     burstBig.y = y;
     burstBig.start(true, 3000, null, 25);
-};
+}
