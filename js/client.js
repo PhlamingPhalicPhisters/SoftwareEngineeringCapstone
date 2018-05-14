@@ -113,11 +113,19 @@ Client.socket.on('allplayers',function(data){
 });
 
 Client.setClientScores = function(score) {
-    Client.lastScore = score;
     if (score > Client.highScore)
     {
         Client.highScore = score;
+        if (typeof(Storage) !== "undefined") {
+            // Code for localStorage/sessionStorage
+            localStorage.highScore = Client.highScore
+        }
     }
+    if (typeof(Storage) !== "undefined") {
+        // Code for localStorage/sessionStorage
+        localStorage.lastScore = score;
+    }
+    Client.lastScore = score;
 };
 
 Client.socket.on('remove',function(id){

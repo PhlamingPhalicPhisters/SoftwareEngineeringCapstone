@@ -26,10 +26,10 @@ io.on('connection',function(socket){
 
     socket.on('newplayer',function(data){
         socket.player = {
-            id: server.lastPlayerId++,
-            name: data.name !== '' ? data.name : 'Player'+server.lastPlayerId,
-            x: randomInt(3000, 4000),
-            y: randomInt(3000, 4000),
+            id: server.lastPlayerId++,//incrementID(),
+            name: checkNameSafety(server.lastPlayerId, data.name)/*data.name !== '' ? data.name : 'Player'+server.lastPlayerId*/,
+            x: randomInt(2700, 3400),
+            y: randomInt(2700, 3600),
             rotation: (-90) * (3.14 / 180), // start upward -- convert degrees to radians??
             health: 100,
             score: 0,
@@ -145,6 +145,10 @@ io.on('connection',function(socket){
     });
 });
 
+function incrementID() {
+    return server.lastPlayerId + 1;
+}
+
 function findFocused(sID, id) {
     Object.keys(io.sockets.connected).forEach(function(socketID) {
         //console.log('socket: ' + socketID);
@@ -183,4 +187,23 @@ function getAllPlayers(){
 
 function randomInt (low, high) {
     return Math.floor(Math.random() * (high - low) + low);
+}
+
+function checkNameSafety (id, name) {
+    if (name === '')
+    {
+        return 'Player'+id;
+    }
+
+    var unsafeRegex = [/fuck/,/dick/,/pussy/,/nig/,/kkk/,/cunt/,/ass/,/bitch/,/retard/,/koon/,/cock/,/tit/];
+    var t = name.toLowerCase();
+    for (var i in unsafeRegex)
+    {
+        if (unsafeRegex[i].test(t))
+        {
+            return 'Player'+id;
+        }
+    }
+
+    return name;
 }

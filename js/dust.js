@@ -3,26 +3,32 @@
 
 //List of all dust items in the game (client side)
 var dustList = [];
-
+var deathDustMap = new Map();
+var deathDustID = 0;
 var worldBoudndX = 6336;
 var worldBoundY = 6336;
 var dust = function (id, startx, starty, value) {
 
     //draw dust
     var dustObject = game.add.sprite(startx, starty, 'dust');
+    //dustObject.animations.add('float');
+    //dustObject.animations.play('float', 10, true);
+    //dustObject.scale.set(4);
 
     //define properties
     dustObject.id = id;
     dustObject.positionx = startx;
     dustObject.positiony = starty;
     dustObject.value = value;
-    dustObject.width = 20;
-    dustObject.height = 20;
+    dustObject.width = 40;
+    dustObject.height = 60;
     dustObject.enableBody = true;
-    Game.physics.enable(dustObject, Phaser.Physics.ARCADE);
 
+    Game.physics.enable(dustObject, Phaser.Physics.ARCADE);
+    dustObject.body.velocity.set(randomInt(-10,10), randomInt(-10,10));
+    dustObject.body.angle = randomInt(-5,5);
     return dustObject;
-}
+};
 
 //when dust is added
 function addDust (id, x, y, value) {
@@ -31,9 +37,17 @@ function addDust (id, x, y, value) {
 
 //Instead of removing dust we just move it to a new location
 function dustCollision(dustObject) {
-    Client.sendCollect(100);
+    Client.sendCollect(dustObject.value);
     moveDust(dustObject);
 }
+
+function dustCollisionDeath(dustObject) {
+    Client.sendCollect(dustObject.value);
+    deathDustMap.delete(dustObject.id);
+    dustObject.destroy();
+    delete dustObject;
+}
+
 function moveDust(dustObject){
     dustObject.x = randomInt(0,worldBoudndX);
     dustObject.y = randomInt(0,worldBoundY);
@@ -45,10 +59,11 @@ function generateDustForClient(){
     }
 }
 
-function generateDustOnDeath(x,y) {
-    var dropAmount = randomInt(0, 8);
+function generateDustOnDeath(x,y, amount) {
+    var dropAmount = amount / 100;
     for(var i = 0;  i < dropAmount; i++){
-        dust(0, x + i, y + i, 70);
+        deathDustMap.set(deathDustID,
+            new dust(deathDustID++, randomInt(x - 10, x + 10), randomInt(y - 10, y + 10), 70));
     }
 }
 

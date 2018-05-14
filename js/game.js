@@ -1,15 +1,14 @@
 var Game = {};
 
 var layer;
-var safeZoneLayer;
 
 var weaponArray = [];
 function addWeapon(lifespan, velocity, bulletTime, damage) {
     weaponArray.push({lifespan: lifespan, velocity: velocity, bulletTime: bulletTime, damage: damage});
 }
-addWeapon(2000, 700, 50, 6);
-addWeapon(2000, 900, 65, 2);
-addWeapon(2000, 500, 75, 10);
+addWeapon(2000, 900, 100, 6);
+addWeapon(2000, 900, 50, 2);
+addWeapon(2000, 900, 150, 10);
 
 Game.ammoMap = {};
 var firedBullets = new Map();
@@ -21,7 +20,7 @@ var shopMenu;
 
 //This variable represents the amount of ships in the game
 //It is used when assigning new players a ship
-const numberOfShipSprites = 9;
+const numberOfShipSprites = 15;
 
 Game.init = function(){
     Client.connect();
@@ -37,6 +36,7 @@ Game.init = function(){
     Game.playerSize = 64;           // sq. px. size
     Game.isSafe = false;            // local player is in safe zone
     Game.maxNormVelocity = 200;         // maximum body acceleration
+    Game.maxBoost = 100;            // max boost capacity
     Game.maxBoostVelocity = 400;    // maximum body acceleration when boosting
     Game.normalAccel = 100;         // normal player acceleration speed
     Game.boostAccelMult = 10;        // boost acceleration multiplier
@@ -44,6 +44,9 @@ Game.init = function(){
     Game.boostRotMult = 0.5;        // boost rotation mutliplier
     Game.boostCost = .01;           // how much boost costs when active
     Game.refillBoostCost = 100;     // how much it costs to refill boost in the safe zone
+
+    Game.bulletReloadCostList = [100, 250, 500];
+    Game.boostRefillCost = 200;
     Game.inShop = false;
 };
 
@@ -55,34 +58,51 @@ Game.preload = function() {
     this.game.stage.disableVisibilityChange = true;
 
     // Load map assets
-    this.game.load.tilemap('map', 'assets/map/bigtilestest.json', null, Phaser.Tilemap.TILED_JSON);
+    this.game.load.tilemap('map', 'assets/map/neontest.json', null, Phaser.Tilemap.TILED_JSON);
     this.game.load.image('tiles', 'assets/map/largetilesheet.png');
-    this.game.load.image('safe_zone', 'assets/map/safe_zone.png');
+    this.game.load.image('safe_zone', 'assets/map/grid.png');
+    this.game.load.image('neon', 'assets/map/tilemapneonsmall.png');
 
     // Load ship assets
-    this.game.load.image('ship1','assets/sprites/ship1.png');
-    this.game.load.image('ship2','assets/sprites/ship2.png');
-    this.game.load.image('ship3','assets/sprites/ship3.png');
-    this.game.load.image('ship4','assets/sprites/ship4.png');
-    this.game.load.image('ship5','assets/sprites/ship5.png');
-    this.game.load.image('ship6','assets/sprites/ship6.png');
-    this.game.load.image('ship7','assets/sprites/ship7.png');
-    this.game.load.image('ship8','assets/sprites/ship8.png');
+    this.game.load.image('ship1','assets/sprites/neon/Ship1.png');
+    this.game.load.image('ship2','assets/sprites/neon/Ship2.png');
+    this.game.load.image('ship3','assets/sprites/neon/Ship3.png');
+    this.game.load.image('ship4','assets/sprites/neon/Ship4.png');
+    this.game.load.image('ship5','assets/sprites/neon/Ship5.png');
+    this.game.load.image('ship6','assets/sprites/neon/Ship6.png');
+    this.game.load.image('ship7','assets/sprites/neon/Ship7.png');
+    this.game.load.image('ship8','assets/sprites/neon/Ship8.png');
+    this.game.load.image('ship9','assets/sprites/neon/Ship9.png');
+    this.game.load.image('ship10','assets/sprites/neon/Ship10.png');
+    this.game.load.image('ship11','assets/sprites/neon/Ship11.png');
+    this.game.load.image('ship12','assets/sprites/neon/Ship12.png');
+    this.game.load.image('ship13','assets/sprites/neon/Ship13.png');
+    this.game.load.image('ship14','assets/sprites/neon/Ship14.png');
+    this.game.load.image('ship15','assets/sprites/neon/Ship15.png');
 
-    // Load dust assets
-    this.game.load.image('dust', 'assets/sprites/bullet2.png');
+    // Load dust asset
+    //thsis.game.load.spritesheet('dust', 'assets/sprites/neon/Dust.png',500,500,30);
+    this.game.load.image('dust', 'assets/sprites/neon/Dust Single.png');
+
+    // Load Particles
+    // this.game.load.image('trail', 'assets/sprites/w_trail.png');
+    this.game.load.image('trail', 'assets/sprites/w_bubble.png');
+    this.game.load.image('spark', 'assets/sprites/neon/spark.png');
+    this.game.load.image('sparksmall', 'assets/sprites/neon/bluespark.png');
 
     // Load weapon assets
-    this.game.load.image('bullet', 'assets/sprites/general-bullet.png');
-    this.game.load.image('bullet1', 'assets/sprites/bullet1.png');
-    this.game.load.image('bullet2', 'assets/sprites/bullet2.png');
+    this.game.load.image('bullet', 'assets/sprites/neon/GreenShot.png');
+    this.game.load.image('bullet1', 'assets/sprites/neon/RedShot.png');
+    this.game.load.image('bullet2', 'assets/sprites/neon/BlueShot.png');
 
-    //this.game.load.image('ship0', 'assets/sprites/general-bullet.png');
+    this.game.load.image('ship0', 'assets/sprites/neon/squaresquare.png');
 };
 
 //Helper function for the loading screen
 function loadStart() {
-    game.add.sprite(game.world.centerX,game.world.centerY, 'shipload');
+    var shiploadsprite = game.add.sprite(game.world.centerX - 50,game.world.centerY - 25, 'shipload');
+    shiploadsprite.height = 75;
+    shiploadsprite.width = 75;
     game.stage.backgroundColor = '#000000';
     game.add.text(game.world.centerX+40,game.world.centerY, 'Loading...', { fill: '#ffffff' });
     //var sprite = game.add.sprite(game.world.centerX,game.world.centerY,'loadingSprite');
@@ -93,7 +113,6 @@ function loadStart() {
 var sprite;
 
 
-var bullet;
 Game.create = function(){
     console.log('Game.create');
 
@@ -136,16 +155,17 @@ Game.create = function(){
     //Name of tilesheet in json, name in game.js
     var map = this.game.add.tilemap('map');
     map.addTilesetImage('largetilesheet','tiles');
+    map.addTilesetImage('tilemapneonsmall', 'neon');
 
     //Order of these statments impacts the order of render
     var background = map.createLayer('Backgroundlayer');
 
     // safeZoneLayer = map.createLayer('Zonelayer');
-    Game.safeZone = game.add.sprite(3500,3500,'safe_zone');
-    Game.safeZone.width = 1000;
-    Game.safeZone.height = 1000;
+    Game.safeZone = game.add.sprite(3235,3240,'safe_zone');
+    Game.safeZone.width = 1205;
+    Game.safeZone.height = 1205;
     Game.safeZone.anchor.setTo(0.5,0.5);
-    Game.safeZone.alpha = 0.3;
+    Game.safeZone.alpha = 0.6;
     layer = map.createLayer('Groundlayer');
     map.setCollisionBetween(0, 4000, true, 'Groundlayer');
     // map.setCollisionBetween(0, 1, true, 'Zonelayer');
@@ -174,10 +194,6 @@ Game.create = function(){
         'left': Phaser.KeyCode.A, 'right': Phaser.KeyCode.D } );
     this.game.input.keyboard.addKeyCapture([Phaser.Keyboard.SPACEBAR]);
 
-    bullet = game.add.sprite(200,200,'bullet');
-    bullet.scale.setTo(0.5,0.5);
-    bullet.enableBody = true;
-    Game.physics.enable(bullet, Phaser.Physics.ARCADE);
     //bullet.body.setSize(bullet.width,bullet.height,0.5,0.5);
     // publicBulletInfo.bullets.bodies.setCircle(10);
     // Input
@@ -218,8 +234,8 @@ Game.update = function()
 {
     // Establish collision detection between groups
 
-    playerMap.forEach(function (player) {
-        Game.physics.arcade.collide(Game.playerMap[Client.getPlayerID()], player);
+    deathDustMap.forEach(function (dust) {
+        Game.physics.arcade.collide(dust, Game.playerMap[Client.getPlayerID()], dustCollisionDeath);
     });
 
     playerMap.forEach(function (player) {
@@ -239,20 +255,27 @@ Game.update = function()
     if(firedBullets.size > 0 && !document.hidden && typeof Game.ammoMap[Client.getPlayerID()] !== 'undefined' && Client.getPlayerID() !== -1) {
         firedBullets.forEach(function (bullet) {
             playerMap.forEach(function (player, key) {
-                if(key != bullet.player) {
+                if(key !== bullet.player) {
                     Game.physics.arcade.overlap(player, bullet, function (player, bullet) {
-                            bulletErase.push(bullet);
-                            player.damage(bullet.damage);
+                        burstLittle(bullet.x, bullet.y);
+                        bulletErase.push(bullet);
+                        player.damage(bullet.damage);
                     });
                 }
             });
             Game.physics.arcade.overlap(bullet, Game.safeZone, function (bullet) {
+                burstLittle(bullet.x, bullet.y);
                 bulletErase.push(bullet);
             });
-            Game.physics.arcade.collide(layer, bullet, function (bullet) {
-                bulletErase.push(bullet);
+            Game.physics.arcade.overlap(layer, bullet, function (bullet, layer) {
+                if(layer.index !== -1) {
+                    burstLittle(bullet.x, bullet.y);
+                    bulletErase.push(bullet);
+                }
             });
         });
+
+        Game.physics.arcade.overlap(dustList, playerMap, dustCollision);
 
         for(var e in bulletErase){
             firedBullets.delete(bulletErase[e].id);
@@ -332,36 +355,35 @@ Game.update = function()
 
     }
 
-    if (Game.isSafe)
-    {
-        Game.showBasePrompts();
+    if (Game.allPlayersAdded) {
+        if (Game.isSafe) {
+            Game.showBasePrompts();
 
-        if (game.input.keyboard.isDown(Phaser.KeyCode.E))
-        {
-            //Game.requestShipUpgrade();
-            //Game.updateShop();
-        }
-        if (Game.inShop) {
-            Game.updateShop();
-            Game.playerMap[Client.id].body.maxVelocity.set(0);
+            if (game.input.keyboard.isDown(Phaser.KeyCode.E)) {
+                //Game.requestShipUpgrade();
+            }
+            if (Game.inShop) {
+                Game.updateShop();
+                Game.playerMap[Client.id].body.maxVelocity.set(0);
+            }
+            else {
+                Game.clearShop();
+                if (Game.playerMap[Client.id].body.maxVelocity === 0)
+                    Game.playerMap[Client.id].body.maxVelocity.set(Game.maxNormVelocity);
+            }
+            if (game.input.keyboard.isDown(Phaser.KeyCode.R)) {
+                Game.reloadWeapon();
+            }
+            if (game.input.keyboard.isDown(Phaser.KeyCode.B)) {
+                Game.refillBoost();
+            }
         }
         else {
-            Game.clearShop();
-            if (Game.playerMap[Client.id].body.maxVelocity === 0)
-                Game.playerMap[Client.id].body.maxVelocity.set(Game.maxNormVelocity);
-        }
-        if (game.input.keyboard.isDown(Phaser.KeyCode.R))
-        {
-            Game.reloadWeapon();
-            Game.refillBoost();
-        }
-    }
-    else
-    {
-        Game.unshowBasePrompts();
-        if (Game.inShop) {
-            Game.clearShop();
-            Game.inShop = false;
+            Game.unshowBasePrompts();
+            if (Game.inShop) {
+                Game.clearShop();
+                Game.inShop = false;
+            }
         }
     }
 
@@ -414,7 +436,9 @@ Game.exitSafeZone = function() {
 };
 
 Game.updateScore = function(id, value) {
-    Game.playerMap[id].score = value;
+    if (Game.playerMap[id].score !== null) {
+        Game.playerMap[id].score = value;
+    }
     // Game.playerHUD["currency"] = value;
 };
 
@@ -449,6 +473,7 @@ function fireBullet(id) {
             firedBullets.set(bullet.id, bullet);
             bulletID++;
             bullet.events.onKilled.add(function() {
+                burstLittle(bullet.x, bullet.y);
                 firedBullets.delete(bullet.id);
                 bullet.destroy();
             }, this);
@@ -473,6 +498,7 @@ Game.updateBullets = function(x, y, rotation, weaponId, id) {
             bulletID++;
             game.physics.arcade.velocityFromRotation(rotation, weaponArray[weaponId].velocity, bullet.body.velocity);
             bullet.events.onKilled.add(function() {
+                burstLittle(bullet.x, bullet.y);
                 firedBullets.delete(bullet.id);
                 bullet.destroy();
             }, this);
@@ -490,8 +516,8 @@ Game.updateAmmo = function(id, ammo, weaponId) {
         Game.ammoMap[id].createMultiple(ammo, 'bullet1');
     if (weaponId === 2)
         Game.ammoMap[id].createMultiple(ammo, 'bullet2');
-    Game.ammoMap[id].setAll('scale.x', 0.5);
-    Game.ammoMap[id].setAll('scale.y', 0.5);
+    Game.ammoMap[id].setAll('scale.x', 1.5);
+    Game.ammoMap[id].setAll('scale.y', 1.5);
     Game.ammoMap[id].setAll('anchor.x', 0.5);
     Game.ammoMap[id].setAll('anchor.y', 0.5);
     //Game.ammoMap[id].setAll('bounce', 0, 0);
@@ -560,7 +586,7 @@ Game.updateHUD = function(player){
     player.shield.setText('Shield:\n' +
         'Bullets: ' + Game.playerHUD["bullets"] + '\n' +
         'Boost: ' + Game.playerHUD["boost"] + '\n' +
-        'Currency: ' + Game.playerHUD["currency"], {font: '100px Arial', fill: '#fff'});
+        'Currency: ' + Game.playerHUD["currency"], {font: '100px Lucida Console', fill: '#fff'});
     // }
 
 
@@ -606,8 +632,8 @@ Game.updateHealthBar = function(player) {
         player.healthBar.endFill();
     }
 
-    player.healthBar.x = player.shield.x + 120;
-    player.healthBar.y = player.shield.y + 20;
+    player.healthBar.x = player.shield.x + 150;
+    player.healthBar.y = player.shield.y + 18;
     player.prevHealth = player.health;
     Game.world.bringToTop(player.healthBar);
     Game.world.moveDown(player.healthBar);
@@ -704,18 +730,18 @@ Game.removeFromLeaderboard = function(id) {
 };
 
 Game.setLeaderboard = function() {
-    Game.playerMap[Client.id].scoreboard.x = (this.game.camera.width / 2) + ((window.innerWidth / 2) - 500);
+    Game.playerMap[Client.id].scoreboard.x = (this.game.camera.width / 2) + ((window.innerWidth / 2) - 20);
     Game.playerMap[Client.id].scoreboard.y = (this.game.camera.height / 2) - ((window.innerHeight / 2) - 20);
     Game.world.bringToTop(Game.playerMap[Client.id].scoreboard);
     Game.world.moveDown(Game.playerMap[Client.id].scoreboard);
     Game.playerMap[Client.id].scoreboard.fixedToCamera = true;
 
     Game.playerMap[Client.id].scoreboard.setText(
-        '#1 '+ (Game.leaderboard[1] !== null ? Game.leaderboard[1].score+' - '+Game.leaderboard[1].name : '_______')+
-        '\n#2 ' + (Game.leaderboard[2] !== null ? Game.leaderboard[2].score+' - '+Game.leaderboard[2].name : '_______')+
-        '\n#3 ' + (Game.leaderboard[3] !== null ? Game.leaderboard[3].score+' - '+Game.leaderboard[3].name : '_______')+
-        '\n#4 ' + (Game.leaderboard[4] !== null ? Game.leaderboard[4].score+' - '+Game.leaderboard[4].name : '_______')+
-        '\n#5 ' + (Game.leaderboard[5] !== null ? Game.leaderboard[5].score+' - '+Game.leaderboard[5].name : '_______'));
+        '#1 '+ (Game.leaderboard[1] !== null ? Game.leaderboard[1].score+'-'+Game.leaderboard[1].name : '_______')+
+        '\n#2 ' + (Game.leaderboard[2] !== null ? Game.leaderboard[2].score+'-'+Game.leaderboard[2].name : '_______')+
+        '\n#3 ' + (Game.leaderboard[3] !== null ? Game.leaderboard[3].score+'-'+Game.leaderboard[3].name : '_______')+
+        '\n#4 ' + (Game.leaderboard[4] !== null ? Game.leaderboard[4].score+'-'+Game.leaderboard[4].name : '_______')+
+        '\n#5 ' + (Game.leaderboard[5] !== null ? Game.leaderboard[5].score+'-'+Game.leaderboard[5].name : '_______'));
 };
 
 // Update the position and rotation of a given remote player
@@ -770,19 +796,38 @@ function removePlayerNames() {
 }
 
 Game.showBasePrompts = function(){
-
+    Game.playerMap[Client.id].safePromptHover.visible = true;
+    Game.playerMap[Client.id].safePromptHover.setText(
+        'Store [E]\n'
+        + 'Refill 1 bullet: '+Game.bulletReloadCostList[Client.weaponId]+'[R]\n'
+        + 'Refill 1 boost: '+Game.boostRefillCost+'[B]');
+    Game.playerMap[Client.id].safePromptHover.x = (this.game.camera.width / 2);
+    Game.playerMap[Client.id].safePromptHover.y = (this.game.camera.height / 2) + 60;
+    Game.playerMap[Client.id].safePromptHover.fixedToCamera = true;
 };
 
 Game.unshowBasePrompts = function(){
-
+    Game.playerMap[Client.id].safePromptHover.visible = false;
 };
 
 Game.reloadWeapon = function(){
-
+    if (Game.playerMap[Client.id].score >= Game.bulletReloadCostList[Client.weaponId])
+    {
+        Game.playerMap[Client.id].score -= Game.bulletReloadCostList[Client.weaponId]
+        Client.score++;
+    }
 };
 
 Game.refillBoost = function(){
-
+    if (Game.playerMap[Client.id].score >= Game.boostRefillCost && Game.playerMap[Client.id].boost < Game.maxBoost)
+    {
+        Client.sendCollect(-Game.boostRefillCost);
+        Game.playerMap[Client.id].boost++;
+        if (Game.playerMap[Client.id].boost > Game.maxBoost)
+        {
+            Game.playerMap[Client.id].boost = Game.maxBoost;
+        }
+    }
 };
 
 // Update the ship of another player
@@ -797,7 +842,9 @@ Game.removePlayer = function(id){
     console.log('Game.removePlayer '+id+'--'+Game.playerMap[id].name);
     Game.removeFromLeaderboard(id);
     Game.playerMap[id].shipTrail.destroy();
-    generateDustOnDeath(Game.playerMap[id].x, Game.playerMap[id].y);
+    generateDustOnDeath(Game.playerMap[id].x, Game.playerMap[id].y, Game.playerMap[id].score);
+
+    burst(Game.playerMap[id].x, Game.playerMap[id].y);
     playerMap.delete(id);
     Game.playerMap[id].destroy();
     Game.playerDestroyed = true;
@@ -806,10 +853,10 @@ Game.removePlayer = function(id){
 
 Game.playerKilled = function(thePlayer){
     //Generate the dust dropped from death
-    generateDustOnDeath(thePlayer.x, thePlayer.y);
-
-    //Game.playerMap[thePlayer.id].shipTrail.destroy();
-    //Remove the players
+    Game.removeFromLeaderboard(id);
+    Game.playerMap[id].shipTrail.destroy();
+    generateDustOnDeath(Game.playerMap[id].x, Game.playerMap[id].y, Game.playerMap[id].score);
+    burst(Game.playerMap[id].x, Game.playerMap[id].y);
     playerMap.delete(thePlayer.id);
     thePlayer.destroy();
     Game.playerDestroyed = true;
@@ -925,7 +972,7 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
     newPlayer.shipTrail.gravity = 0;
     newPlayer.shipTrail.z = -1000;
     newPlayer.shipTrail.width = 10;
-    newPlayer.shipTrail.makeParticles('bullet');
+    newPlayer.shipTrail.makeParticles('trail');
     newPlayer.shipTrail.setXSpeed(30, -30);
     newPlayer.shipTrail.setYSpeed(30, -30);
     // newPlayer.shipTrail.setRotation(50,-50);
@@ -962,14 +1009,16 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
     // Local player should be instantiated first before remote players
     newPlayer.id = id;
     Game.playerMap[id] = newPlayer;
-    Game.playerMap[id].shield = Game.add.text(0, 0, '', { font: '35px Arial', fill: '#fff' });
-    Game.playerMap[id].nameHover = Game.add.text(0, 0, '', {font: '20px Arial', fill: '#fff'});
-    Game.playerMap[id].scoreHover = Game.add.text(0, 0, '', {font: '20px Arial', fill: '#fff'});
+    Game.playerMap[id].shield = Game.add.text(0, 0, '', { font: '35px Lucida Console', fill: '#fff' });
+    Game.playerMap[id].nameHover = Game.add.text(0, 0, '', {font: '20px Lucida Console', fill: '#fff'});
+    Game.playerMap[id].safePromptHover = Game.add.text(0, 0, '', {font: '20px Lucida Console', fill: '#fff', boundsAlignH: "center"});
+    Game.playerMap[id].safePromptHover.anchor.set(0.5,0.5);
+    Game.playerMap[id].scoreHover = Game.add.text(0, 0, '', {font: '20px Lucida Console', fill: '#fff'});
     Game.playerMap[id].healthBar = Game.add.graphics(0,0);
     Game.playerMap[id].healthBar.safe = false;
     Game.playerMap[id].prevHealth = -1;
-    Game.playerMap[id].scoreboard = Game.add.text(0, 0, '', { font: '35px Arial', fill: '#fff'/*, boundsAlignH: 'right'*/ });
-
+    Game.playerMap[id].scoreboard = Game.add.text(0, 0, '', { font: '35px Lucida Console', fill: '#fff'/*, boundsAlignH: 'right'*/ });
+    Game.playerMap[id].scoreboard.anchor.setTo(1, 0);
 
     //Game.createHealthBar(Game.playerMap[id]);
     playerMap.set(newPlayer.id, newPlayer);
@@ -1035,4 +1084,24 @@ Game.rgbToHex = function(r, g, b) {
 Game.componentToHex = function(c) {
     var hex = c.toString(16);
     return hex.length == 1 ? "0" + hex : hex;
+};
+
+//Particle methods:
+// if you want to increase performance edit the final argument of
+// bullet.start(true, 1000, null, 2
+// this is->   burst  lifetime    amout of particles
+
+//called on bullet removal
+function burstLittle(x,y){
+    //generating burst
+    var burst = game.add.emitter(x, y,100);
+    burst.makeParticles('spark');
+    burst.start(true, 1000, null, 2);
+}
+//called on player death
+function burst(x,y){
+  //bullet burst
+    var burst = game.add.emitter(x, y,20);
+    burst.makeParticles('sparksmall');
+    burst.start(true, 3000, null, 25);
 };
