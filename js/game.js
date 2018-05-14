@@ -931,7 +931,7 @@ Game.setPlayerRotation = function(id, angVelocity){
         Game.playerMap[id].body.angularVelocity = angVelocity;
 };
 
-Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
+Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color){
     console.log('Game.addNewPlayer '+id+'--'+name+'--'+shipName);
 
     Game.shipTrails[id] = game.add.emitter(x, y + Game.playerSize/2, 400);
@@ -953,9 +953,9 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
             Client.sendShipChange(shipSelectionString);
     }
     // If it is an existing player
-    else{
+    else {
         // console.log(name+'\'s shipName: '+shipName);
-        newPlayer = game.add.sprite(x,y,shipName);
+        newPlayer = game.add.sprite(x, y, shipName);
         // console.log('else statement - shipSelectionString: ' + shipName);
     }
 
@@ -994,6 +994,10 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
     // newPlayer.addChild(newPlayer.shipTrail);
     // newPlayer.shipTrail.rotation = rotation;
     newPlayer.shipTrail.start(false, 2000, 10);
+
+    // Set player sprite and trail color
+    newPlayer.tint = color;
+    newPlayer.shipTrail.setAll('tint', color);
 
 
     // Initialize player's health

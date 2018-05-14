@@ -36,6 +36,7 @@ io.on('connection',function(socket){
             weaponId: randomInt(0, 3),
             ammo: 0,
             shipName: 'unassignedShip',
+            color: randomTint(),
             focused: true
         };
 
@@ -188,6 +189,11 @@ function getAllPlayers(){
 function randomInt (low, high) {
     return Math.floor(Math.random() * (high - low) + low);
 }
+
+var randomTint = function() {
+    return ((Math.random()*0xffffff)|0x0f0f0f);
+    //return Math.random() * 0xffffff;
+};
 
 function checkNameSafety (id, name) {
     if (name === '')
