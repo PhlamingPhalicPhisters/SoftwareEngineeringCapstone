@@ -25,7 +25,8 @@ var dust = function (id, startx, starty, value) {
     dustObject.enableBody = true;
 
     Game.physics.enable(dustObject, Phaser.Physics.ARCADE);
-
+    dustObject.body.velocity.set(randomInt(-10,10), randomInt(-10,10));
+    dustObject.body.angle = randomInt(-5,5);
     return dustObject;
 };
 
@@ -61,7 +62,8 @@ function generateDustForClient(){
 function generateDustOnDeath(x,y, amount) {
     var dropAmount = amount / 100;
     for(var i = 0;  i < dropAmount; i++){
-        deathDustMap.set(deathDustID, new dust(deathDustID++, x + 1, y + 1, 70));
+        deathDustMap.set(deathDustID,
+            new dust(deathDustID++, randomInt(x - 10, x + 10), randomInt(y - 10, y + 10), 70));
     }
 }
 
