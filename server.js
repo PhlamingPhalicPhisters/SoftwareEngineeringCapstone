@@ -26,7 +26,7 @@ io.on('connection',function(socket){
 
     socket.on('newplayer',function(data){
         socket.player = {
-            id: server.lastPlayerId++,//incrementID(),
+            id: server.lastPlayerId++,
             name: data.name !== '' ? data.name : 'Player'+server.lastPlayerId,
             x: randomInt(3000, 4000),
             y: randomInt(3000, 4000),
@@ -129,6 +129,8 @@ io.on('connection',function(socket){
         });
         socket.on('setFocus', function(data) {
             socket.player.focused = data;
+            socket.broadcast.emit('removeTrail', {id: socket.player.id, trailSet: data});
+            socket.emit('removeTrail', {id: socket.player.id, trailSet: data});
             //console.log('focused: ' + data);
         });
         socket.on('returnCoordinates', function(data) {
@@ -142,10 +144,6 @@ io.on('connection',function(socket){
         console.log('test received');
     });
 });
-
-function incrementID() {
-    return server.lastPlayerId + 1;
-}
 
 function findFocused(sID, id) {
     Object.keys(io.sockets.connected).forEach(function(socketID) {

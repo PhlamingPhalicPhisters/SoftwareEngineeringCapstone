@@ -16,6 +16,8 @@ var firedBullets = new Map();
 var playerMap = new Map();
 var bulletID = 0;
 
+var shopMenu;
+
 
 //This variable represents the amount of ships in the game
 //It is used when assigning new players a ship
@@ -42,6 +44,7 @@ Game.init = function(){
     Game.boostRotMult = 0.5;        // boost rotation mutliplier
     Game.boostCost = .01;           // how much boost costs when active
     Game.refillBoostCost = 100;     // how much it costs to refill boost in the safe zone
+    Game.inShop = false;
 };
 
 
@@ -135,7 +138,8 @@ Game.create = function(){
     map.addTilesetImage('largetilesheet','tiles');
 
     //Order of these statments impacts the order of render
-    map.createLayer('Backgroundlayer');
+    var background = map.createLayer('Backgroundlayer');
+
     // safeZoneLayer = map.createLayer('Zonelayer');
     Game.safeZone = game.add.sprite(3500,3500,'safe_zone');
     Game.safeZone.width = 1000;
@@ -187,6 +191,8 @@ Game.create = function(){
     console.log("Testing the dust list to verify that it loaded correctly, " +
         "dust x position: " + dustList[100].positionx);
     Game.playerDestroyed = false;
+
+    shopMenu = Game.add.graphics(0,0);
 };
 
 /*
@@ -256,12 +262,12 @@ Game.update = function()
 
 
     // Get forward/backward input
-    if (Game.cursors.up.isDown)
+    if (Game.cursors.up.isDown && !Game.inShop)
     {
         // Client.sendAcceleration(1);
         Game.setPlayerAcceleration(Game.normalAccel, game.input.keyboard.isDown(Phaser.Keyboard.SHIFT))
     }
-    else if (Game.cursors.down.isDown)
+    else if (Game.cursors.down.isDown && !Game.inShop)
     {
         // Client.sendAcceleration(-1);
         Game.setPlayerAcceleration(-Game.normalAccel, game.input.keyboard.isDown(Phaser.Keyboard.SHIFT))
@@ -271,7 +277,7 @@ Game.update = function()
         // Client.sendAcceleration(0);
         Game.setPlayerAcceleration(0, false);
     }
-    if (Game.cursors.left.isDown && Game.cursors.right.isDown) {
+    if (Game.cursors.left.isDown && Game.cursors.right.isDown && !Game.inShop) {
         /*var angVelocity = Game.playerMap[Client.player.id].body.angularVelocity;// Game.playerMap[Client.id].body.angularVelocity = 300;
         if (Game.cursors.left.isDown && angVelocity < 0) {
             Client.sendRotation(-300);
@@ -294,10 +300,10 @@ Game.update = function()
             Client.sendRotation(300);
         }
     }
-    else if (Game.cursors.left.isDown) {
+    else if (Game.cursors.left.isDown && !Game.inShop) {
         Client.sendRotation(-300);
     }
-    else if (Game.cursors.right.isDown) {
+    else if (Game.cursors.right.isDown && !Game.inShop) {
         Client.sendRotation(300);
     }
     else
@@ -305,7 +311,7 @@ Game.update = function()
         Client.sendRotation(0);
     }
 
-    if (game.input.keyboard.isDown(Phaser.KeyCode.Q) || game.input.keyboard.isDown(Phaser.KeyCode.L)) {
+    if ((game.input.keyboard.isDown(Phaser.KeyCode.Q) || game.input.keyboard.isDown(Phaser.KeyCode.L)) && !Game.inShop) {
         showPlayerNames();
     }
     else {
@@ -333,6 +339,16 @@ Game.update = function()
         if (game.input.keyboard.isDown(Phaser.KeyCode.E))
         {
             //Game.requestShipUpgrade();
+            //Game.updateShop();
+        }
+        if (Game.inShop) {
+            Game.updateShop();
+            Game.playerMap[Client.id].body.maxVelocity.set(0);
+        }
+        else {
+            Game.clearShop();
+            if (Game.playerMap[Client.id].body.maxVelocity === 0)
+                Game.playerMap[Client.id].body.maxVelocity.set(Game.maxNormVelocity);
         }
         if (game.input.keyboard.isDown(Phaser.KeyCode.R))
         {
@@ -343,12 +359,39 @@ Game.update = function()
     else
     {
         Game.unshowBasePrompts();
+        if (Game.inShop) {
+            Game.clearShop();
+            Game.inShop = false;
+        }
     }
 
     // Sync the transform of remote instances of this player
     // Send transform also handles the amount of health and the hud display
     // Inside of the health tracker when a player dies dust is dropped
     Game.sendTransform();
+};
+
+window.addEventListener("keypress", function(event) {
+    if (event.code === 'KeyE' && Game.isSafe) {
+        Game.inShop = !Game.inShop;
+    }
+});
+
+Game.updateShop = function() {
+    shopMenu.clear();
+    var color = Game.rgbToHex(50, 50, 50);
+    shopMenu.beginFill(color, 1);
+    shopMenu.moveTo(0, 0);
+    shopMenu.drawRect(window.innerWidth/8, window.innerHeight/8, window.innerWidth*3/4, window.innerHeight*3/4);
+    shopMenu.endFill();
+    shopMenu.x = 0;
+    shopMenu.y = 0;
+    Game.world.bringToTop(shopMenu);
+    shopMenu.fixedToCamera = true;
+};
+
+Game.clearShop = function() {
+    shopMenu.clear();
 };
 
 
@@ -491,16 +534,22 @@ Game.updateHUD = function(player){
 
     player.shield.x = (this.game.camera.width / 2) - ((window.innerWidth / 2) - 20);
     player.shield.y = (this.game.camera.height / 2) - ((window.innerHeight / 2) - 20);
+    Game.world.bringToTop(player.shield);
+    Game.world.moveDown(player.shield);
     player.shield.fixedToCamera = true;
 
     player.nameHover.setText(player.name);
     player.nameHover.x = (this.game.camera.width / 2) - (player.nameHover.width / 2);
     player.nameHover.y = (this.game.camera.height / 2) - 60;
+    Game.world.bringToTop(player.nameHover);
+    Game.world.moveDown(player.nameHover);
     player.nameHover.fixedToCamera = true;
 
     player.scoreHover.setText('Score: ' + player.score);
     player.scoreHover.x = (this.game.camera.width / 2) - (player.scoreHover.width / 2);
     player.scoreHover.y = (this.game.camera.height / 2) - 90;
+    Game.world.bringToTop(player.scoreHover);
+    Game.world.moveDown(player.scoreHover);
     player.scoreHover.fixedToCamera = true;
 
     // if(player.prevHealth != player.health || player.prevAmmo != Client.ammo) {
@@ -560,6 +609,8 @@ Game.updateHealthBar = function(player) {
     player.healthBar.x = player.shield.x + 120;
     player.healthBar.y = player.shield.y + 20;
     player.prevHealth = player.health;
+    Game.world.bringToTop(player.healthBar);
+    Game.world.moveDown(player.healthBar);
     player.healthBar.fixedToCamera = true;
 };
 
@@ -655,6 +706,8 @@ Game.removeFromLeaderboard = function(id) {
 Game.setLeaderboard = function() {
     Game.playerMap[Client.id].scoreboard.x = (this.game.camera.width / 2) + ((window.innerWidth / 2) - 500);
     Game.playerMap[Client.id].scoreboard.y = (this.game.camera.height / 2) - ((window.innerHeight / 2) - 20);
+    Game.world.bringToTop(Game.playerMap[Client.id].scoreboard);
+    Game.world.moveDown(Game.playerMap[Client.id].scoreboard);
     Game.playerMap[Client.id].scoreboard.fixedToCamera = true;
 
     Game.playerMap[Client.id].scoreboard.setText(
@@ -685,6 +738,11 @@ Game.updateTransform = function(id, x, y, rotation, health) {
             Game.playerMap[id].destroy();
         }
     }
+};
+
+Game.setTrail = function(id, trailSet) {
+    var player = Game.playerMap[id];
+    player.shipTrail.visible = trailSet;
 };
 
 function showPlayerNames() {
