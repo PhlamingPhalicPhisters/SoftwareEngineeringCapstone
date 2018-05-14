@@ -264,18 +264,20 @@ Game.update = function()
     if(firedBullets.size > 0 && !document.hidden && typeof Game.ammoMap[Client.getPlayerID()] !== 'undefined' && Client.getPlayerID() !== -1) {
         firedBullets.forEach(function (bullet) {
             playerMap.forEach(function (player, key) {
+                //when the current player is hit with a bullet
                 if(key !== bullet.player) {
                     Game.physics.arcade.overlap(player, bullet, function (player, bullet) {
-                        //burstLittle(bullet.x, bullet.y);
                         bulletErase.push(bullet);
                         player.damage(bullet.damage);
                     });
                 }
             });
+            //safezone
             Game.physics.arcade.overlap(bullet, Game.safeZone, function (bullet) {
                 //burstLittle(bullet.x, bullet.y);
                 bulletErase.push(bullet);
             });
+            //layer
             Game.physics.arcade.overlap(layer, bullet, function (bullet, layer) {
                 if(layer.index !== -1) {
                     //burstLittle(bullet.x, bullet.y);
@@ -639,6 +641,9 @@ Game.updateHealthBar = function(player) {
         player.healthBar.moveTo(0, 0);
         player.healthBar.lineTo((1.5 * xHealth), 0);
         player.healthBar.endFill();
+        if(player.prevHealth != player.health) {
+            shake();
+        }
     }
 
     player.healthBar.x = player.shield.x + 150;
@@ -1112,7 +1117,7 @@ Game.componentToHex = function(c) {
 //Particle methods:
 // if you want to increase performance edit the final argument of
 // bullet.start(true, 1000, null, 2
-// this is->   burst  lifetime    amout of particles
+// this is->   burst  lifetime    amout of particle
 
 //called on bullet removal
 function burstLittle(x,y){
@@ -1127,4 +1132,9 @@ function burst(x,y){
     burstBig.x = x;
     burstBig.y = y;
     burstBig.start(true, 3000, null, 25);
+};
+
+function shake(){
+  //Set shake intensity and duration
+    game.camera.shake(0.01, 100);
 };
