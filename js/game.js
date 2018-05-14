@@ -37,18 +37,19 @@ Game.init = function(){
 
     Game.playerSize = 64;           // sq. px. size
     Game.isSafe = false;            // local player is in safe zone
-    Game.maxNormVelocity = 200;         // maximum body acceleration
-    Game.maxBoost = 100;            // max boost capacity
+    Game.maxNormVelocity = 200;     // maximum body acceleration
+    Game.maxBoost = 5000;           // max boost capacity
     Game.maxBoostVelocity = 400;    // maximum body acceleration when boosting
     Game.normalAccel = 100;         // normal player acceleration speed
-    Game.boostAccelMult = 10;        // boost acceleration multiplier
+    Game.boostAccelMult = 10;       // boost acceleration multiplier
     Game.normalAngVel = 300;        // normal player rotation speed
     Game.boostRotMult = 0.5;        // boost rotation mutliplier
-    Game.boostCost = .01;           // how much boost costs when active
+    Game.boostCost = 1;             // how much boost costs when active
     Game.refillBoostCost = 100;     // how much it costs to refill boost in the safe zone
 
-    Game.bulletReloadCostList = [100, 250, 500];
-    Game.boostRefillCost = 200;
+    Game.maxWeaponAmmo = [250, 500, 100];
+    Game.bulletReloadCostList = [50, 25, 100];
+    Game.boostRefillCost = 50;
     Game.inShop = false;
 };
 
@@ -263,18 +264,20 @@ Game.update = function()
     if(firedBullets.size > 0 && !document.hidden && typeof Game.ammoMap[Client.getPlayerID()] !== 'undefined' && Client.getPlayerID() !== -1) {
         firedBullets.forEach(function (bullet) {
             playerMap.forEach(function (player, key) {
+                //when the current player is hit with a bullet
                 if(key !== bullet.player) {
                     Game.physics.arcade.overlap(player, bullet, function (player, bullet) {
-                        //burstLittle(bullet.x, bullet.y);
                         bulletErase.push(bullet);
                         player.damage(bullet.damage);
                     });
                 }
             });
+            //safezone
             Game.physics.arcade.overlap(bullet, Game.safeZone, function (bullet) {
                 //burstLittle(bullet.x, bullet.y);
                 bulletErase.push(bullet);
             });
+            //layer
             Game.physics.arcade.overlap(layer, bullet, function (bullet, layer) {
                 if(layer.index !== -1) {
                     //burstLittle(bullet.x, bullet.y);
@@ -594,7 +597,7 @@ Game.updateHUD = function(player){
     player.shield.setText('Shield:\n' +
         'Bullets: ' + Game.playerHUD["bullets"] + '\n' +
         'Boost: ' + Game.playerHUD["boost"] + '\n' +
-        'Dust: ' + Game.playerHUD["currency"], {font: '100px Lucida Console', fill: '#fff'});
+        'Currency: ' + Game.playerHUD["currency"], {font: '100px Lucida Console', fill: '#fff'});
     // }
 
 
@@ -638,6 +641,9 @@ Game.updateHealthBar = function(player) {
         player.healthBar.moveTo(0, 0);
         player.healthBar.lineTo((1.5 * xHealth), 0);
         player.healthBar.endFill();
+        if(player.prevHealth != player.health) {
+            shake();
+        }
     }
 
     player.healthBar.x = player.shield.x + 150;
@@ -819,11 +825,14 @@ Game.unshowBasePrompts = function(){
 };
 
 Game.reloadWeapon = function(){
-    if (Client.score >= Game.bulletReloadCostList[Client.weaponId])
+    if (Game.playerMap[Client.id].score >= Game.bulletReloadCostList[Client.weaponId] && Client.ammo < Game.maxWeaponAmmo[Client.weaponId])
     {
-        Game.playerMap[Client.getPlayerID()].score -= Game.bulletReloadCostList[Client.weaponId];
-        Client.score -= Game.bulletReloadCostList[Client.weaponId];
+        Client.sendCollect(-Game.bulletReloadCostList[Client.weaponId]);
         Client.ammo++;
+        if (Client.ammo > Game.maxWeaponAmmo[Client.weaponId])
+        {
+            Client.ammo = Game.maxWeaponAmmo[Client.weaponId];
+        }
     }
 };
 
@@ -927,7 +936,7 @@ Game.setPlayerRotation = function(id, angVelocity){
         Game.playerMap[id].body.angularVelocity = angVelocity;
 };
 
-Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
+Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color){
     console.log('Game.addNewPlayer '+id+'--'+name+'--'+shipName);
 
     Game.shipTrails[id] = game.add.emitter(x, y + Game.playerSize/2, 400);
@@ -949,9 +958,9 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
             Client.sendShipChange(shipSelectionString);
     }
     // If it is an existing player
-    else{
+    else {
         // console.log(name+'\'s shipName: '+shipName);
-        newPlayer = game.add.sprite(x,y,shipName);
+        newPlayer = game.add.sprite(x, y, shipName);
         // console.log('else statement - shipSelectionString: ' + shipName);
     }
 
@@ -991,6 +1000,10 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
     // newPlayer.shipTrail.rotation = rotation;
     newPlayer.shipTrail.start(false, 2000, 10);
 
+    // Set player sprite and trail color
+    newPlayer.tint = color;
+    newPlayer.shipTrail.setAll('tint', color);
+
 
     // Initialize player's health
     newPlayer.heal(100);
@@ -1003,7 +1016,7 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
 
     // Set the player's score
     // Game.playerHUD["currency"] = score;
-    newPlayer.boost = 100;
+    newPlayer.boost = Game.maxBoost;
     newPlayer.score = score;
     // newPlayer.isSafe = true;
     newPlayer.isMoving = false;
@@ -1108,7 +1121,7 @@ Game.componentToHex = function(c) {
 //Particle methods:
 // if you want to increase performance edit the final argument of
 // bullet.start(true, 1000, null, 2
-// this is->   burst  lifetime    amout of particles
+// this is->   burst  lifetime    amout of particle
 
 //called on bullet removal
 function burstLittle(x,y){
@@ -1123,4 +1136,9 @@ function burst(x,y){
     burstBig.x = x;
     burstBig.y = y;
     burstBig.start(true, 3000, null, 25);
-}
+};
+
+function shake(){
+  //Set shake intensity and duration
+    game.camera.shake(0.01, 100);
+};

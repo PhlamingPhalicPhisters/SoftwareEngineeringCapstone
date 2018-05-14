@@ -92,7 +92,7 @@ Client.socket.on('newplayer',function(data){
         //Game.addNewPlayer(data.id,data.x,data.y,data.rotation);
         // console.log('asscream');
         console.log(data.health);
-        Game.addNewPlayer(data.id, data.x, data.y, data.rotation, data.shipName, data.name, data.score);
+        Game.addNewPlayer(data.id, data.x, data.y, data.rotation, data.shipName, data.name, data.score, data.color);
         if (data.id === Client.id)
             Game.setDeathBehavior(data.id);
     }
@@ -106,7 +106,7 @@ Client.socket.on('allplayers',function(data){
             console.log("Ship Name of an existing ship being sent to new player" + data[i].shipName);
 
             Game.updateAmmo(data[i].id, data[i].ammo, data[i].weaponId);
-            Game.addNewPlayer(data[i].id, data[i].x, data[i].y, data[i].rotation, data[i].shipName, data[i].name, data[i].score);
+            Game.addNewPlayer(data[i].id, data[i].x, data[i].y, data[i].rotation, data[i].shipName, data[i].name, data[i].score, data[i].color);
         }
     }
     Game.setAllPlayersAdded();
@@ -214,6 +214,10 @@ Client.changeAmmo = function(ammo) {
 
 Client.sendCollect = function(value) {
     Client.score += value;
+    if (Client.score < 0)
+    {
+        Client.score = 0;
+    }
     Client.socket.emit('collect', {id: Client.id, value: value});
 };
 
