@@ -14,6 +14,8 @@ Game.ammoMap = {};
 var firedBullets = new Map();
 var playerMap = new Map();
 var bulletID = 0;
+var burstLittleEmitter;
+var burstBig;
 
 var shopMenu;
 
@@ -208,6 +210,12 @@ Game.create = function(){
         "dust x position: " + dustList[100].positionx);
     Game.playerDestroyed = false;
 
+    burstLittleEmitter = game.add.emitter(0, 0,100);
+    burstLittleEmitter.makeParticles('spark');
+    burstBig = game.add.emitter(0, 0,20);
+    burstBig.makeParticles('sparksmall');
+
+
     shopMenu = Game.add.graphics(0,0);
 };
 
@@ -235,7 +243,7 @@ Game.update = function()
     // Establish collision detection between groups
 
     deathDustMap.forEach(function (dust) {
-        Game.physics.arcade.collide(dust, Game.playerMap[Client.getPlayerID()], dustCollisionDeath);
+        Game.physics.arcade.overlap(dust, Game.playerMap[Client.getPlayerID()], dustCollisionDeath);
     });
 
     playerMap.forEach(function (player) {
@@ -257,19 +265,19 @@ Game.update = function()
             playerMap.forEach(function (player, key) {
                 if(key !== bullet.player) {
                     Game.physics.arcade.overlap(player, bullet, function (player, bullet) {
-                        burstLittle(bullet.x, bullet.y);
+                        //burstLittle(bullet.x, bullet.y);
                         bulletErase.push(bullet);
                         player.damage(bullet.damage);
                     });
                 }
             });
             Game.physics.arcade.overlap(bullet, Game.safeZone, function (bullet) {
-                burstLittle(bullet.x, bullet.y);
+                //burstLittle(bullet.x, bullet.y);
                 bulletErase.push(bullet);
             });
             Game.physics.arcade.overlap(layer, bullet, function (bullet, layer) {
                 if(layer.index !== -1) {
-                    burstLittle(bullet.x, bullet.y);
+                    //burstLittle(bullet.x, bullet.y);
                     bulletErase.push(bullet);
                 }
             });
@@ -472,7 +480,7 @@ function fireBullet(id) {
             bullet.player = id;
             firedBullets.set(bullet.id, bullet);
             bulletID++;
-            bullet.events.onKilled.add(function() {
+            bullet.events.onDestroy.add(function() {
                 burstLittle(bullet.x, bullet.y);
                 firedBullets.delete(bullet.id);
                 bullet.destroy();
@@ -497,7 +505,7 @@ Game.updateBullets = function(x, y, rotation, weaponId, id) {
             firedBullets.set(bullet.id, bullet);
             bulletID++;
             game.physics.arcade.velocityFromRotation(rotation, weaponArray[weaponId].velocity, bullet.body.velocity);
-            bullet.events.onKilled.add(function() {
+            bullet.events.onDestroy.add(function() {
                 burstLittle(bullet.x, bullet.y);
                 firedBullets.delete(bullet.id);
                 bullet.destroy();
@@ -811,10 +819,11 @@ Game.unshowBasePrompts = function(){
 };
 
 Game.reloadWeapon = function(){
-    if (Game.playerMap[Client.id].score >= Game.bulletReloadCostList[Client.weaponId])
+    if (Client.score >= Game.bulletReloadCostList[Client.weaponId])
     {
-        Game.playerMap[Client.id].score -= Game.bulletReloadCostList[Client.weaponId]
-        Client.score++;
+        Game.playerMap[Client.getPlayerID()].score -= Game.bulletReloadCostList[Client.weaponId];
+        Client.score -= Game.bulletReloadCostList[Client.weaponId];
+        Client.ammo++;
     }
 };
 
@@ -844,7 +853,7 @@ Game.removePlayer = function(id){
     Game.playerMap[id].shipTrail.destroy();
     generateDustOnDeath(Game.playerMap[id].x, Game.playerMap[id].y, Game.playerMap[id].score);
 
-    burst(Game.playerMap[id].x, Game.playerMap[id].y);
+    //burst(Game.playerMap[id].x, Game.playerMap[id].y);
     playerMap.delete(id);
     Game.playerMap[id].destroy();
     Game.playerDestroyed = true;
@@ -1104,14 +1113,14 @@ Game.componentToHex = function(c) {
 //called on bullet removal
 function burstLittle(x,y){
     //generating burst
-    var burst = game.add.emitter(x, y,100);
-    burst.makeParticles('spark');
-    burst.start(true, 1000, null, 2);
+    burstLittleEmitter.x = x;
+    burstLittleEmitter.y = y;
+    burstLittleEmitter.start(true, 1000, null, 2);
 }
 //called on player death
 function burst(x,y){
   //bullet burst
-    var burst = game.add.emitter(x, y,20);
-    burst.makeParticles('sparksmall');
-    burst.start(true, 3000, null, 25);
+    burstBig.x = x;
+    burstBig.y = y;
+    burstBig.start(true, 3000, null, 25);
 };
