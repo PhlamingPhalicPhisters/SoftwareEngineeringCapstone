@@ -16,7 +16,7 @@ var playerMap = new Map();
 var bulletID = 0;
 var burstLittleEmitter;
 var burstBig;
-
+Game.screenResized = false;
 var shopMenu;
 
 
@@ -151,6 +151,7 @@ Game.create = function(){
         window.resizedFinished = setTimeout(function(){
             console.log('Resize finished');
             Game.rescale();
+            Game.screenResized = true;
         }, 50);
     });
 
@@ -569,8 +570,10 @@ Game.updateHUD = function(player){
     //player.shield.x = player.x - ((window.innerWidth / 2) - 20);
     //player.shield.y = player.y - ((window.innerHeight / 2) - 20);
 
-    player.shield.x = (this.game.camera.width / 2) - ((window.innerWidth / 2) - 20);
-    player.shield.y = (this.game.camera.height / 2) - ((window.innerHeight / 2) - 20);
+    //player.shield.destroy();
+    //player.shield = Game.add.text(0, 0, '', {font: 'Lucida Console', fontSize: this.game.camera.width * .01, fill: '#fff' });
+    player.shield.x = (this.game.camera.width / 2) - ((this.game.camera.width / 2) - 20);
+    player.shield.y = (this.game.camera.height / 2) - ((this.game.camera.height / 2) - 20);
     Game.world.bringToTop(player.shield);
     Game.world.moveDown(player.shield);
     player.shield.fixedToCamera = true;
@@ -594,12 +597,14 @@ Game.updateHUD = function(player){
     Game.playerHUD["bullets"] = Client.ammo;
     player.prevAmmo = Client.ammo;
     Game.playerHUD["currency"] = player.score;
+
+
     player.shield.setText('Shield:\n' +
         'Bullets: ' + Game.playerHUD["bullets"] + '\n' +
         'Boost: ' + Game.playerHUD["boost"] + '\n' +
-        'Currency: ' + Game.playerHUD["currency"], {font: '100px Lucida Console', fill: '#fff'});
+        'Dust: ' + Game.playerHUD["currency"]);
     // }
-
+    player.shield.fontSize = this.game.camera.width * .023;
 
     Game.updateHealthBar(player);
     if (Game.allPlayersAdded)
@@ -623,12 +628,12 @@ Game.updateHealthBar = function(player) {
         //Game.healthBar.x = 10;
         //Game.healthBar.y = 10;
         player.healthBar.beginFill(color);
-        player.healthBar.lineStyle(30, color, 1);
+        player.healthBar.lineStyle(this.game.camera.width * .02, color, 1);
         player.healthBar.moveTo(0, 0);
-        player.healthBar.lineTo((1.5 * xHealth), 0);
+        player.healthBar.lineTo((this.game.camera.width * .001) * xHealth, 0);
         player.healthBar.endFill();
     }
-    else if (player.prevHealth != player.health || player.healthBar.safe){
+    else if (player.prevHealth != player.health || player.healthBar.safe || Game.screenResized){
         player.healthBar.safe = false;
         player.healthBar.clear();
         var x = player.health / 100;
@@ -637,17 +642,19 @@ Game.updateHealthBar = function(player) {
         //Game.healthBar.x = 10;
         //Game.healthBar.y = 10;
         player.healthBar.beginFill(color);
-        player.healthBar.lineStyle(30, color, 1);
+        player.healthBar.lineStyle(this.game.camera.width * .02, color, 1);
         player.healthBar.moveTo(0, 0);
-        player.healthBar.lineTo((1.5 * xHealth), 0);
+        player.healthBar.lineTo((this.game.camera.width * .001) * xHealth, 0);
         player.healthBar.endFill();
+        if(Game.screenResized)
+            Game.screenResized = false;
         if(player.prevHealth != player.health) {
             shake();
         }
     }
 
-    player.healthBar.x = player.shield.x + 150;
-    player.healthBar.y = player.shield.y + 18;
+    player.healthBar.x = player.shield.x + (this.game.camera.width * .10);
+    player.healthBar.y = player.shield.y + (this.game.camera.width * .09 * .12);
     player.prevHealth = player.health;
     Game.world.bringToTop(player.healthBar);
     Game.world.moveDown(player.healthBar);
@@ -744,8 +751,8 @@ Game.removeFromLeaderboard = function(id) {
 };
 
 Game.setLeaderboard = function() {
-    Game.playerMap[Client.id].scoreboard.x = (this.game.camera.width / 2) + ((window.innerWidth / 2) - 20);
-    Game.playerMap[Client.id].scoreboard.y = (this.game.camera.height / 2) - ((window.innerHeight / 2) - 20);
+    Game.playerMap[Client.id].scoreboard.x = (this.game.camera.width / 2) + ((this.game.camera.width / 2) - 20);
+    Game.playerMap[Client.id].scoreboard.y = (this.game.camera.height / 2) - ((this.game.camera.height / 2) - 20);
     Game.world.bringToTop(Game.playerMap[Client.id].scoreboard);
     Game.world.moveDown(Game.playerMap[Client.id].scoreboard);
     Game.playerMap[Client.id].scoreboard.fixedToCamera = true;
@@ -756,6 +763,8 @@ Game.setLeaderboard = function() {
         '\n#3 ' + (Game.leaderboard[3] !== null ? Game.leaderboard[3].score+'-'+Game.leaderboard[3].name : '_______')+
         '\n#4 ' + (Game.leaderboard[4] !== null ? Game.leaderboard[4].score+'-'+Game.leaderboard[4].name : '_______')+
         '\n#5 ' + (Game.leaderboard[5] !== null ? Game.leaderboard[5].score+'-'+Game.leaderboard[5].name : '_______'));
+
+    Game.playerMap[Client.id].scoreboard.fontSize = this.game.camera.width * .023;
 };
 
 // Update the position and rotation of a given remote player
@@ -1003,7 +1012,7 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color){
     // Set player sprite and trail color
     newPlayer.tint = color;
     newPlayer.shipTrail.setAll('tint', color);
-
+    //newPlayer.maxHealth = 200;
 
     // Initialize player's health
     newPlayer.heal(100);
@@ -1031,18 +1040,17 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color){
     // Local player should be instantiated first before remote players
     newPlayer.id = id;
     Game.playerMap[id] = newPlayer;
-    Game.playerMap[id].shield = Game.add.text(0, 0, '', { font: '35px Lucida Console', fill: '#fff' });
-    Game.playerMap[id].nameHover = Game.add.text(0, 0, '', {font: '20px Lucida Console', fill: '#fff'});
-    Game.playerMap[id].safePromptHover = Game.add.text(0, 0, '', {font: '20px Lucida Console', fill: '#fff', boundsAlignH: "center"});
+    Game.playerMap[id].shield = Game.add.text(0, 0, '', {font: 'Lucida Console', fontSize: this.game.camera.width * .01, fill: '#fff' });
+    Game.playerMap[id].nameHover = Game.add.text(0, 0, '', {font: 'Lucida Console', fontSize: this.game.camera.width * .01, fill: '#fff'});
+    Game.playerMap[id].safePromptHover = Game.add.text(0, 0, '', {font: 'Lucida Console', fontSize: this.game.camera.width * .01, fill: '#fff', boundsAlignH: "center"});
     Game.playerMap[id].safePromptHover.anchor.set(0.5,0.5);
-    Game.playerMap[id].scoreHover = Game.add.text(0, 0, '', {font: '20px Lucida Console', fill: '#fff'});
+    Game.playerMap[id].scoreHover = Game.add.text(0, 0, '', {font: 'Lucida Console', fontSize: this.game.camera.width * .01, fill: '#fff'});
     Game.playerMap[id].healthBar = Game.add.graphics(0,0);
     Game.playerMap[id].healthBar.safe = false;
     Game.playerMap[id].prevHealth = -1;
-    Game.playerMap[id].scoreboard = Game.add.text(0, 0, '', { font: '35px Lucida Console', fill: '#fff'/*, boundsAlignH: 'right'*/ });
+    Game.playerMap[id].scoreboard = Game.add.text(0, 0, '', {font: 'Lucida Console', fontSize: this.game.camera.width * .01, fill: '#fff'/*, boundsAlignH: 'right'*/ });
     Game.playerMap[id].scoreboard.anchor.setTo(1, 0);
 
-    //Game.createHealthBar(Game.playerMap[id]);
     playerMap.set(newPlayer.id, newPlayer);
     if (!Game.localPlayerInstantiated) {
         Game.localPlayerInstantiated = true;
@@ -1072,23 +1080,6 @@ Game.setDeathBehavior = function(id) {
     });
 };
 
-Game.createHealthBar = function(player){
-    player.healthBar = Game.add.graphics(0,0);
-    player.healthBar.clear();
-    player.healthBar.safe = false;
-    var xHealth = (player.health / 100) * 100;
-    player.prevHealth = xHealth;
-    var color = Game.rgbToHex(255, 0, 0);
-    //Game.healthBar.x = 10;
-    //Game.healthBar.y = 10;
-    player.healthBar.beginFill(color);
-    player.healthBar.lineStyle(30, color, 1);
-    //player.healthBar.moveTo(0, 0);
-    player.healthBar.lineTo(1.5 * xHealth, 0);
-    player.healthBar.endFill();
-    //Game.healthBar[player.id].x = player.x;
-    //Game.healthBar[player.id].y = player.y;
-};
 
 Game.setAllPlayersAdded = function(){
     Game.allPlayersAdded = true;
@@ -1136,9 +1127,12 @@ function burst(x,y){
     burstBig.x = x;
     burstBig.y = y;
     burstBig.start(true, 3000, null, 25);
-};
+
+}
+
 
 function shake(){
   //Set shake intensity and duration
     game.camera.shake(0.01, 100);
-};
+}
+
