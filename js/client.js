@@ -212,6 +212,10 @@ Client.changeAmmo = function(ammo) {
     Client.socket.emit('changeAmmo', ammo);
 };
 
+Client.refillAmmo = function(ammo) {
+    Client.socket.emit('setAmmo', {id: Client.id, ammo: Client.ammo, weaponId: Client.weaponId});
+};
+
 Client.sendCollect = function(value) {
     Client.score += value;
     if (Client.score < 0)
