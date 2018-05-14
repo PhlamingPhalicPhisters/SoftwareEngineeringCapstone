@@ -25,10 +25,10 @@ var dust = function (id, startx, starty, value) {
     dustObject.enableBody = true;
 
     Game.physics.enable(dustObject, Phaser.Physics.ARCADE);
-    dustObject.body.velocity.set(randomInt(-10,10), randomInt(-10,10));
+    dustObject.body.velocity.set(randomInt(-15,15), randomInt(-15,15));
     dustObject.body.angle = randomInt(-5,5);
     dustObject.body.collideWorldBounds = true;
-    dustObject.body.bounce.setTo(.5, .5);
+    dustObject.body.bounce.setTo(1, .1);
     return dustObject;
 };
 

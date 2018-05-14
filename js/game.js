@@ -242,7 +242,6 @@ window.addEventListener("focus", function(event) {
 Game.update = function()
 {
     // Establish collision detection between groups
-
     deathDustMap.forEach(function (dust) {
         Game.physics.arcade.overlap(dust, Game.playerMap[Client.getPlayerID()], dustCollisionDeath);
     });
@@ -250,6 +249,8 @@ Game.update = function()
     playerMap.forEach(function (player) {
         Game.physics.arcade.overlap(dustList, player, dustCollision);
     });
+
+    Game.physics.arcade.collide(layer, dustList);
 
     Game.physics.arcade.collide(layer, Game.playerMap[Client.getPlayerID()]);
 
@@ -298,35 +299,17 @@ Game.update = function()
     // Get forward/backward input
     if (Game.cursors.up.isDown && !Game.inShop)
     {
-        // Client.sendAcceleration(1);
         Game.setPlayerAcceleration(Game.normalAccel, game.input.keyboard.isDown(Phaser.Keyboard.SHIFT))
     }
     else if (Game.cursors.down.isDown && !Game.inShop)
     {
-        // Client.sendAcceleration(-1);
         Game.setPlayerAcceleration(-Game.normalAccel, game.input.keyboard.isDown(Phaser.Keyboard.SHIFT))
     }
     else
     {
-        // Client.sendAcceleration(0);
         Game.setPlayerAcceleration(0, false);
     }
     if (Game.cursors.left.isDown && Game.cursors.right.isDown && !Game.inShop) {
-        /*var angVelocity = Game.playerMap[Client.player.id].body.angularVelocity;// Game.playerMap[Client.id].body.angularVelocity = 300;
-        if (Game.cursors.left.isDown && angVelocity < 0) {
-            Client.sendRotation(-300);
-        }
-        else if (Game.cursors.left.isDown && angVelocity >= 0) {
-            Client.sendRotation(-300);
-            // Game.playerMap[Client.id].body.angularVelocity = -300;
-        }
-        else if (Game.cursors.right.isDown && angVelocity >= 0) {
-            Client.sendRotation(300);
-            // Game.playerMap[Client.id].body.angularVelocity = 300;
-        }
-        if (Game.cursors.right.isDown && angVelocity < 0) {
-            Client.sendRotation(300);
-        }*/
         if (Game.cursors.left.isDown && Game.cursors.left.timeDown > Game.cursors.right.timeDown) {
             Client.sendRotation(-300);
         }
@@ -355,8 +338,6 @@ Game.update = function()
     // Get firing input
     if (!Game.isSafe && game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR))
     {
-        //Client.sendShoot();
-        //fireBullet(bulletInfo);
         fireBullet(Client.getPlayerID());
     }
 
@@ -1021,6 +1002,9 @@ Game.setPlayerAcceleration = function(acceleration, isBoost){
             // game.physics.arcade.velocityFromRotation(rotation, weaponArray[weaponId].velocity, bullet.body.velocity);
             game.physics.arcade.accelerationFromRotation(Game.playerMap[Client.id].rotation,
                 acceleration * Game.boostAccelMult, Game.playerMap[Client.id].body.acceleration);
+
+            //game.physics.arcade.accelerationFromRotation(Game.playerMap[Client.id].rotation,
+            //    acceleration, parallax);
         }
         else {
             Game.playerMap[Client.id].body.maxVelocity.set(Game.maxNormVelocity);
