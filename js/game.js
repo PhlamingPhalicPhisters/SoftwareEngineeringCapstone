@@ -40,16 +40,15 @@ Game.init = function(){
     Game.maxNormVelocity = 200;     // maximum body acceleration
     Game.maxBoost = 5000;           // max boost capacity
     Game.maxBoostVelocity = 400;    // maximum body acceleration when boosting
-    Game.normalAccel = 100;         // normal player acceleration speed
+    Game.normalAccel = 300;         // normal player acceleration speed
     Game.boostAccelMult = 10;       // boost acceleration multiplier
     Game.normalAngVel = 300;        // normal player rotation speed
     Game.boostRotMult = 0.5;        // boost rotation mutliplier
     Game.boostCost = 1;             // how much boost costs when active
-    Game.refillBoostCost = 20;     // how much it costs to refill boost in the safe zone
 
     Game.maxWeaponAmmo = [250, 500, 100];
     Game.bulletReloadCostList = [50, 25, 100];
-    Game.boostRefillCost = 50;
+    Game.boostRefillCost = 1;
     Game.inShop = false;
 };
 
@@ -586,8 +585,8 @@ Game.updateHUD = function(player){
 
 
     player.shield.setText('Shield:\n' +
-        'Bullets: ' + Game.playerHUD["bullets"] + '\n' +
-        'Boost: ' + Game.playerHUD["boost"] + '\n' +
+        'Bullets: ' + Game.playerHUD["bullets"] + '/' + Game.maxWeaponAmmo[Client.weaponId] +'\n' +
+        'Boost: ' + Game.playerHUD["boost"] + '/' + Game.maxBoost +'\n' +
         'Dust: ' + Game.playerHUD["currency"]);
     // }
     player.shield.fontSize = this.game.camera.width * .023;
@@ -821,7 +820,7 @@ Game.showBasePrompts = function(){
         * ((Game.maxWeaponAmmo[Client.weaponId]-Client.ammo)/Game.maxWeaponAmmo[Client.weaponId]))+'[R]\n'*/
         /*+ 'Refill 1 boost: '+Game.boostRefillCost+'[B]');*/
     Game.playerMap[Client.id].safePromptHover.x = (this.game.camera.width / 2);
-    Game.playerMap[Client.id].safePromptHover.y = (this.game.camera.height / 2) + 60;
+    Game.playerMap[Client.id].safePromptHover.y = (this.game.camera.height / 2) + .1*this.game.camera.height;
     Game.playerMap[Client.id].safePromptHover.fixedToCamera = true;
 };
 
