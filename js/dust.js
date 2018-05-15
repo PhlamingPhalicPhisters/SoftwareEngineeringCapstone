@@ -38,8 +38,10 @@ function addDust (id, x, y, value) {
 }
 
 //Instead of removing dust we just move it to a new location
-function dustCollision(dustObject) {
-    Client.sendCollect(dustObject.value);
+function dustCollision(dustObject, player) {
+    if(player.id === Client.id) {
+        Client.sendCollect(dustObject.value);
+    }
     moveDust(dustObject);
 }
 

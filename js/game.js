@@ -244,7 +244,9 @@ Game.update = function()
     // Establish collision detection between groups
 
     deathDustMap.forEach(function (dust) {
-        Game.physics.arcade.overlap(dust, Game.playerMap[Client.getPlayerID()], dustCollisionDeath);
+        playerMap.forEach(function (player) {
+            Game.physics.arcade.overlap(dust, player, dustCollisionDeath);
+        });
     });
 
     playerMap.forEach(function (player) {
@@ -360,12 +362,6 @@ Game.update = function()
         fireBullet(Client.getPlayerID());
     }
 
-    if (game.input.keyboard.isDown(Phaser.Keyboard.SHIFT)
-        && game.input.keyboard.isDown(Phaser.Keyboard.ESC))
-    {
-
-    }
-
     if (Game.allPlayersAdded) {
         if (Game.isSafe) {
             Game.showBasePrompts();
@@ -396,6 +392,11 @@ Game.update = function()
                 Game.inShop = false;
             }
         }
+    }
+
+    if (game.input.keyboard.isDown(Phaser.Keyboard.ESC))
+    {
+        Game.playerMap[Client.id].kill();
     }
 
     // Sync the transform of remote instances of this player
