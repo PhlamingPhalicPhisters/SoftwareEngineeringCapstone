@@ -70,38 +70,9 @@ Menu.create = function()
     Menu.button = null;
     Menu.highScore = null;
     Menu.lastScore = null;
-    Menu.addGraphics();
-
-    onColorUpdate(Menu.titleImg);
-
-    // Menu.button.onInputOver.add(over, this);
-    // Menu.button.onInputOut.add(out, this);
-    // Menu.button.onInputUp.add(up, this);
-
-    /*if (music.name !== "dangerous" && playMusic) {
-
-            music.stop();
-
-            music = game.add.audio('dangerous');
-
-            music.loop = true;
-
-            music.play();
-
-    }*/
 
 
-    // Menu.addMenuOption('Start', function () {
-    //     game.state.start("Game");
-    // });
-    //
-    // Menu.addMenuOption('Options', function () {
-    //     game.state.start("Options");
-    // });
-    //
-    // Menu.addMenuOption('Credits', function () {
-    //     game.state.start("Credits");
-    // });
+    Menu.rescale();
 };
 
 Menu.update = function()

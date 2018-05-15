@@ -46,6 +46,9 @@ Game.init = function(){
     // Run game in background
     this.game.stage.disableVisibilityChange = true;
 
+    Game.rescale();
+    Game.screenResized = true;
+
     Game.leaderboard = [null, null, null, null, null, null];
 
     // Game.playerSize = 64;           // sq. px. size
