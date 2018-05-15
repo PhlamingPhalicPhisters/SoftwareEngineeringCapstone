@@ -1,7 +1,7 @@
 var Game = {};
 
 var layer;
-
+var dustList = [];
 var weaponArray = [];
 function addWeapon(lifespan, velocity, bulletTime, damage) {
     weaponArray.push({lifespan: lifespan, velocity: velocity, bulletTime: bulletTime, damage: damage});
@@ -143,14 +143,18 @@ Game.create = function(){
     this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
     this.game.scale.pageAlignHorizontally = true;
     this.game.scale.pageAlignVertically = true;
+    Game.rescale();
+    //console.log(this.game.scale.width + " width");
+    //this.game.scale.setGameSize(window.outerWidth * 1.1, window.innerHeight * 1.1);
     // this.game.scale.setMinMax(640,480/*,1920,1080*/);
 
     // Handle window resizing events every 50ms
     window.addEventListener('resize',function(event){
         clearTimeout(window.resizedFinished);
         window.resizedFinished = setTimeout(function(){
-            console.log('Resize finished');
+            //console.log('Resize finished');
             Game.rescale();
+            //console.log("Resize width: " + Game.width + ", Resize height: " + Game.height);
             Game.screenResized = true;
         }, 50);
     });
@@ -206,7 +210,8 @@ Game.create = function(){
     Game.playerDestroyed = false;
 
     //generate dust for the player
-    generateDustForClient();
+    generateDustForClient(Client.getPlayerID());
+    console.log("DustList size: " + dustList.length);
     console.log("Testing the dust list to verify that it loaded correctly, " +
         "dust x position: " + dustList[100].positionx);
     Game.playerDestroyed = false;
@@ -242,7 +247,6 @@ window.addEventListener("focus", function(event) {
 Game.update = function()
 {
     // Establish collision detection between groups
-
     deathDustMap.forEach(function (dust) {
         playerMap.forEach(function (player) {
             Game.physics.arcade.overlap(dust, player, dustCollisionDeath);
@@ -252,6 +256,8 @@ Game.update = function()
     playerMap.forEach(function (player) {
         Game.physics.arcade.overlap(dustList, player, dustCollision);
     });
+
+    Game.physics.arcade.collide(layer, dustList);
 
     Game.physics.arcade.collide(layer, Game.playerMap[Client.getPlayerID()]);
 
@@ -300,35 +306,17 @@ Game.update = function()
     // Get forward/backward input
     if (Game.cursors.up.isDown && !Game.inShop)
     {
-        // Client.sendAcceleration(1);
         Game.setPlayerAcceleration(Game.normalAccel, game.input.keyboard.isDown(Phaser.Keyboard.SHIFT))
     }
     else if (Game.cursors.down.isDown && !Game.inShop)
     {
-        // Client.sendAcceleration(-1);
         Game.setPlayerAcceleration(-Game.normalAccel, game.input.keyboard.isDown(Phaser.Keyboard.SHIFT))
     }
     else
     {
-        // Client.sendAcceleration(0);
         Game.setPlayerAcceleration(0, false);
     }
     if (Game.cursors.left.isDown && Game.cursors.right.isDown && !Game.inShop) {
-        /*var angVelocity = Game.playerMap[Client.player.id].body.angularVelocity;// Game.playerMap[Client.id].body.angularVelocity = 300;
-        if (Game.cursors.left.isDown && angVelocity < 0) {
-            Client.sendRotation(-300);
-        }
-        else if (Game.cursors.left.isDown && angVelocity >= 0) {
-            Client.sendRotation(-300);
-            // Game.playerMap[Client.id].body.angularVelocity = -300;
-        }
-        else if (Game.cursors.right.isDown && angVelocity >= 0) {
-            Client.sendRotation(300);
-            // Game.playerMap[Client.id].body.angularVelocity = 300;
-        }
-        if (Game.cursors.right.isDown && angVelocity < 0) {
-            Client.sendRotation(300);
-        }*/
         if (Game.cursors.left.isDown && Game.cursors.left.timeDown > Game.cursors.right.timeDown) {
             Client.sendRotation(-300);
         }
@@ -357,8 +345,6 @@ Game.update = function()
     // Get firing input
     if (!Game.isSafe && game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR))
     {
-        //Client.sendShoot();
-        //fireBullet(bulletInfo);
         fireBullet(Client.getPlayerID());
     }
 
@@ -612,8 +598,15 @@ Game.updateHUD = function(player){
         Game.updateLeaderboard();
     }
 };
-
+var healthTime = true;
 Game.updateHealthBar = function(player) {
+    if(healthTime) {
+        setTimeout(function () {
+            player.heal(5);
+            healthTime = true;
+        }, 1000);
+        healthTime = false;
+    }
     //player.damage(.05);
     if(player.health === 0){
         //Game.playerKilled(player);
@@ -648,7 +641,7 @@ Game.updateHealthBar = function(player) {
         player.healthBar.endFill();
         if(Game.screenResized)
             Game.screenResized = false;
-        if(player.prevHealth != player.health) {
+        if(player.prevHealth > player.health) {
             shake();
         }
     }
@@ -1022,6 +1015,9 @@ Game.setPlayerAcceleration = function(acceleration, isBoost){
             // game.physics.arcade.velocityFromRotation(rotation, weaponArray[weaponId].velocity, bullet.body.velocity);
             game.physics.arcade.accelerationFromRotation(Game.playerMap[Client.id].rotation,
                 acceleration * Game.boostAccelMult, Game.playerMap[Client.id].body.acceleration);
+
+            //game.physics.arcade.accelerationFromRotation(Game.playerMap[Client.id].rotation,
+            //    acceleration, parallax);
         }
         else {
             Game.playerMap[Client.id].body.maxVelocity.set(Game.maxNormVelocity);
