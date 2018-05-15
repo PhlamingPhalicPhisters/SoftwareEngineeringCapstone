@@ -2,7 +2,7 @@
 //it keeps a running list of all dust in the game
 
 //List of all dust items in the game (client side)
-var dustList = [];
+
 var deathDustMap = new Map();
 var deathDustID = 0;
 var worldBoudndX = 6336;
@@ -38,8 +38,9 @@ function addDust (id, x, y, value) {
 }
 
 //Instead of removing dust we just move it to a new location
-function dustCollision(dustObject) {
-    Client.sendCollect(dustObject.value);
+function dustCollision(dustObject, player) {
+    if(dustObject.id === player.id)
+        Client.sendCollect(dustObject.value);
     moveDust(dustObject);
 }
 
@@ -55,9 +56,9 @@ function moveDust(dustObject){
     dustObject.y = randomInt(0,worldBoundY);
 }
 
-function generateDustForClient(){
+function generateDustForClient(id){
     for(var i = 0; i < 150; i++) {
-        addDust(i, randomInt(0,worldBoudndX), randomInt(0,worldBoundY), 100);
+        addDust(id, randomInt(0,worldBoudndX), randomInt(0,worldBoundY), 100);
     }
 }
 

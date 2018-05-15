@@ -1,7 +1,7 @@
 var Game = {};
 
 var layer;
-
+var dustList = [];
 var weaponArray = [];
 function addWeapon(lifespan, velocity, bulletTime, damage) {
     weaponArray.push({lifespan: lifespan, velocity: velocity, bulletTime: bulletTime, damage: damage});
@@ -143,14 +143,18 @@ Game.create = function(){
     this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
     this.game.scale.pageAlignHorizontally = true;
     this.game.scale.pageAlignVertically = true;
+    Game.rescale();
+    //console.log(this.game.scale.width + " width");
+    //this.game.scale.setGameSize(window.outerWidth * 1.1, window.innerHeight * 1.1);
     // this.game.scale.setMinMax(640,480/*,1920,1080*/);
 
     // Handle window resizing events every 50ms
     window.addEventListener('resize',function(event){
         clearTimeout(window.resizedFinished);
         window.resizedFinished = setTimeout(function(){
-            console.log('Resize finished');
+            //console.log('Resize finished');
             Game.rescale();
+            //console.log("Resize width: " + Game.width + ", Resize height: " + Game.height);
             Game.screenResized = true;
         }, 50);
     });
@@ -207,7 +211,8 @@ Game.create = function(){
     Game.playerDestroyed = false;
 
     //generate dust for the player
-    generateDustForClient();
+    generateDustForClient(Client.getPlayerID());
+    console.log("DustList size: " + dustList.length);
     console.log("Testing the dust list to verify that it loaded correctly, " +
         "dust x position: " + dustList[100].positionx);
     Game.playerDestroyed = false;
@@ -245,7 +250,9 @@ Game.update = function()
     // Establish collision detection between groups
 
     deathDustMap.forEach(function (dust) {
-        Game.physics.arcade.overlap(dust, Game.playerMap[Client.getPlayerID()], dustCollisionDeath);
+        playerMap.forEach(function (player) {
+            Game.physics.arcade.overlap(dust, player, dustCollisionDeath);
+        });
     });
 
     playerMap.forEach(function (player) {
@@ -612,8 +619,15 @@ Game.updateHUD = function(player){
         Game.updateLeaderboard();
     }
 };
-
+var healthTime = true;
 Game.updateHealthBar = function(player) {
+    if(healthTime) {
+        setTimeout(function () {
+            player.heal(5);
+            healthTime = true;
+        }, 1000);
+        healthTime = false;
+    }
     //player.damage(.05);
     if(player.health === 0){
         //Game.playerKilled(player);
@@ -648,7 +662,7 @@ Game.updateHealthBar = function(player) {
         player.healthBar.endFill();
         if(Game.screenResized)
             Game.screenResized = false;
-        if(player.prevHealth != player.health) {
+        if(player.prevHealth > player.health) {
             shake();
         }
     }
