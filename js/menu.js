@@ -106,10 +106,6 @@ Menu.create = function()
 
 Menu.update = function()
 {
-    if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR))
-    {
-        console.log(Menu.nameInput.value);
-    }
     if (game.input.keyboard.isDown(Phaser.Keyboard.ENTER))
     {
         Menu.enterGame();
@@ -187,7 +183,7 @@ Menu.addGraphics = function()
     var buttonHeight = Menu.button.height;
     Menu.button.width = Menu.nameInput.width*.5;
     Menu.button.height = Menu.button.width * (buttonHeight/buttonWidth);
-    randomTint(Menu.button);
+    Menu.button.tint = randomTint();
 };
 
 Menu.rescale = function(){
@@ -199,14 +195,15 @@ Menu.rescale = function(){
     onColorUpdate(Menu.titleImg);
 };
 
-var randomTint = function(sprite) {
-    sprite.tint = Math.random() * 0xffffff;
+var randomTint = function() {
+    return ((Math.random()*0xffffff)|0x0f0f0f);
+    //return Math.random() * 0xffffff;
 };
 
 var onColorUpdate = function(sprite) {
     if (sprite !== null)
     {
-        randomTint(sprite);
+        sprite.tint = randomTint();
     }
     var ms = 1500;
     sprite.updateEvent  = this.game.time.events.add(ms, function(){ onColorUpdate(sprite); }, this);

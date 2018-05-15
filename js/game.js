@@ -1,7 +1,7 @@
 var Game = {};
 
 var layer;
-
+var dustList = [];
 var weaponArray = [];
 function addWeapon(lifespan, velocity, bulletTime, damage) {
     weaponArray.push({lifespan: lifespan, velocity: velocity, bulletTime: bulletTime, damage: damage});
@@ -30,6 +30,8 @@ shop = {
 };
 Game.dragX = 0;
 Game.dragY = 0;
+Game.screenResized = false;
+
 
 //This variable represents the amount of ships in the game
 //It is used when assigning new players a ship
@@ -51,16 +53,15 @@ Game.init = function(){
     Game.maxNormVelocity = 200;     // maximum body acceleration
     Game.maxBoost = 5000;           // max boost capacity
     Game.maxBoostVelocity = 400;    // maximum body acceleration when boosting
-    Game.normalAccel = 100;         // normal player acceleration speed
+    Game.normalAccel = 300;         // normal player acceleration speed
     Game.boostAccelMult = 10;       // boost acceleration multiplier
     Game.normalAngVel = 300;        // normal player rotation speed
     Game.boostRotMult = 0.5;        // boost rotation mutliplier
     Game.boostCost = 1;             // how much boost costs when active
-    Game.refillBoostCost = 100;     // how much it costs to refill boost in the safe zone
 
     Game.maxWeaponAmmo = [250, 500, 100];
     Game.bulletReloadCostList = [50, 25, 100];
-    Game.boostRefillCost = 50;
+    Game.boostRefillCost = 1;
     Game.inShop = false;
 };
 
@@ -154,14 +155,19 @@ Game.create = function(){
     this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
     this.game.scale.pageAlignHorizontally = true;
     this.game.scale.pageAlignVertically = true;
+    Game.rescale();
+    //console.log(this.game.scale.width + " width");
+    //this.game.scale.setGameSize(window.outerWidth * 1.1, window.innerHeight * 1.1);
     // this.game.scale.setMinMax(640,480/*,1920,1080*/);
 
     // Handle window resizing events every 50ms
     window.addEventListener('resize',function(event){
         clearTimeout(window.resizedFinished);
         window.resizedFinished = setTimeout(function(){
-            console.log('Resize finished');
+            //console.log('Resize finished');
             Game.rescale();
+            //console.log("Resize width: " + Game.width + ", Resize height: " + Game.height);
+            Game.screenResized = true;
         }, 50);
     });
 
@@ -182,7 +188,6 @@ Game.create = function(){
     Game.safeZone.alpha = 0.6;
     layer = map.createLayer('Groundlayer');
     map.setCollisionBetween(0, 4000, true, 'Groundlayer');
-    // map.setCollisionBetween(0, 1, true, 'Zonelayer');
     layer.resizeWorld();
 
     // Enable Phaser Arcade game physics engine
@@ -218,7 +223,8 @@ Game.create = function(){
     Game.playerDestroyed = false;
 
     //generate dust for the player
-    generateDustForClient();
+    generateDustForClient(Client.getPlayerID());
+    console.log("DustList size: " + dustList.length);
     console.log("Testing the dust list to verify that it loaded correctly, " +
         "dust x position: " + dustList[100].positionx);
     Game.playerDestroyed = false;
@@ -256,14 +262,17 @@ window.addEventListener("focus", function(event) {
 Game.update = function()
 {
     // Establish collision detection between groups
-
     deathDustMap.forEach(function (dust) {
-        Game.physics.arcade.overlap(dust, Game.playerMap[Client.getPlayerID()], dustCollisionDeath);
+        playerMap.forEach(function (player) {
+            Game.physics.arcade.overlap(dust, player, dustCollisionDeath);
+        });
     });
 
     playerMap.forEach(function (player) {
         Game.physics.arcade.overlap(dustList, player, dustCollision);
     });
+
+    Game.physics.arcade.collide(layer, dustList);
 
     Game.physics.arcade.collide(layer, Game.playerMap[Client.getPlayerID()]);
 
@@ -278,18 +287,20 @@ Game.update = function()
     if(firedBullets.size > 0 && !document.hidden && typeof Game.ammoMap[Client.getPlayerID()] !== 'undefined' && Client.getPlayerID() !== -1) {
         firedBullets.forEach(function (bullet) {
             playerMap.forEach(function (player, key) {
+                //when the current player is hit with a bullet
                 if(key !== bullet.player) {
                     Game.physics.arcade.overlap(player, bullet, function (player, bullet) {
-                        //burstLittle(bullet.x, bullet.y);
                         bulletErase.push(bullet);
                         player.damage(bullet.damage);
                     });
                 }
             });
+            //safezone
             Game.physics.arcade.overlap(bullet, Game.safeZone, function (bullet) {
                 //burstLittle(bullet.x, bullet.y);
                 bulletErase.push(bullet);
             });
+            //layer
             Game.physics.arcade.overlap(layer, bullet, function (bullet, layer) {
                 if(layer.index !== -1) {
                     //burstLittle(bullet.x, bullet.y);
@@ -310,35 +321,17 @@ Game.update = function()
     // Get forward/backward input
     if (Game.cursors.up.isDown && !Game.inShop)
     {
-        // Client.sendAcceleration(1);
         Game.setPlayerAcceleration(Game.normalAccel, game.input.keyboard.isDown(Phaser.Keyboard.SHIFT))
     }
     else if (Game.cursors.down.isDown && !Game.inShop)
     {
-        // Client.sendAcceleration(-1);
         Game.setPlayerAcceleration(-Game.normalAccel, game.input.keyboard.isDown(Phaser.Keyboard.SHIFT))
     }
     else
     {
-        // Client.sendAcceleration(0);
         Game.setPlayerAcceleration(0, false);
     }
     if (Game.cursors.left.isDown && Game.cursors.right.isDown && !Game.inShop) {
-        /*var angVelocity = Game.playerMap[Client.player.id].body.angularVelocity;// Game.playerMap[Client.id].body.angularVelocity = 300;
-        if (Game.cursors.left.isDown && angVelocity < 0) {
-            Client.sendRotation(-300);
-        }
-        else if (Game.cursors.left.isDown && angVelocity >= 0) {
-            Client.sendRotation(-300);
-            // Game.playerMap[Client.id].body.angularVelocity = -300;
-        }
-        else if (Game.cursors.right.isDown && angVelocity >= 0) {
-            Client.sendRotation(300);
-            // Game.playerMap[Client.id].body.angularVelocity = 300;
-        }
-        if (Game.cursors.right.isDown && angVelocity < 0) {
-            Client.sendRotation(300);
-        }*/
         if (Game.cursors.left.isDown && Game.cursors.left.timeDown > Game.cursors.right.timeDown) {
             Client.sendRotation(-300);
         }
@@ -367,15 +360,7 @@ Game.update = function()
     // Get firing input
     if (!Game.isSafe && game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR))
     {
-        //Client.sendShoot();
-        //fireBullet(bulletInfo);
         fireBullet(Client.getPlayerID());
-    }
-
-    if (game.input.keyboard.isDown(Phaser.Keyboard.SHIFT)
-        && game.input.keyboard.isDown(Phaser.Keyboard.ESC))
-    {
-
     }
 
     if (Game.allPlayersAdded) {
@@ -412,6 +397,11 @@ Game.update = function()
                 Game.inShop = false;
             }
         }
+    }
+
+    if (game.input.keyboard.isDown(Phaser.Keyboard.ESC))
+    {
+        Game.playerMap[Client.id].kill();
     }
 
     // Sync the transform of remote instances of this player
@@ -653,8 +643,10 @@ Game.updateHUD = function(player){
     //player.shield.x = player.x - ((window.innerWidth / 2) - 20);
     //player.shield.y = player.y - ((window.innerHeight / 2) - 20);
 
-    player.shield.x = (this.game.camera.width / 2) - ((window.innerWidth / 2) - 20);
-    player.shield.y = (this.game.camera.height / 2) - ((window.innerHeight / 2) - 20);
+    //player.shield.destroy();
+    //player.shield = Game.add.text(0, 0, '', {font: 'Lucida Console', fontSize: this.game.camera.width * .01, fill: '#fff' });
+    player.shield.x = (this.game.camera.width / 2) - ((this.game.camera.width / 2) - 20);
+    player.shield.y = (this.game.camera.height / 2) - ((this.game.camera.height / 2) - 20);
     Game.world.bringToTop(player.shield);
     Game.world.moveDown(player.shield);
     player.shield.fixedToCamera = true;
@@ -678,12 +670,14 @@ Game.updateHUD = function(player){
     Game.playerHUD["bullets"] = Client.ammo;
     player.prevAmmo = Client.ammo;
     Game.playerHUD["currency"] = player.score;
-    player.shield.setText('Shield:\n' +
-        'Bullets: ' + Game.playerHUD["bullets"] + '\n' +
-        'Boost: ' + Game.playerHUD["boost"] + '\n' +
-        'Currency: ' + Game.playerHUD["currency"], {font: '100px Lucida Console', fill: '#fff'});
-    // }
 
+
+    player.shield.setText('Shield:\n' +
+        'Bullets: ' + Game.playerHUD["bullets"] + '/' + Game.maxWeaponAmmo[Client.weaponId] +'\n' +
+        'Boost: ' + Game.playerHUD["boost"] + '/' + Game.maxBoost +'\n' +
+        'Dust: ' + Game.playerHUD["currency"]);
+    // }
+    player.shield.fontSize = this.game.camera.width * .023;
 
     Game.updateHealthBar(player);
     if (Game.allPlayersAdded)
@@ -691,8 +685,15 @@ Game.updateHUD = function(player){
         Game.updateLeaderboard();
     }
 };
-
+var healthTime = true;
 Game.updateHealthBar = function(player) {
+    if(healthTime) {
+        setTimeout(function () {
+            player.heal(5);
+            healthTime = true;
+        }, 1000);
+        healthTime = false;
+    }
     //player.damage(.05);
     if(player.health === 0){
         //Game.playerKilled(player);
@@ -707,12 +708,12 @@ Game.updateHealthBar = function(player) {
         //Game.healthBar.x = 10;
         //Game.healthBar.y = 10;
         player.healthBar.beginFill(color);
-        player.healthBar.lineStyle(30, color, 1);
+        player.healthBar.lineStyle(this.game.camera.width * .02, color, 1);
         player.healthBar.moveTo(0, 0);
-        player.healthBar.lineTo((1.5 * xHealth), 0);
+        player.healthBar.lineTo((this.game.camera.width * .001) * xHealth, 0);
         player.healthBar.endFill();
     }
-    else if (player.prevHealth != player.health || player.healthBar.safe){
+    else if (player.prevHealth != player.health || player.healthBar.safe || Game.screenResized){
         player.healthBar.safe = false;
         player.healthBar.clear();
         var x = player.health / 100;
@@ -721,14 +722,19 @@ Game.updateHealthBar = function(player) {
         //Game.healthBar.x = 10;
         //Game.healthBar.y = 10;
         player.healthBar.beginFill(color);
-        player.healthBar.lineStyle(30, color, 1);
+        player.healthBar.lineStyle(this.game.camera.width * .02, color, 1);
         player.healthBar.moveTo(0, 0);
-        player.healthBar.lineTo((1.5 * xHealth), 0);
+        player.healthBar.lineTo((this.game.camera.width * .001) * xHealth, 0);
         player.healthBar.endFill();
+        if(Game.screenResized)
+            Game.screenResized = false;
+        if(player.prevHealth > player.health) {
+            shake();
+        }
     }
 
-    player.healthBar.x = player.shield.x + 150;
-    player.healthBar.y = player.shield.y + 18;
+    player.healthBar.x = player.shield.x + (this.game.camera.width * .10);
+    player.healthBar.y = player.shield.y + (this.game.camera.width * .09 * .12);
     player.prevHealth = player.health;
     Game.world.bringToTop(player.healthBar);
     Game.world.moveDown(player.healthBar);
@@ -829,8 +835,8 @@ Game.removeFromLeaderboard = function(id) {
 };
 
 Game.setLeaderboard = function() {
-    Game.playerMap[Client.id].scoreboard.x = (this.game.camera.width / 2) + ((window.innerWidth / 2) - 20);
-    Game.playerMap[Client.id].scoreboard.y = (this.game.camera.height / 2) - ((window.innerHeight / 2) - 20);
+    Game.playerMap[Client.id].scoreboard.x = (this.game.camera.width / 2) + ((this.game.camera.width / 2) - 20);
+    Game.playerMap[Client.id].scoreboard.y = (this.game.camera.height / 2) - ((this.game.camera.height / 2) - 20);
     Game.world.bringToTop(Game.playerMap[Client.id].scoreboard);
     Game.world.moveDown(Game.playerMap[Client.id].scoreboard);
     Game.playerMap[Client.id].scoreboard.fixedToCamera = true;
@@ -845,6 +851,8 @@ Game.setLeaderboard = function() {
         '\n#3 ' + (Game.leaderboard[3] !== null ? Game.leaderboard[3].score+'-'+Game.leaderboard[3].name : '_______')+
         '\n#4 ' + (Game.leaderboard[4] !== null ? Game.leaderboard[4].score+'-'+Game.leaderboard[4].name : '_______')+
         '\n#5 ' + (Game.leaderboard[5] !== null ? Game.leaderboard[5].score+'-'+Game.leaderboard[5].name : '_______'));
+
+    Game.playerMap[Client.id].scoreboard.fontSize = this.game.camera.width * .023;
 };
 
 // Update the position and rotation of a given remote player
@@ -902,11 +910,58 @@ Game.showBasePrompts = function(){
     Game.playerMap[Client.id].safePromptHover.visible = true;
     Game.playerMap[Client.id].safePromptHover.setText(
         'Store [E]\n'
-        + 'Refill 1 bullet: '+Game.bulletReloadCostList[Client.weaponId]+'[R]\n'
-        + 'Refill 1 boost: '+Game.boostRefillCost+'[B]');
+        + Game.calcAmmoRefillPrompt()
+        + Game.calcBoostRefillPrompt());
+       /* + 'Refill ammo: '+(Game.bulletReloadCostList[Client.weaponId]*Game.maxWeaponAmmo[Client.weaponId]
+        * ((Game.maxWeaponAmmo[Client.weaponId]-Client.ammo)/Game.maxWeaponAmmo[Client.weaponId]))+'[R]\n'*/
+        /*+ 'Refill 1 boost: '+Game.boostRefillCost+'[B]');*/
     Game.playerMap[Client.id].safePromptHover.x = (this.game.camera.width / 2);
-    Game.playerMap[Client.id].safePromptHover.y = (this.game.camera.height / 2) + 60;
+    Game.playerMap[Client.id].safePromptHover.y = (this.game.camera.height / 2) + .1*this.game.camera.height;
     Game.playerMap[Client.id].safePromptHover.fixedToCamera = true;
+};
+
+Game.calcAmmoRefillPrompt = function()
+{
+    if (Client.ammo >= Game.maxWeaponAmmo[Client.weaponId])
+    {
+        return 'Ammo full!\n';
+    }
+    else if (Client.score <= 0)
+    {
+        return 'No money for ammo!\n';
+    }
+    else if (Client.score >= Math.ceil(Game.bulletReloadCostList[Client.weaponId]*Game.maxWeaponAmmo[Client.weaponId]
+            * ((Game.maxWeaponAmmo[Client.weaponId]-Client.ammo)/Game.maxWeaponAmmo[Client.weaponId])))
+    {
+        return 'Refill all ammo: '+Math.ceil(Game.bulletReloadCostList[Client.weaponId]*Game.maxWeaponAmmo[Client.weaponId]
+            * ((Game.maxWeaponAmmo[Client.weaponId]-Client.ammo)/Game.maxWeaponAmmo[Client.weaponId]))+' [R]\n';
+    }
+    else
+    {
+        return 'Refill '+Math.ceil(Client.score/Game.bulletReloadCostList[Client.weaponId])+' ammo: '+Client.score+' [R]\n';
+    }
+};
+
+Game.calcBoostRefillPrompt = function()
+{
+    if (Game.playerMap[Client.id].boost >= Game.maxBoost)
+    {
+        return 'Boost full!\n';
+    }
+    else if (Client.score <= 0)
+    {
+        return 'No money for boost!';
+    }
+    else if (Client.score >= Math.ceil(Game.boostRefillCost*Game.maxBoost
+            * ((Game.maxBoost-Game.playerMap[Client.id].boost)/Game.maxBoost)))
+    {
+        return 'Refill all boost: '+Math.ceil(Game.boostRefillCost*Game.maxBoost
+            * ((Game.maxBoost-Game.playerMap[Client.id].boost)/Game.maxBoost))+' [B]\n';
+    }
+    else
+    {
+        return 'Refill '+Math.ceil(Client.score/Game.boostRefillCost)+' boost: '+Client.score+' [B]\n';
+    }
 };
 
 Game.unshowBasePrompts = function(){
@@ -914,19 +969,77 @@ Game.unshowBasePrompts = function(){
 };
 
 Game.reloadWeapon = function(){
-    if (Game.playerMap[Client.id].score >= Game.bulletReloadCostList[Client.weaponId] && Client.ammo < Game.maxWeaponAmmo[Client.weaponId])
+    if (Client.ammo >= Game.maxWeaponAmmo[Client.weaponId])
     {
-        Client.sendCollect(-Game.bulletReloadCostList[Client.weaponId]);
-        Client.ammo++;
+        // Ammo already full
+    }
+    else if (Client.score <= 0)
+    {
+       // No money to reload
+    }
+    else if (Client.score >= Math.ceil(Game.bulletReloadCostList[Client.weaponId]*Game.maxWeaponAmmo[Client.weaponId]
+            * ((Game.maxWeaponAmmo[Client.weaponId]-Client.ammo)/Game.maxWeaponAmmo[Client.weaponId])))
+    {
+        Client.sendCollect(-Math.ceil(Game.bulletReloadCostList[Client.weaponId]*Game.maxWeaponAmmo[Client.weaponId]
+            * ((Game.maxWeaponAmmo[Client.weaponId]-Client.ammo)/Game.maxWeaponAmmo[Client.weaponId])));
+        Client.ammo = Game.maxWeaponAmmo[Client.weaponId];
+
+        Client.refillAmmo(Client.ammo);
+    }
+    else
+    {
+        Client.ammo += (Client.score/Game.bulletReloadCostList[Client.weaponId]);
+        Client.sendCollect(-Client.score);
         if (Client.ammo > Game.maxWeaponAmmo[Client.weaponId])
         {
             Client.ammo = Game.maxWeaponAmmo[Client.weaponId];
         }
+        Client.refillAmmo(Client.ammo);
     }
+
+    /*if (Game.playerMap[Client.id].score >= (Game.bulletReloadCostList[Client.weaponId]*Game.maxWeaponAmmo[Client.weaponId]
+            * ((Game.maxWeaponAmmo[Client.weaponId]-Client.ammo)/Game.maxWeaponAmmo[Client.weaponId]))
+            && Client.ammo < Game.maxWeaponAmmo[Client.weaponId])
+    {
+        Client.sendCollect(-(Game.bulletReloadCostList[Client.weaponId]*Game.maxWeaponAmmo[Client.weaponId]
+            * ((Game.maxWeaponAmmo[Client.weaponId]-Client.ammo)/Game.maxWeaponAmmo[Client.weaponId])));
+        Client.ammo += Game.maxWeaponAmmo[Client.weaponId];
+        if (Client.ammo > Game.maxWeaponAmmo[Client.weaponId])
+        {
+            Client.ammo = Game.maxWeaponAmmo[Client.weaponId];
+        }
+        Client.refillAmmo(Client.ammo);
+    }*/
 };
 
 Game.refillBoost = function(){
-    if (Game.playerMap[Client.id].score >= Game.boostRefillCost && Game.playerMap[Client.id].boost < Game.maxBoost)
+    if (Client.boost >= Game.playerMap[Client.id].boost)
+    {
+        // Boost already full
+    }
+    else if (Client.score <= 0)
+    {
+       // No money to reload
+    }
+    else if (Client.score >= (Game.boostRefillCost*Game.maxBoost
+            * ((Game.maxBoost-Game.playerMap[Client.id].boost)/Game.maxBoost)))
+    {
+        Client.sendCollect(-Math.ceil(Game.boostRefillCost*Game.maxBoost
+            * ((Game.maxBoost-Game.playerMap[Client.id].boost)/Game.maxBoost)));
+        Game.playerMap[Client.id].boost = Game.maxBoost;
+    }
+    else
+    {
+        Game.playerMap[Client.id].boost += (Client.score/Game.boostRefillCost);
+        Client.sendCollect(-Client.score);
+        // Game.playerMap[Client.id].boost++;
+        if (Game.playerMap[Client.id].boost > Game.maxBoost)
+        {
+            Game.playerMap[Client.id].boost = Game.maxBoost;
+        }
+    }
+
+    /*if (Game.playerMap[Client.id].score >= Game.boostRefillCost && Game.playerMap[Client.id].boost < Game.maxBoost)
     {
         Client.sendCollect(-Game.boostRefillCost);
         Game.playerMap[Client.id].boost++;
@@ -934,7 +1047,7 @@ Game.refillBoost = function(){
         {
             Game.playerMap[Client.id].boost = Game.maxBoost;
         }
-    }
+    }*/
 };
 
 // Update the ship of another player
@@ -985,6 +1098,9 @@ Game.setPlayerAcceleration = function(acceleration, isBoost){
             // game.physics.arcade.velocityFromRotation(rotation, weaponArray[weaponId].velocity, bullet.body.velocity);
             game.physics.arcade.accelerationFromRotation(Game.playerMap[Client.id].rotation,
                 acceleration * Game.boostAccelMult, Game.playerMap[Client.id].body.acceleration);
+
+            //game.physics.arcade.accelerationFromRotation(Game.playerMap[Client.id].rotation,
+            //    acceleration, parallax);
         }
         else {
             Game.playerMap[Client.id].body.maxVelocity.set(Game.maxNormVelocity);
@@ -1013,7 +1129,7 @@ Game.setPlayerRotation = function(id, angVelocity){
         Game.playerMap[id].body.angularVelocity = angVelocity;
 };
 
-Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
+Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color){
     console.log('Game.addNewPlayer '+id+'--'+name+'--'+shipName);
 
     Game.shipTrails[id] = game.add.emitter(x, y + Game.playerSize/2, 400);
@@ -1035,9 +1151,9 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
             Client.sendShipChange(shipSelectionString);
     }
     // If it is an existing player
-    else{
+    else {
         // console.log(name+'\'s shipName: '+shipName);
-        newPlayer = game.add.sprite(x,y,shipName);
+        newPlayer = game.add.sprite(x, y, shipName);
         // console.log('else statement - shipSelectionString: ' + shipName);
     }
 
@@ -1077,6 +1193,10 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
     // newPlayer.shipTrail.rotation = rotation;
     newPlayer.shipTrail.start(false, 2000, 10);
 
+    // Set player sprite and trail color
+    newPlayer.tint = color;
+    newPlayer.shipTrail.setAll('tint', color);
+    //newPlayer.maxHealth = 200;
 
     // Initialize player's health
     newPlayer.heal(100);
@@ -1104,18 +1224,17 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score){
     // Local player should be instantiated first before remote players
     newPlayer.id = id;
     Game.playerMap[id] = newPlayer;
-    Game.playerMap[id].shield = Game.add.text(0, 0, '', { font: '35px Lucida Console', fill: '#fff' });
-    Game.playerMap[id].nameHover = Game.add.text(0, 0, '', {font: '20px Lucida Console', fill: '#fff'});
-    Game.playerMap[id].safePromptHover = Game.add.text(0, 0, '', {font: '20px Lucida Console', fill: '#fff', boundsAlignH: "center"});
+    Game.playerMap[id].shield = Game.add.text(0, 0, '', {font: 'Lucida Console', fontSize: this.game.camera.width * .01, fill: '#fff' });
+    Game.playerMap[id].nameHover = Game.add.text(0, 0, '', {font: 'Lucida Console', fontSize: this.game.camera.width * .01, fill: '#fff'});
+    Game.playerMap[id].safePromptHover = Game.add.text(0, 0, '', {font: 'Lucida Console', fontSize: this.game.camera.width * .01, fill: '#fff', boundsAlignH: "center"});
     Game.playerMap[id].safePromptHover.anchor.set(0.5,0.5);
-    Game.playerMap[id].scoreHover = Game.add.text(0, 0, '', {font: '20px Lucida Console', fill: '#fff'});
+    Game.playerMap[id].scoreHover = Game.add.text(0, 0, '', {font: 'Lucida Console', fontSize: this.game.camera.width * .01, fill: '#fff'});
     Game.playerMap[id].healthBar = Game.add.graphics(0,0);
     Game.playerMap[id].healthBar.safe = false;
     Game.playerMap[id].prevHealth = -1;
-    Game.playerMap[id].scoreboard = Game.add.text(0, 0, '', { font: '35px Lucida Console', fill: '#fff'/*, boundsAlignH: 'right'*/ });
+    Game.playerMap[id].scoreboard = Game.add.text(0, 0, '', {font: 'Lucida Console', fontSize: this.game.camera.width * .01, fill: '#fff'/*, boundsAlignH: 'right'*/ });
     Game.playerMap[id].scoreboard.anchor.setTo(1, 0);
 
-    //Game.createHealthBar(Game.playerMap[id]);
     playerMap.set(newPlayer.id, newPlayer);
     if (!Game.localPlayerInstantiated) {
         Game.localPlayerInstantiated = true;
@@ -1145,23 +1264,6 @@ Game.setDeathBehavior = function(id) {
     });
 };
 
-Game.createHealthBar = function(player){
-    player.healthBar = Game.add.graphics(0,0);
-    player.healthBar.clear();
-    player.healthBar.safe = false;
-    var xHealth = (player.health / 100) * 100;
-    player.prevHealth = xHealth;
-    var color = Game.rgbToHex(255, 0, 0);
-    //Game.healthBar.x = 10;
-    //Game.healthBar.y = 10;
-    player.healthBar.beginFill(color);
-    player.healthBar.lineStyle(30, color, 1);
-    //player.healthBar.moveTo(0, 0);
-    player.healthBar.lineTo(1.5 * xHealth, 0);
-    player.healthBar.endFill();
-    //Game.healthBar[player.id].x = player.x;
-    //Game.healthBar[player.id].y = player.y;
-};
 
 Game.setAllPlayersAdded = function(){
     Game.allPlayersAdded = true;
@@ -1194,7 +1296,7 @@ Game.componentToHex = function(c) {
 //Particle methods:
 // if you want to increase performance edit the final argument of
 // bullet.start(true, 1000, null, 2
-// this is->   burst  lifetime    amout of particles
+// this is->   burst  lifetime    amout of particle
 
 //called on bullet removal
 function burstLittle(x,y){
@@ -1209,4 +1311,12 @@ function burst(x,y){
     burstBig.x = x;
     burstBig.y = y;
     burstBig.start(true, 3000, null, 25);
-};
+
+}
+
+
+function shake(){
+  //Set shake intensity and duration
+    game.camera.shake(0.01, 100);
+}
+
