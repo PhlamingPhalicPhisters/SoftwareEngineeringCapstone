@@ -262,12 +262,14 @@ window.addEventListener("focus", function(event) {
 Game.update = function()
 {
     // Establish collision detection between groups
+    // This is the dust that is spawned when a player dies
     deathDustMap.forEach(function (dust) {
         playerMap.forEach(function (player) {
             Game.physics.arcade.overlap(dust, player, dustCollisionDeath);
         });
     });
 
+    // This for the dust that starts in your game
     playerMap.forEach(function (player) {
         Game.physics.arcade.overlap(dustList, player, dustCollision);
     });
@@ -276,7 +278,6 @@ Game.update = function()
 
     Game.physics.arcade.collide(layer, Game.playerMap[Client.getPlayerID()]);
 
-    //Game.physics.arcade.overlap(bullet, playerArray, Game.safeZoneEvent);       // TODODODODODO - SWAP WITH SAFEZONE, (playerArray no longer exists)
     if (Game.physics.arcade.overlap(Game.safeZone, Game.playerMap[Client.getPlayerID()], Game.enterSafeZone)){}
     else {
         Game.exitSafeZone();
@@ -388,6 +389,15 @@ Game.update = function()
             }
             if (game.input.keyboard.isDown(Phaser.KeyCode.B)) {
                 Game.refillBoost();
+            }
+            if (game.input.keyboard.isDown(Phaser.KeyCode.V)){
+                // Game.playerMap[Client.id].shipName = 'ship0';
+                // Game.updatePlayerShip(Client.id,'ship0');
+                // Client.sendShipChange('ship0');
+                // Game.playerMap[Client.id].maxHealth = 500;
+                // Game.playerMap[Client.id].heal(500);
+                // Game.MaxBoost
+                shipTierAssign('ship15');
             }
         }
         else {
