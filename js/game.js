@@ -111,6 +111,8 @@ Game.preload = function() {
     this.game.load.image('bullet2', 'assets/sprites/neon/BlueShot.png');
 
     this.game.load.image('ship0', 'assets/sprites/neon/squaresquare.png');
+
+    this.game.load.image('arrow', 'assets/sprites/neon/arrow.png');
 };
 
 //Helper function for the loading screen
@@ -1145,18 +1147,15 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color){
     Game.shipTrails[id] = game.add.emitter(x, y + Game.playerSize/2, 400);
 
     var newPlayer;
-
-
+    var centerPointer;
     // Create player sprite and assign the player a unique ship
     // If it is a new player
-    //console.log(shipName.length);
-    //console.log(String('unassignedShip').length);
-    //console.log(shipName === 'unassignedShip' && id === Client.id);
     if(shipName === 'unassignedShip'){//} && id === Client.id/*Client.getPlayerID()*/){
         var shipSelectionString = assignShip(id + 1);
-        // console.log(name + '\'s shipName: '+shipSelectionString);
         newPlayer = game.add.sprite(x,y,shipSelectionString);
-        // console.log('if statement - shipSelectionString: ' + shipSelectionString);
+        //centerPointer = game.add.sprite(x,y,newPlayer'','arrow');
+        //centerPointer.anchor.setTo(0.3,0.5);
+
         if (id === Client.id)
             Client.sendShipChange(shipSelectionString);
     }
@@ -1182,9 +1181,6 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color){
     Game.physics.enable(newPlayer, Phaser.Physics.ARCADE);
     newPlayer.enableBody = true;                            //Here is what is needed for
     newPlayer.body.collideWorldBounds = true;
-    // newPlayer.body.anchor(0.5,0.5);
-    //newPlayer.body.setSize(newPlayer.width, newPlayer.height, 0.5, 0.5);                   //collisions to work
-    //newPlayer.body.bounce.setTo(.5, .5);
     newPlayer.body.drag.set(100);
     newPlayer.body.maxVelocity.set(Game.maxNormVelocity);
 
@@ -1196,11 +1192,8 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color){
     newPlayer.shipTrail.makeParticles('trail');
     newPlayer.shipTrail.setXSpeed(30, -30);
     newPlayer.shipTrail.setYSpeed(30, -30);
-    // newPlayer.shipTrail.setRotation(50,-50);
     newPlayer.shipTrail.setAlpha(1, 0.01, 800);
     newPlayer.shipTrail.setScale(0.05, 0.4, 0.05, 0.4, 2000, Phaser.Easing.Quintic.Out);
-    // newPlayer.addChild(newPlayer.shipTrail);
-    // newPlayer.shipTrail.rotation = rotation;
     newPlayer.shipTrail.start(false, 2000, 10);
 
     // Set player sprite and trail color
