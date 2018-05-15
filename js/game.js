@@ -35,7 +35,7 @@ Game.init = function(){
 
     Game.leaderboard = [null, null, null, null, null, null];
 
-    Game.playerSize = 64;           // sq. px. size
+    // Game.playerSize = 64;           // sq. px. size
     Game.isSafe = false;            // local player is in safe zone
     Game.maxNormVelocity = 200;     // maximum body acceleration
     Game.maxBoost = 5000;           // max boost capacity
@@ -368,6 +368,9 @@ Game.update = function()
             }
             if (game.input.keyboard.isDown(Phaser.KeyCode.B)) {
                 Game.refillBoost();
+            }
+            if (game.input.keyboard.isDown(Phaser.KeyCode.V)) {
+                Client.sendResize(120);
             }
         }
         else {
@@ -781,6 +784,12 @@ Game.updateTransform = function(id, x, y, rotation, health) {
     }
 };
 
+Game.updateSize = function(id, size)
+{
+    Game.playerMap[id].width = size;
+    Game.playerMap[id].height = size;
+};
+
 Game.setTrail = function(id, trailSet) {
     var player = Game.playerMap[id];
     player.shipTrail.visible = trailSet;
@@ -1006,6 +1015,8 @@ Game.movePlayer = function(id, x, y) {
 Game.setPlayerAcceleration = function(acceleration, isBoost){
     if (Game.allPlayersAdded && Game.playerMap[Client.getPlayerID()].body !== null) {
         if (isBoost && Game.playerMap[Client.id].boost >= Game.boostCost) {
+            Game.playerMap[Client.id].shipTrail.setScale(0.5, 1.0, 0.5, 1.0, 1000, Phaser.Easing.Quintic.Out);
+
             Game.playerMap[Client.id].body.maxVelocity.set(Game.maxBoostVelocity);
             // Game.playBoostPFX();
 
@@ -1019,6 +1030,8 @@ Game.setPlayerAcceleration = function(acceleration, isBoost){
             //    acceleration, parallax);
         }
         else {
+            Game.playerMap[Client.id].shipTrail.setScale(0.05, 0.4, 0.05, 0.4, 2000, Phaser.Easing.Quintic.Out);
+
             Game.playerMap[Client.id].body.maxVelocity.set(Game.maxNormVelocity);
             // Game.stopBoostPFX();
 
@@ -1045,7 +1058,7 @@ Game.setPlayerRotation = function(id, angVelocity){
         Game.playerMap[id].body.angularVelocity = angVelocity;
 };
 
-Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color){
+Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color,size){
     console.log('Game.addNewPlayer '+id+'--'+name+'--'+shipName);
 
     Game.shipTrails[id] = game.add.emitter(x, y + Game.playerSize/2, 400);
@@ -1073,9 +1086,9 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color){
         // console.log('else statement - shipSelectionString: ' + shipName);
     }
 
-    // make all ships the same width & height
-    newPlayer.width = Game.playerSize;
-    newPlayer.height = Game.playerSize;
+    // Adjust player's squared size
+    newPlayer.width = size;
+    newPlayer.height = size;
 
     // Set player sprite origin to center
     newPlayer.anchor.set(0.5);

@@ -37,6 +37,7 @@ io.on('connection',function(socket){
             ammo: 0,
             shipName: 'unassignedShip',
             color: randomTint(),
+            size: 64,
             focused: true
         };
 
@@ -64,13 +65,22 @@ io.on('connection',function(socket){
             io.emit('move',socket.player);
         });
 
+        socket.on('resize', function(data){
+            //console.log('Server transform');
+            socket.player.size = data.size;
+            socket.emit('updateSize', {id: socket.player.id, size: socket.player.size});
+            socket.broadcast.emit('updateSize', {id: socket.player.id, size: socket.player.size});
+            // socket.player.scale = data.scale;
+        });
+
         socket.on('transform', function(data){
             //console.log('Server transform');
             socket.player.x = data.x;
             socket.player.y = data.y;
             socket.player.rotation = data.rotation;
             socket.player.health = data.health;
-            socket.broadcast.emit('updateTransform', socket.player);
+            socket.broadcast.emit('updateTransform', {id: socket.player.id, x: socket.player.x, y: socket.player.y,
+                rotation: socket.player.rotation, health: socket.player.health});
             // socket.player.scale = data.scale;
         });
 
