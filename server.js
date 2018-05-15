@@ -201,7 +201,7 @@ function checkNameSafety (id, name) {
         return 'Player'+id;
     }
 
-    var unsafeRegex = [/fuck/,/dick/,/pussy/,/nig/,/kkk/,/cunt/,/ass/,/bitch/,/retard/,/koon/,/cock/,/tit/];
+    var unsafeRegex = [/fuck/,/dick/,/pussy/,/nig/,/kkk/,/cunt/,/ass/,/bitch/,/retard/,/coon/,/cock/,/tit/,/gooch/,/penis/,/fag/,/vagina/];
     var t = name.toLowerCase();
     for (var i in unsafeRegex)
     {

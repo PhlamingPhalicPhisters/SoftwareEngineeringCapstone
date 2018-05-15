@@ -45,7 +45,7 @@ Game.init = function(){
     Game.normalAngVel = 300;        // normal player rotation speed
     Game.boostRotMult = 0.5;        // boost rotation mutliplier
     Game.boostCost = 1;             // how much boost costs when active
-    Game.refillBoostCost = 100;     // how much it costs to refill boost in the safe zone
+    Game.refillBoostCost = 20;     // how much it costs to refill boost in the safe zone
 
     Game.maxWeaponAmmo = [250, 500, 100];
     Game.bulletReloadCostList = [50, 25, 100];
@@ -176,7 +176,6 @@ Game.create = function(){
     Game.safeZone.alpha = 0.6;
     layer = map.createLayer('Groundlayer');
     map.setCollisionBetween(0, 4000, true, 'Groundlayer');
-    // map.setCollisionBetween(0, 1, true, 'Zonelayer');
     layer.resizeWorld();
 
     // Enable Phaser Arcade game physics engine
@@ -248,7 +247,6 @@ window.addEventListener("focus", function(event) {
 Game.update = function()
 {
     // Establish collision detection between groups
-
     deathDustMap.forEach(function (dust) {
         playerMap.forEach(function (player) {
             Game.physics.arcade.overlap(dust, player, dustCollisionDeath);
@@ -258,6 +256,8 @@ Game.update = function()
     playerMap.forEach(function (player) {
         Game.physics.arcade.overlap(dustList, player, dustCollision);
     });
+
+    Game.physics.arcade.collide(layer, dustList);
 
     Game.physics.arcade.collide(layer, Game.playerMap[Client.getPlayerID()]);
 
@@ -306,35 +306,17 @@ Game.update = function()
     // Get forward/backward input
     if (Game.cursors.up.isDown && !Game.inShop)
     {
-        // Client.sendAcceleration(1);
         Game.setPlayerAcceleration(Game.normalAccel, game.input.keyboard.isDown(Phaser.Keyboard.SHIFT))
     }
     else if (Game.cursors.down.isDown && !Game.inShop)
     {
-        // Client.sendAcceleration(-1);
         Game.setPlayerAcceleration(-Game.normalAccel, game.input.keyboard.isDown(Phaser.Keyboard.SHIFT))
     }
     else
     {
-        // Client.sendAcceleration(0);
         Game.setPlayerAcceleration(0, false);
     }
     if (Game.cursors.left.isDown && Game.cursors.right.isDown && !Game.inShop) {
-        /*var angVelocity = Game.playerMap[Client.player.id].body.angularVelocity;// Game.playerMap[Client.id].body.angularVelocity = 300;
-        if (Game.cursors.left.isDown && angVelocity < 0) {
-            Client.sendRotation(-300);
-        }
-        else if (Game.cursors.left.isDown && angVelocity >= 0) {
-            Client.sendRotation(-300);
-            // Game.playerMap[Client.id].body.angularVelocity = -300;
-        }
-        else if (Game.cursors.right.isDown && angVelocity >= 0) {
-            Client.sendRotation(300);
-            // Game.playerMap[Client.id].body.angularVelocity = 300;
-        }
-        if (Game.cursors.right.isDown && angVelocity < 0) {
-            Client.sendRotation(300);
-        }*/
         if (Game.cursors.left.isDown && Game.cursors.left.timeDown > Game.cursors.right.timeDown) {
             Client.sendRotation(-300);
         }
@@ -363,8 +345,6 @@ Game.update = function()
     // Get firing input
     if (!Game.isSafe && game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR))
     {
-        //Client.sendShoot();
-        //fireBullet(bulletInfo);
         fireBullet(Client.getPlayerID());
     }
 
@@ -836,11 +816,58 @@ Game.showBasePrompts = function(){
     Game.playerMap[Client.id].safePromptHover.visible = true;
     Game.playerMap[Client.id].safePromptHover.setText(
         'Store [E]\n'
-        + 'Refill 1 bullet: '+Game.bulletReloadCostList[Client.weaponId]+'[R]\n'
-        + 'Refill 1 boost: '+Game.boostRefillCost+'[B]');
+        + Game.calcAmmoRefillPrompt()
+        + Game.calcBoostRefillPrompt());
+       /* + 'Refill ammo: '+(Game.bulletReloadCostList[Client.weaponId]*Game.maxWeaponAmmo[Client.weaponId]
+        * ((Game.maxWeaponAmmo[Client.weaponId]-Client.ammo)/Game.maxWeaponAmmo[Client.weaponId]))+'[R]\n'*/
+        /*+ 'Refill 1 boost: '+Game.boostRefillCost+'[B]');*/
     Game.playerMap[Client.id].safePromptHover.x = (this.game.camera.width / 2);
     Game.playerMap[Client.id].safePromptHover.y = (this.game.camera.height / 2) + 60;
     Game.playerMap[Client.id].safePromptHover.fixedToCamera = true;
+};
+
+Game.calcAmmoRefillPrompt = function()
+{
+    if (Client.ammo >= Game.maxWeaponAmmo[Client.weaponId])
+    {
+        return 'Ammo full!\n';
+    }
+    else if (Client.score <= 0)
+    {
+        return 'No money for ammo!\n';
+    }
+    else if (Client.score >= Math.ceil(Game.bulletReloadCostList[Client.weaponId]*Game.maxWeaponAmmo[Client.weaponId]
+            * ((Game.maxWeaponAmmo[Client.weaponId]-Client.ammo)/Game.maxWeaponAmmo[Client.weaponId])))
+    {
+        return 'Refill all ammo: '+Math.ceil(Game.bulletReloadCostList[Client.weaponId]*Game.maxWeaponAmmo[Client.weaponId]
+            * ((Game.maxWeaponAmmo[Client.weaponId]-Client.ammo)/Game.maxWeaponAmmo[Client.weaponId]))+' [R]\n';
+    }
+    else
+    {
+        return 'Refill '+Math.ceil(Client.score/Game.bulletReloadCostList[Client.weaponId])+' ammo: '+Client.score+' [R]\n';
+    }
+};
+
+Game.calcBoostRefillPrompt = function()
+{
+    if (Game.playerMap[Client.id].boost >= Game.maxBoost)
+    {
+        return 'Boost full!\n';
+    }
+    else if (Client.score <= 0)
+    {
+        return 'No money for boost!';
+    }
+    else if (Client.score >= Math.ceil(Game.boostRefillCost*Game.maxBoost
+            * ((Game.maxBoost-Game.playerMap[Client.id].boost)/Game.maxBoost)))
+    {
+        return 'Refill all boost: '+Math.ceil(Game.boostRefillCost*Game.maxBoost
+            * ((Game.maxBoost-Game.playerMap[Client.id].boost)/Game.maxBoost))+' [B]\n';
+    }
+    else
+    {
+        return 'Refill '+Math.ceil(Client.score/Game.boostRefillCost)+' boost: '+Client.score+' [B]\n';
+    }
 };
 
 Game.unshowBasePrompts = function(){
@@ -848,19 +875,77 @@ Game.unshowBasePrompts = function(){
 };
 
 Game.reloadWeapon = function(){
-    if (Game.playerMap[Client.id].score >= Game.bulletReloadCostList[Client.weaponId] && Client.ammo < Game.maxWeaponAmmo[Client.weaponId])
+    if (Client.ammo >= Game.maxWeaponAmmo[Client.weaponId])
     {
-        Client.sendCollect(-Game.bulletReloadCostList[Client.weaponId]);
-        Client.ammo++;
+        // Ammo already full
+    }
+    else if (Client.score <= 0)
+    {
+       // No money to reload
+    }
+    else if (Client.score >= Math.ceil(Game.bulletReloadCostList[Client.weaponId]*Game.maxWeaponAmmo[Client.weaponId]
+            * ((Game.maxWeaponAmmo[Client.weaponId]-Client.ammo)/Game.maxWeaponAmmo[Client.weaponId])))
+    {
+        Client.sendCollect(-Math.ceil(Game.bulletReloadCostList[Client.weaponId]*Game.maxWeaponAmmo[Client.weaponId]
+            * ((Game.maxWeaponAmmo[Client.weaponId]-Client.ammo)/Game.maxWeaponAmmo[Client.weaponId])));
+        Client.ammo = Game.maxWeaponAmmo[Client.weaponId];
+
+        Client.refillAmmo(Client.ammo);
+    }
+    else
+    {
+        Client.ammo += (Client.score/Game.bulletReloadCostList[Client.weaponId]);
+        Client.sendCollect(-Client.score);
         if (Client.ammo > Game.maxWeaponAmmo[Client.weaponId])
         {
             Client.ammo = Game.maxWeaponAmmo[Client.weaponId];
         }
+        Client.refillAmmo(Client.ammo);
     }
+
+    /*if (Game.playerMap[Client.id].score >= (Game.bulletReloadCostList[Client.weaponId]*Game.maxWeaponAmmo[Client.weaponId]
+            * ((Game.maxWeaponAmmo[Client.weaponId]-Client.ammo)/Game.maxWeaponAmmo[Client.weaponId]))
+            && Client.ammo < Game.maxWeaponAmmo[Client.weaponId])
+    {
+        Client.sendCollect(-(Game.bulletReloadCostList[Client.weaponId]*Game.maxWeaponAmmo[Client.weaponId]
+            * ((Game.maxWeaponAmmo[Client.weaponId]-Client.ammo)/Game.maxWeaponAmmo[Client.weaponId])));
+        Client.ammo += Game.maxWeaponAmmo[Client.weaponId];
+        if (Client.ammo > Game.maxWeaponAmmo[Client.weaponId])
+        {
+            Client.ammo = Game.maxWeaponAmmo[Client.weaponId];
+        }
+        Client.refillAmmo(Client.ammo);
+    }*/
 };
 
 Game.refillBoost = function(){
-    if (Game.playerMap[Client.id].score >= Game.boostRefillCost && Game.playerMap[Client.id].boost < Game.maxBoost)
+    if (Client.boost >= Game.playerMap[Client.id].boost)
+    {
+        // Boost already full
+    }
+    else if (Client.score <= 0)
+    {
+       // No money to reload
+    }
+    else if (Client.score >= (Game.boostRefillCost*Game.maxBoost
+            * ((Game.maxBoost-Game.playerMap[Client.id].boost)/Game.maxBoost)))
+    {
+        Client.sendCollect(-Math.ceil(Game.boostRefillCost*Game.maxBoost
+            * ((Game.maxBoost-Game.playerMap[Client.id].boost)/Game.maxBoost)));
+        Game.playerMap[Client.id].boost = Game.maxBoost;
+    }
+    else
+    {
+        Game.playerMap[Client.id].boost += (Client.score/Game.boostRefillCost);
+        Client.sendCollect(-Client.score);
+        // Game.playerMap[Client.id].boost++;
+        if (Game.playerMap[Client.id].boost > Game.maxBoost)
+        {
+            Game.playerMap[Client.id].boost = Game.maxBoost;
+        }
+    }
+
+    /*if (Game.playerMap[Client.id].score >= Game.boostRefillCost && Game.playerMap[Client.id].boost < Game.maxBoost)
     {
         Client.sendCollect(-Game.boostRefillCost);
         Game.playerMap[Client.id].boost++;
@@ -868,7 +953,7 @@ Game.refillBoost = function(){
         {
             Game.playerMap[Client.id].boost = Game.maxBoost;
         }
-    }
+    }*/
 };
 
 // Update the ship of another player
@@ -931,6 +1016,9 @@ Game.setPlayerAcceleration = function(acceleration, isBoost){
             // game.physics.arcade.velocityFromRotation(rotation, weaponArray[weaponId].velocity, bullet.body.velocity);
             game.physics.arcade.accelerationFromRotation(Game.playerMap[Client.id].rotation,
                 acceleration * Game.boostAccelMult, Game.playerMap[Client.id].body.acceleration);
+
+            //game.physics.arcade.accelerationFromRotation(Game.playerMap[Client.id].rotation,
+            //    acceleration, parallax);
         }
         else {
             Game.playerMap[Client.id].body.maxVelocity.set(Game.maxNormVelocity);

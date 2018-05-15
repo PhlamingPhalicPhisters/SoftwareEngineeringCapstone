@@ -106,10 +106,6 @@ Menu.create = function()
 
 Menu.update = function()
 {
-    if (game.input.keyboard.isDown(Phaser.Keyboard.SPACEBAR))
-    {
-        console.log(Menu.nameInput.value);
-    }
     if (game.input.keyboard.isDown(Phaser.Keyboard.ENTER))
     {
         Menu.enterGame();
