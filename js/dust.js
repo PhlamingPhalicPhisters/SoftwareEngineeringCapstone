@@ -10,15 +10,15 @@ var worldBoundY = 6336;
 var dust = function (id, startx, starty, value) {
 
     //draw dust
-    var dustObject = game.add.sprite(startx, starty, 'dust');
+    var dustObject = Game.add.sprite(startx, starty, 'dust');
     //dustObject.animations.add('float');
     //dustObject.animations.play('float', 10, true);
     //dustObject.scale.set(4);
 
     //define properties
     dustObject.id = id;
-    dustObject.positionx = startx;
-    dustObject.positiony = starty;
+    //dustObject.positionx = startx;
+    //dustObject.positiony = starty;
     dustObject.value = value;
     dustObject.width = 40;
     dustObject.height = 60;
@@ -31,6 +31,10 @@ var dust = function (id, startx, starty, value) {
     dustObject.body.bounce.setTo(1, 1);
     return dustObject;
 };
+
+var deathDust = function (id, startx, starty, value) {
+
+ww};
 
 //when dust is added
 function addDust (id, x, y, value) {
@@ -270,9 +274,11 @@ function generateDustForClient(){
 
 function generateDustOnDeath(x,y, amount) {
     var dropAmount = amount / 100;
+    console.log("player x: " + x + ", player y: " + y);
     for(var i = 0;  i < dropAmount; i++){
         deathDustMap.set(deathDustID,
-            new dust(deathDustID++, randomInt(x - 10, x + 10), randomInt(y - 10, y + 10), 70));
+            new deathDust(deathDustID++,randomInt(x - 10, x + 10), randomInt(y - 10, y + 10), 70));
+        //randomInt(x - 10, x + 10), randomInt(y - 10, y + 10)
     }
 }
 

@@ -233,7 +233,7 @@ Game.create = function(){
     generateDustForClient(Client.getPlayerID());
     console.log("DustList size: " + dustList.length);
     console.log("Testing the dust list to verify that it loaded correctly, " +
-        "dust x position: " + dustList[100].positionx);
+        "dust x position: " + "poop");
     Game.playerDestroyed = false;
 
     burstLittleEmitter = game.add.emitter(0, 0,100);
@@ -759,7 +759,8 @@ var healthTime = true;
 Game.updateHealthBar = function(player) {
     if(healthTime) {
         setTimeout(function () {
-            player.heal(5);
+            if(player !== null)
+                player.heal(5);
             healthTime = true;
         }, 1000);
         healthTime = false;
@@ -1443,4 +1444,6 @@ function shake(){
   //Set shake intensity and duration
     game.camera.shake(0.01, 100);
 }
+
+
 
