@@ -28,7 +28,7 @@ function shipTierAssign(shipName){
 function assignTierOneShip(shipName){
 
     //Ship1
-    //Ship2
+    //Ship2 //Assigned in assignShip in game.js
     //Ship7
 };
 
