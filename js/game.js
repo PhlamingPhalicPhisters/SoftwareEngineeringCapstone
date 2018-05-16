@@ -1118,7 +1118,7 @@ Game.getCoordinates = function(layer, pointer) {
 Game.setPlayerAcceleration = function(acceleration, isBoost){
     if (Game.allPlayersAdded && Game.playerMap[Client.getPlayerID()].body !== null) {
         if (isBoost && Game.playerMap[Client.id].boost >= Game.boostCost) {
-            Game.playerMap[Client.id].shipTrail.setScale(0.5, 1.0, 0.5, 1.0, 1000, Phaser.Easing.Quintic.Out);
+            Game.playerMap[Client.id].shipTrail.setScale(0.5, 0.8, 0.5, 0.8, 1000, Phaser.Easing.Quintic.Out);
 
             Game.playerMap[Client.id].body.maxVelocity.set(Game.maxBoostVelocity);
             // Game.playBoostPFX();
@@ -1300,9 +1300,15 @@ Game.setAllPlayersAdded = function(){
 };
 
 //This function creates a string name of the ship to be assigned to a new player
+//T1 ship
 function assignShip(amountOfPlayers) {
-    var shipNumber = amountOfPlayers % numberOfShipSprites;
-    return 'ship' + shipNumber;
+    //var shipNumber = amountOfPlayers % numberOfShipSprites;
+    //Changed logic to provide one of the first three ships to new players
+    var randomShip = randomInt(1,4); //range of 1 - 3
+    if(randomShip == 3){
+        randomShip = 7;
+    }
+    return 'ship' + randomShip;
 }
 
 Game.rescale = function(){
@@ -1361,8 +1367,6 @@ function burst(x,y){
     burstBig.start(true, 3000, null, 25);
 
 }
-
-
 function shake(){
   //Set shake intensity and duration
     game.camera.shake(0.01, 100);
