@@ -215,17 +215,25 @@ Client.socket.on('updateFire', function(data) {
     //Game.updateBullets(data);
 });
 
-Client.socket.on('updateAmmo', function(data) {
-    Game.updateAmmo(data.id, data.ammo, data.weaponId);
-});
-
 Client.changeAmmo = function(ammo) {
     Client.socket.emit('changeAmmo', ammo);
 };
 
 Client.refillAmmo = function(ammo) {
+    Client.ammo = ammo;
     Client.socket.emit('setAmmo', {id: Client.id, ammo: Client.ammo, weaponId: Client.weaponId});
 };
+Client.changeWeapon = function(ammo, weaponId) {
+    Client.ammo = ammo;
+    Client.weaponId = weaponId;
+    console.log(Client.id+' changing to weapon '+Client.weaponId+' w/ '+Client.ammo+' ammo');
+    Client.socket.emit('changeWeapon', {id: Client.id, ammo: Client.ammo, weaponId: Client.weaponId});
+};
+Client.socket.on('updateAmmo', function(data) {
+    Game.updateAmmo(data.id, data.ammo, data.weaponId);
+});
+
+
 
 Client.sendCollect = function(value) {
     Client.score += value;

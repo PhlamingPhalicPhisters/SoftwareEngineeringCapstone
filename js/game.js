@@ -46,7 +46,6 @@ Game.init = function(){
     // Run game in background
     this.game.stage.disableVisibilityChange = true;
 
-    Game.rescale();
     Game.screenResized = true;
 
     Game.leaderboard = [null, null, null, null, null, null];
@@ -62,6 +61,7 @@ Game.init = function(){
     Game.boostRotMult = 0.5;        // boost rotation mutliplier
     Game.boostCost = 1;             // how much boost costs when active
 
+    Game.buyWeaponCost = [2000, 3000, 4000];
     Game.maxWeaponAmmo = [250, 500, 100];
     Game.bulletReloadCostList = [50, 25, 100];
     Game.boostRefillCost = 1;
@@ -120,11 +120,11 @@ Game.preload = function() {
 
 //Helper function for the loading screen
 function loadStart() {
-    var shiploadsprite = game.add.sprite(game.world.centerX - 50,game.world.centerY - 25, 'shipload');
+    var shiploadsprite = game.add.sprite(game.world.centerX - game.world.width*0.03, game.world.centerY, 'shipload');
     shiploadsprite.height = 75;
     shiploadsprite.width = 75;
     game.stage.backgroundColor = '#000000';
-    game.add.text(game.world.centerX+40,game.world.centerY, 'Loading...', { fill: '#ffffff' });
+    game.add.text(game.world.centerX+game.world.width*0.03,game.world.centerY, 'Loading...', { fill: '#ffffff' });
     //var sprite = game.add.sprite(game.world.centerX,game.world.centerY,'loadingSprite');
     //sprite.animations.add('spin');
     //sprite.animations.play('spin',10,true);
@@ -160,7 +160,6 @@ Game.create = function(){
     this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
     this.game.scale.pageAlignHorizontally = true;
     this.game.scale.pageAlignVertically = true;
-    Game.rescale();
     //console.log(this.game.scale.width + " width");
     //this.game.scale.setGameSize(window.outerWidth * 1.1, window.innerHeight * 1.1);
     // this.game.scale.setMinMax(640,480/*,1920,1080*/);
@@ -178,12 +177,12 @@ Game.create = function(){
 
     // Set up tile mapping and layer system
     //Name of tilesheet in json, name in game.js
-    var map = this.game.add.tilemap('map');
-    map.addTilesetImage('largetilesheet','tiles');
-    map.addTilesetImage('tilemapneonsmall', 'neon');
+    Game.map = this.game.add.tilemap('map');
+    Game.map.addTilesetImage('largetilesheet','tiles');
+    Game.map.addTilesetImage('tilemapneonsmall','neon');
 
-    //Order of these statments impacts the order of render
-    var background = map.createLayer('Backgroundlayer');
+    //Order of these statements impacts the order of render
+    Game.background = Game.map.createLayer('Backgroundlayer');
 
     // safeZoneLayer = map.createLayer('Zonelayer');
     Game.safeZone = game.add.sprite(3235,3240,'safe_zone');
@@ -191,9 +190,10 @@ Game.create = function(){
     Game.safeZone.height = 1205;
     Game.safeZone.anchor.setTo(0.5,0.5);
     Game.safeZone.alpha = 0.6;
-    layer = map.createLayer('Groundlayer');
-    map.setCollisionBetween(0, 4000, true, 'Groundlayer');
-    layer.resizeWorld();
+    Game.layer = Game.map.createLayer('Groundlayer');
+    Game.map.setCollisionBetween(0, 4000, true, 'Groundlayer');
+    Game.layer.resizeWorld();
+    Game.rescale();
 
     // Enable Phaser Arcade game physics engine
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -279,9 +279,9 @@ Game.update = function()
         Game.physics.arcade.overlap(dustList, player, dustCollision);
     });
 
-    Game.physics.arcade.collide(layer, dustList);
+    Game.physics.arcade.collide(Game.layer, dustList);
 
-    Game.physics.arcade.collide(layer, Game.playerMap[Client.getPlayerID()]);
+    Game.physics.arcade.collide(Game.layer, Game.playerMap[Client.getPlayerID()]);
 
     if (Game.physics.arcade.overlap(Game.safeZone, Game.playerMap[Client.getPlayerID()], Game.enterSafeZone)){}
     else {
@@ -307,7 +307,7 @@ Game.update = function()
                 bulletErase.push(bullet);
             });
             //layer
-            Game.physics.arcade.overlap(layer, bullet, function (bullet, layer) {
+            Game.physics.arcade.overlap(Game.layer, bullet, function (bullet, layer) {
                 if(layer.index !== -1) {
                     //burstLittle(bullet.x, bullet.y);
                     bulletErase.push(bullet);
@@ -403,6 +403,15 @@ Game.update = function()
                 // Game.playerMap[Client.id].heal(500);
                 // Game.MaxBoost
                 shipTierAssign('ship15');
+            }
+            if (game.input.keyboard.isDown(Phaser.KeyCode.NUMPAD_1)) {
+                Client.changeWeapon(Game.maxWeaponAmmo[0], 0);
+            }
+            if (game.input.keyboard.isDown(Phaser.KeyCode.NUMPAD_2)) {
+                Client.changeWeapon(Game.maxWeaponAmmo[1], 1);
+            }
+            if (game.input.keyboard.isDown(Phaser.KeyCode.NUMPAD_3)) {
+                Client.changeWeapon(Game.maxWeaponAmmo[2], 2);
             }
         }
         else {
@@ -1016,12 +1025,12 @@ Game.reloadWeapon = function(){
     }
     else
     {
-        Client.ammo += (Client.score/Game.bulletReloadCostList[Client.weaponId]);
-        Client.sendCollect(-Client.score);
+        Client.ammo += Math.ceil(Client.score/Game.bulletReloadCostList[Client.weaponId]);
         if (Client.ammo > Game.maxWeaponAmmo[Client.weaponId])
         {
             Client.ammo = Game.maxWeaponAmmo[Client.weaponId];
         }
+        Client.sendCollect(-Client.score);
         Client.refillAmmo(Client.ammo);
     }
 
@@ -1058,13 +1067,12 @@ Game.refillBoost = function(){
     }
     else
     {
-        Game.playerMap[Client.id].boost += (Client.score/Game.boostRefillCost);
-        Client.sendCollect(-Client.score);
-        // Game.playerMap[Client.id].boost++;
+        Game.playerMap[Client.id].boost += Math.ceil(Client.score/Game.boostRefillCost);
         if (Game.playerMap[Client.id].boost > Game.maxBoost)
         {
             Game.playerMap[Client.id].boost = Game.maxBoost;
         }
+        Client.sendCollect(-Client.score);
     }
 
     /*if (Game.playerMap[Client.id].score >= Game.boostRefillCost && Game.playerMap[Client.id].boost < Game.maxBoost)
@@ -1164,7 +1172,7 @@ Game.setPlayerRotation = function(id, angVelocity){
 Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color,size){
     console.log('Game.addNewPlayer '+id+'--'+name+'--'+shipName);
 
-    Game.shipTrails[id] = game.add.emitter(x, y + Game.playerSize/2, 400);
+    Game.shipTrails[id] = game.add.emitter(x, y + size/2, 400);
 
     var newPlayer;
     var centerPointer;
@@ -1182,6 +1190,7 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color,size){
         // newPlayer.addChild(newPlayer.centerPointer);
         // newPlayer.centerPointer.scale.setTo(4);
         newPlayer.centerPointer.anchor.setTo(0.3,0.5);
+        newPlayer.centerPointer.alpha = 0.75;
 
         if (id === Client.id)
             Client.sendShipChange(shipSelectionString);
@@ -1315,8 +1324,34 @@ Game.rescale = function(){
     console.log('Rescaling game to '+window.innerWidth+'x'+window.innerHeight);
     this.game.scale.setGameSize(window.innerWidth, window.innerHeight);
 
+    Game.background.canvas = PIXI.CanvasPool.create(this, game.width, game.height);
+    Game.background.context = Game.background.canvas.getContext('2d');
+    Game.background.setTexture(new PIXI.Texture(new PIXI.BaseTexture(Game.background.canvas)));
+    Game.layer.canvas = PIXI.CanvasPool.create(this, game.width, game.height);
+    Game.layer.context =  Game.layer.canvas.getContext('2d');
+    Game.layer.setTexture(new PIXI.Texture(new PIXI.BaseTexture(Game.layer.canvas)));
+
+    /*Game.safeZone.sendToBack();
+    Game.layer.sendToBack();
+    Game.background.sendToBack();*/
+
+    /*Game.background = Game.map.createLayer('Backgroundlayer');
+
+    // safeZoneLayer = map.createLayer('Zonelayer');
+    Game.safeZone = game.add.sprite(3235,3240,'safe_zone');
+    Game.safeZone.width = 1205;
+    Game.safeZone.height = 1205;
+    Game.safeZone.anchor.setTo(0.5,0.5);
+    Game.safeZone.alpha = 0.6;
+    Game.layer = Game.map.createLayer('Groundlayer');
+    Game.map.setCollisionBetween(0, 4000, true, 'Groundlayer');
+    Game.layer.resizeWorld();*/
+
     if (Game.allPlayersAdded)
     {
+        // Game.background = map.createLayer('Backgroundlayer');
+        // Game.layer.resizeWorld();
+
         var cpW = Game.playerMap[Client.id].centerPointer.width;
         var cpH = Game.playerMap[Client.id].centerPointer.height;
         Game.playerMap[Client.id].centerPointer.width = game.width*0.2083;

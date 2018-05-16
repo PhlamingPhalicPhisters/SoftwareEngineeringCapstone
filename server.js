@@ -130,6 +130,7 @@ io.on('connection',function(socket){
         socket.on('disconnect',function(){
             io.emit('remove',socket.player.id);
         });
+
         socket.on('setAmmo', function(data) {
             socket.player.ammo = data.ammo;
             socket.broadcast.emit('updateAmmo', {id: data.id, ammo: data.ammo, weaponId: data.weaponId});
@@ -138,6 +139,14 @@ io.on('connection',function(socket){
         socket.on('changeAmmo', function(data) {
             socket.player.ammo = data;
         });
+
+        socket.on('changeWeapon', function(data) {
+            socket.player.ammo = data.ammo;
+            socket.player.weaponId = data.weaponId;
+            socket.broadcast.emit('updateAmmo', {id: data.id, ammo: data.ammo, weaponId: data.weaponId});
+            socket.emit('updateAmmo', {id: data.id, ammo: data.ammo, weaponId: data.weaponId});
+        });
+
         socket.on('setFocus', function(data) {
             socket.player.focused = data;
             socket.broadcast.emit('removeTrail', {id: socket.player.id, trailSet: data});
