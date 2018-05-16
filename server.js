@@ -80,7 +80,7 @@ io.on('connection',function(socket){
             socket.player.rotation = data.rotation;
             socket.player.health = data.health;
             socket.broadcast.emit('updateTransform', {id: socket.player.id, x: socket.player.x, y: socket.player.y,
-                rotation: socket.player.rotation, health: socket.player.health});
+                rotation: socket.player.rotation, health: socket.player.health, isBoosting: data.isBoosting});
             // socket.player.scale = data.scale;
         });
 
@@ -221,7 +221,7 @@ function checkNameSafety (id, name) {
         return 'Player'+id;
     }
 
-    var unsafeRegex = [/fuck/,/dick/,/pussy/,/nig/,/kkk/,/cunt/,/ass/,/bitch/,/retard/,/cock/,/tit/,/gooch/,/penis/,/fag/,/vagina/,/wtf/,/kys/,];
+    var unsafeRegex = [/fuck/,/dick/,/pussy/,/piss/,/bastard/,/chode/,/chide/,/boner/,/clit/,/jizz/,/nig/,/kkk/,/cunt/,/ass/,/bitch/,/retard/,/cock/,/tit/,/gooch/,/penis/,/fag/,/vagina/,/wtf/,/kys/,];
     var t = name.toLowerCase();
     for (var i in unsafeRegex)
     {
