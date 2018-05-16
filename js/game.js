@@ -10,7 +10,7 @@ addWeapon(2000, 900, 100, 6);
 addWeapon(2000, 900, 50, 2);
 addWeapon(2000, 900, 150, 10);
 
-Game.ammoMap = {};
+
 var firedBullets = new Map();
 var playerMap = new Map();
 var bulletID = 0;
@@ -152,6 +152,7 @@ Game.create = function(){
     // Create reference list of all players in game
     Game.shipTrails = game.add.group();
     Game.playerMap = {};
+    Game.ammoMap = {};
     Game.allPlayersAdded = false;
     Game.localPlayerInstantiated = false;
     Game.bulletsCreated = false;
@@ -193,7 +194,6 @@ Game.create = function(){
     Game.layer = Game.map.createLayer('Groundlayer');
     Game.map.setCollisionBetween(0, 4000, true, 'Groundlayer');
     Game.layer.resizeWorld();
-    Game.rescale();
 
     // Enable Phaser Arcade game physics engine
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -203,6 +203,8 @@ Game.create = function(){
     // Create Local player & all active remote players
     Client.askNewPlayer();
     Client.getPlayer();
+
+    Game.rescale();
 
     this.game.camera.bounds = new Phaser.Rectangle(-this.game.world.width,-this.game.world.height,
         this.game.world.width*3, this.game.world.height*3);
@@ -616,7 +618,7 @@ Game.updateBullets = function(x, y, rotation, weaponId, id) {
 };
 
 Game.updateAmmo = function(id, ammo, weaponId) {
-    if (Game.ammoMap[id] === null)
+    if (Game.ammoMap[id] === undefined)
     {
         Game.ammoMap[id] = game.add.group();
     }
@@ -1183,13 +1185,13 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color,size){
     Game.shipTrails[id] = game.add.emitter(x, y + size/2, 400);
 
     var newPlayer;
-    var centerPointer;
     // Create player sprite and assign the player a unique ship
     // If it is a new player
     if(shipName === 'unassignedShip'){//} && id === Client.id/*Client.getPlayerID()*/){
         var shipSelectionString = assignShip(id + 1);
         newPlayer = game.add.sprite(x,y,shipSelectionString);
-        newPlayer.centerPointer = game.add.sprite(x,y,'arrow');
+
+        /*newPlayer.centerPointer = game.add.sprite(x,y,'arrow');
         newPlayer.centerPointer.startWidth = newPlayer.centerPointer.width;
         var cpW = newPlayer.centerPointer.width;
         var cpH = newPlayer.centerPointer.height;
@@ -1198,10 +1200,22 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color,size){
         // newPlayer.addChild(newPlayer.centerPointer);
         // newPlayer.centerPointer.scale.setTo(4);
         newPlayer.centerPointer.anchor.setTo(0.3,0.5);
-        newPlayer.centerPointer.alpha = 0.75;
+        newPlayer.centerPointer.alpha = 0.75;*/
 
-        if (id === Client.id)
+        if (id === Client.id) {
             Client.sendShipChange(shipSelectionString);
+
+            newPlayer.centerPointer = game.add.sprite(x,y,'arrow');
+            newPlayer.centerPointer.startWidth = newPlayer.centerPointer.width;
+            var cpW = newPlayer.centerPointer.width;
+            var cpH = newPlayer.centerPointer.height;
+            newPlayer.centerPointer.width = game.width*0.2083;
+            newPlayer.centerPointer.height = newPlayer.centerPointer.width*(cpH/cpW);
+            // newPlayer.addChild(newPlayer.centerPointer);
+            // newPlayer.centerPointer.scale.setTo(4);
+            newPlayer.centerPointer.anchor.setTo(0.3,0.5);
+            newPlayer.centerPointer.alpha = 0.75;
+        }
     }
     // If it is an existing player
     else {
