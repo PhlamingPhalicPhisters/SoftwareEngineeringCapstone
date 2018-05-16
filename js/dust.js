@@ -9,8 +9,14 @@ var worldBoudndX = 6336;
 var worldBoundY = 6336;
 var dust = function (id, startx, starty, value) {
 
+    var dustObject = game.add.sprite(0, 0, 'dust');
+    console.log("dust location before move: " + dustObject.x + " " + dustObject.y);
+    dustObject.x = startx;
+    dustObject.y = starty;
+    console.log("dust location before move: " + dustObject.x + " " + dustObject.y);
     //draw dust
-    var dustObject = game.add.sprite(startx, starty, 'dust');
+
+    console.log("coordinates of dust in dust: " + startx + " " + starty);
     //dustObject.animations.add('float');
     //dustObject.animations.play('float', 10, true);
     //dustObject.scale.set(4);
@@ -269,6 +275,7 @@ function generateDustForClient(){
 }
 
 function generateDustOnDeath(x,y, amount) {
+    console.log("coordinates of dust in generateDustOnDeath: " + x + " " + y);
     var dropAmount = amount / 100;
     for(var i = 0;  i < dropAmount; i++){
         deathDustMap.set(deathDustID,

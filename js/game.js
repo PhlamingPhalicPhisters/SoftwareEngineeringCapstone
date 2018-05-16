@@ -1110,7 +1110,7 @@ Game.refillBoost = function(){
 // Update the ship of another player
 Game.updatePlayerShip = function(id, shipName){
     if (Game.allPlayersAdded){
-        console.log('we got to update playership, the player id is: '+ id + " " + shipName);
+        //console.log('we got to update playership, the player id is: '+ id + " " + shipName);
         Game.playerMap[id].loadTexture(shipName); // loadTexture draws the new sprite
     }
 };
