@@ -10,7 +10,7 @@ addWeapon(2000, 900, 100, 6);
 addWeapon(2000, 900, 50, 2);
 addWeapon(2000, 900, 150, 10);
 
-Game.ammoMap = {};
+
 var firedBullets = new Map();
 var playerMap = new Map();
 var bulletID = 0;
@@ -74,9 +74,11 @@ Game.init = function(){
     // Run game in background
     this.game.stage.disableVisibilityChange = true;
 
+    Game.screenResized = true;
+
     Game.leaderboard = [null, null, null, null, null, null];
 
-    Game.playerSize = 64;           // sq. px. size
+    // Game.playerSize = 64;           // sq. px. size
     Game.isSafe = false;            // local player is in safe zone
     Game.maxNormVelocity = 200;     // maximum body acceleration
     Game.maxBoost = 5000;           // max boost capacity
@@ -87,6 +89,7 @@ Game.init = function(){
     Game.boostRotMult = 0.5;        // boost rotation mutliplier
     Game.boostCost = 1;             // how much boost costs when active
 
+    Game.buyWeaponCost = [2000, 3000, 4000];
     Game.maxWeaponAmmo = [250, 500, 100];
     Game.bulletReloadCostList = [50, 25, 100];
     Game.boostRefillCost = 1;
@@ -152,15 +155,17 @@ Game.preload = function() {
     this.game.load.image('bullet2', 'assets/sprites/neon/BlueShot.png');
 
     this.game.load.image('ship0', 'assets/sprites/neon/squaresquare.png');
+
+    this.game.load.image('arrow', 'assets/sprites/neon/arrow.png');
 };
 
 //Helper function for the loading screen
 function loadStart() {
-    var shiploadsprite = game.add.sprite(game.world.centerX - 50,game.world.centerY - 25, 'shipload');
+    var shiploadsprite = game.add.sprite(game.world.centerX - game.world.width*0.03, game.world.centerY, 'shipload');
     shiploadsprite.height = 75;
     shiploadsprite.width = 75;
     game.stage.backgroundColor = '#000000';
-    game.add.text(game.world.centerX+40,game.world.centerY, 'Loading...', { fill: '#ffffff' });
+    game.add.text(game.world.centerX+game.world.width*0.03,game.world.centerY, 'Loading...', { fill: '#ffffff' });
     //var sprite = game.add.sprite(game.world.centerX,game.world.centerY,'loadingSprite');
     //sprite.animations.add('spin');
     //sprite.animations.play('spin',10,true);
@@ -188,6 +193,7 @@ Game.create = function(){
     // Create reference list of all players in game
     Game.shipTrails = game.add.group();
     Game.playerMap = {};
+    Game.ammoMap = {};
     Game.allPlayersAdded = false;
     Game.localPlayerInstantiated = false;
     Game.bulletsCreated = false;
@@ -196,7 +202,6 @@ Game.create = function(){
     this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
     this.game.scale.pageAlignHorizontally = true;
     this.game.scale.pageAlignVertically = true;
-    Game.rescale();
     //console.log(this.game.scale.width + " width");
     //this.game.scale.setGameSize(window.outerWidth * 1.1, window.innerHeight * 1.1);
     // this.game.scale.setMinMax(640,480/*,1920,1080*/);
@@ -214,12 +219,12 @@ Game.create = function(){
 
     // Set up tile mapping and layer system
     //Name of tilesheet in json, name in game.js
-    var map = this.game.add.tilemap('map');
-    map.addTilesetImage('largetilesheet','tiles');
-    map.addTilesetImage('tilemapneonsmall', 'neon');
+    Game.map = this.game.add.tilemap('map');
+    Game.map.addTilesetImage('largetilesheet','tiles');
+    Game.map.addTilesetImage('tilemapneonsmall','neon');
 
-    //Order of these statments impacts the order of render
-    var background = map.createLayer('Backgroundlayer');
+    //Order of these statements impacts the order of render
+    Game.background = Game.map.createLayer('Backgroundlayer');
 
     // safeZoneLayer = map.createLayer('Zonelayer');
     Game.safeZone = game.add.sprite(3235,3240,'safe_zone');
@@ -227,9 +232,9 @@ Game.create = function(){
     Game.safeZone.height = 1205;
     Game.safeZone.anchor.setTo(0.5,0.5);
     Game.safeZone.alpha = 0.6;
-    layer = map.createLayer('Groundlayer');
-    map.setCollisionBetween(0, 4000, true, 'Groundlayer');
-    layer.resizeWorld();
+    Game.layer = Game.map.createLayer('Groundlayer');
+    Game.map.setCollisionBetween(0, 4000, true, 'Groundlayer');
+    Game.layer.resizeWorld();
 
     // Enable Phaser Arcade game physics engine
     this.game.physics.startSystem(Phaser.Physics.ARCADE);
@@ -239,6 +244,8 @@ Game.create = function(){
     // Create Local player & all active remote players
     Client.askNewPlayer();
     Client.getPlayer();
+
+    Game.rescale();
 
     this.game.camera.bounds = new Phaser.Rectangle(-this.game.world.width,-this.game.world.height,
         this.game.world.width*3, this.game.world.height*3);
@@ -334,21 +341,22 @@ window.addEventListener("focus", function(event) {
 Game.update = function()
 {
     // Establish collision detection between groups
+    // This is the dust that is spawned when a player dies
     deathDustMap.forEach(function (dust) {
         playerMap.forEach(function (player) {
             Game.physics.arcade.overlap(dust, player, dustCollisionDeath);
         });
     });
 
+    // This for the dust that starts in your game
     playerMap.forEach(function (player) {
         Game.physics.arcade.overlap(dustList, player, dustCollision);
     });
 
-    Game.physics.arcade.collide(layer, dustList);
+    Game.physics.arcade.collide(Game.layer, dustList);
 
-    Game.physics.arcade.collide(layer, Game.playerMap[Client.getPlayerID()]);
+    Game.physics.arcade.collide(Game.layer, Game.playerMap[Client.getPlayerID()]);
 
-    //Game.physics.arcade.overlap(bullet, playerArray, Game.safeZoneEvent);       // TODODODODODO - SWAP WITH SAFEZONE, (playerArray no longer exists)
     if (Game.physics.arcade.overlap(Game.safeZone, Game.playerMap[Client.getPlayerID()], Game.enterSafeZone)){}
     else {
         Game.exitSafeZone();
@@ -373,7 +381,7 @@ Game.update = function()
                 bulletErase.push(bullet);
             });
             //layer
-            Game.physics.arcade.overlap(layer, bullet, function (bullet, layer) {
+            Game.physics.arcade.overlap(Game.layer, bullet, function (bullet, layer) {
                 if(layer.index !== -1) {
                     //burstLittle(bullet.x, bullet.y);
                     bulletErase.push(bullet);
@@ -460,6 +468,24 @@ Game.update = function()
             }
             if (game.input.keyboard.isDown(Phaser.KeyCode.B)) {
                 Game.refillBoost();
+            }
+            if (game.input.keyboard.isDown(Phaser.KeyCode.V)){
+                // Game.playerMap[Client.id].shipName = 'ship0';
+                // Game.updatePlayerShip(Client.id,'ship0');
+                // Client.sendShipChange('ship0');
+                // Game.playerMap[Client.id].maxHealth = 500;
+                // Game.playerMap[Client.id].heal(500);
+                // Game.MaxBoost
+                shipTierAssign('ship15');
+            }
+            if (game.input.keyboard.isDown(Phaser.KeyCode.NUMPAD_1)) {
+                Client.changeWeapon(Game.maxWeaponAmmo[0], 0);
+            }
+            if (game.input.keyboard.isDown(Phaser.KeyCode.NUMPAD_2)) {
+                Client.changeWeapon(Game.maxWeaponAmmo[1], 1);
+            }
+            if (game.input.keyboard.isDown(Phaser.KeyCode.NUMPAD_3)) {
+                Client.changeWeapon(Game.maxWeaponAmmo[2], 2);
             }
         }
         else {
@@ -788,7 +814,15 @@ Game.updateBullets = function(x, y, rotation, weaponId, id) {
 };
 
 Game.updateAmmo = function(id, ammo, weaponId) {
-    Game.ammoMap[id] = game.add.group();
+    if (Game.ammoMap[id] === undefined)
+    {
+        Game.ammoMap[id] = game.add.group();
+    }
+    else
+    {
+        Game.ammoMap[id].removeAll(true);
+    }
+    // Game.ammoMap[id] = game.add.group();
     Game.ammoMap[id].enableBody = true;
     Game.ammoMap[id].physicsBodyType = Phaser.Physics.ARCADE;
     if (weaponId === 0)
@@ -874,6 +908,11 @@ Game.updateHUD = function(player){
         'Dust: ' + Game.playerHUD["currency"]);
     // }
     player.shield.fontSize = this.game.camera.width * .023;
+
+    player.centerPointer.bringToTop();
+    player.centerPointer.x = player.x;
+    player.centerPointer.y = player.y;
+    player.centerPointer.rotation = game.physics.arcade.angleToXY(player, Game.safeZone.x, Game.safeZone.y);
 
     Game.updateHealthBar(player);
     if (Game.allPlayersAdded)
@@ -1099,6 +1138,12 @@ Game.updateTransform = function(id, x, y, rotation, health) {
     }
 };
 
+Game.updateSize = function(id, size)
+{
+    Game.playerMap[id].width = size;
+    Game.playerMap[id].height = size;
+};
+
 Game.setTrail = function(id, trailSet) {
     var player = Game.playerMap[id];
     player.shipTrail.visible = trailSet;
@@ -1129,6 +1174,7 @@ function removePlayerNames() {
 }
 
 Game.showBasePrompts = function(){
+    Game.playerMap[Client.id].centerPointer.visible = false;
     Game.playerMap[Client.id].safePromptHover.visible = true;
     Game.playerMap[Client.id].safePromptHover.setText(
         'Store [E]\n'
@@ -1188,6 +1234,7 @@ Game.calcBoostRefillPrompt = function()
 
 Game.unshowBasePrompts = function(){
     Game.playerMap[Client.id].safePromptHover.visible = false;
+    Game.playerMap[Client.id].centerPointer.visible = true;
 };
 
 Game.reloadWeapon = function(){
@@ -1210,12 +1257,12 @@ Game.reloadWeapon = function(){
     }
     else
     {
-        Client.ammo += (Client.score/Game.bulletReloadCostList[Client.weaponId]);
-        Client.sendCollect(-Client.score);
+        Client.ammo += Math.ceil(Client.score/Game.bulletReloadCostList[Client.weaponId]);
         if (Client.ammo > Game.maxWeaponAmmo[Client.weaponId])
         {
             Client.ammo = Game.maxWeaponAmmo[Client.weaponId];
         }
+        Client.sendCollect(-Client.score);
         Client.refillAmmo(Client.ammo);
     }
 
@@ -1252,13 +1299,12 @@ Game.refillBoost = function(){
     }
     else
     {
-        Game.playerMap[Client.id].boost += (Client.score/Game.boostRefillCost);
-        Client.sendCollect(-Client.score);
-        // Game.playerMap[Client.id].boost++;
+        Game.playerMap[Client.id].boost += Math.ceil(Client.score/Game.boostRefillCost);
         if (Game.playerMap[Client.id].boost > Game.maxBoost)
         {
             Game.playerMap[Client.id].boost = Game.maxBoost;
         }
+        Client.sendCollect(-Client.score);
     }
 
     /*if (Game.playerMap[Client.id].score >= Game.boostRefillCost && Game.playerMap[Client.id].boost < Game.maxBoost)
@@ -1312,6 +1358,8 @@ Game.getCoordinates = function(layer, pointer) {
 Game.setPlayerAcceleration = function(acceleration, isBoost){
     if (Game.allPlayersAdded && Game.playerMap[Client.getPlayerID()].body !== null) {
         if (isBoost && Game.playerMap[Client.id].boost >= Game.boostCost) {
+            Game.playerMap[Client.id].shipTrail.setScale(0.5, 0.8, 0.5, 0.8, 1000, Phaser.Easing.Quintic.Out);
+
             Game.playerMap[Client.id].body.maxVelocity.set(Game.maxBoostVelocity);
             // Game.playBoostPFX();
 
@@ -1325,6 +1373,8 @@ Game.setPlayerAcceleration = function(acceleration, isBoost){
             //    acceleration, parallax);
         }
         else {
+            Game.playerMap[Client.id].shipTrail.setScale(0.05, 0.4, 0.05, 0.4, 2000, Phaser.Easing.Quintic.Out);
+
             Game.playerMap[Client.id].body.maxVelocity.set(Game.maxNormVelocity);
             // Game.stopBoostPFX();
 
@@ -1351,26 +1401,43 @@ Game.setPlayerRotation = function(id, angVelocity){
         Game.playerMap[id].body.angularVelocity = angVelocity;
 };
 
-Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color){
+Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color,size){
     console.log('Game.addNewPlayer '+id+'--'+name+'--'+shipName);
 
-    Game.shipTrails[id] = game.add.emitter(x, y + Game.playerSize/2, 400);
+    Game.shipTrails[id] = game.add.emitter(x, y + size/2, 400);
 
     var newPlayer;
-
-
     // Create player sprite and assign the player a unique ship
     // If it is a new player
-    //console.log(shipName.length);
-    //console.log(String('unassignedShip').length);
-    //console.log(shipName === 'unassignedShip' && id === Client.id);
     if(shipName === 'unassignedShip'){//} && id === Client.id/*Client.getPlayerID()*/){
         var shipSelectionString = assignShip(id + 1);
-        // console.log(name + '\'s shipName: '+shipSelectionString);
         newPlayer = game.add.sprite(x,y,shipSelectionString);
-        // console.log('if statement - shipSelectionString: ' + shipSelectionString);
-        if (id === Client.id)
+
+        /*newPlayer.centerPointer = game.add.sprite(x,y,'arrow');
+        newPlayer.centerPointer.startWidth = newPlayer.centerPointer.width;
+        var cpW = newPlayer.centerPointer.width;
+        var cpH = newPlayer.centerPointer.height;
+        newPlayer.centerPointer.width = game.width*0.2083;
+        newPlayer.centerPointer.height = newPlayer.centerPointer.width*(cpH/cpW);
+        // newPlayer.addChild(newPlayer.centerPointer);
+        // newPlayer.centerPointer.scale.setTo(4);
+        newPlayer.centerPointer.anchor.setTo(0.3,0.5);
+        newPlayer.centerPointer.alpha = 0.75;*/
+
+        if (id === Client.id) {
             Client.sendShipChange(shipSelectionString);
+
+            newPlayer.centerPointer = game.add.sprite(x,y,'arrow');
+            newPlayer.centerPointer.startWidth = newPlayer.centerPointer.width;
+            var cpW = newPlayer.centerPointer.width;
+            var cpH = newPlayer.centerPointer.height;
+            newPlayer.centerPointer.width = game.width*0.2083;
+            newPlayer.centerPointer.height = newPlayer.centerPointer.width*(cpH/cpW);
+            // newPlayer.addChild(newPlayer.centerPointer);
+            // newPlayer.centerPointer.scale.setTo(4);
+            newPlayer.centerPointer.anchor.setTo(0.3,0.5);
+            newPlayer.centerPointer.alpha = 0.75;
+        }
     }
     // If it is an existing player
     else {
@@ -1379,9 +1446,9 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color){
         // console.log('else statement - shipSelectionString: ' + shipName);
     }
 
-    // make all ships the same width & height
-    newPlayer.width = Game.playerSize;
-    newPlayer.height = Game.playerSize;
+    // Adjust player's squared size
+    newPlayer.width = size;
+    newPlayer.height = size;
 
     // Set player sprite origin to center
     newPlayer.anchor.set(0.5);
@@ -1394,9 +1461,6 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color){
     Game.physics.enable(newPlayer, Phaser.Physics.ARCADE);
     newPlayer.enableBody = true;                            //Here is what is needed for
     newPlayer.body.collideWorldBounds = true;
-    // newPlayer.body.anchor(0.5,0.5);
-    //newPlayer.body.setSize(newPlayer.width, newPlayer.height, 0.5, 0.5);                   //collisions to work
-    //newPlayer.body.bounce.setTo(.5, .5);
     newPlayer.body.drag.set(100);
     newPlayer.body.maxVelocity.set(Game.maxNormVelocity);
 
@@ -1408,11 +1472,8 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color){
     newPlayer.shipTrail.makeParticles('trail');
     newPlayer.shipTrail.setXSpeed(30, -30);
     newPlayer.shipTrail.setYSpeed(30, -30);
-    // newPlayer.shipTrail.setRotation(50,-50);
     newPlayer.shipTrail.setAlpha(1, 0.01, 800);
     newPlayer.shipTrail.setScale(0.05, 0.4, 0.05, 0.4, 2000, Phaser.Easing.Quintic.Out);
-    // newPlayer.addChild(newPlayer.shipTrail);
-    // newPlayer.shipTrail.rotation = rotation;
     newPlayer.shipTrail.start(false, 2000, 10);
 
     // Set player sprite and trail color
@@ -1497,14 +1558,64 @@ Game.setAllPlayersAdded = function(){
 };
 
 //This function creates a string name of the ship to be assigned to a new player
+//T1 ship
 function assignShip(amountOfPlayers) {
-    var shipNumber = amountOfPlayers % numberOfShipSprites;
-    return 'ship' + shipNumber;
+    //var shipNumber = amountOfPlayers % numberOfShipSprites;
+    //Changed logic to provide one of the first three ships to new players
+    var randomShip = randomInt(1,4); //range of 1 - 3
+    if(randomShip == 3){
+        randomShip = 7;
+    }
+    return 'ship' + randomShip;
 }
 
 Game.rescale = function(){
     console.log('Rescaling game to '+window.innerWidth+'x'+window.innerHeight);
     this.game.scale.setGameSize(window.innerWidth, window.innerHeight);
+
+    Game.background.canvas = PIXI.CanvasPool.create(this, game.width, game.height);
+    Game.background.context = Game.background.canvas.getContext('2d');
+    Game.background.setTexture(new PIXI.Texture(new PIXI.BaseTexture(Game.background.canvas)));
+    Game.layer.canvas = PIXI.CanvasPool.create(this, game.width, game.height);
+    Game.layer.context =  Game.layer.canvas.getContext('2d');
+    Game.layer.setTexture(new PIXI.Texture(new PIXI.BaseTexture(Game.layer.canvas)));
+
+    /*Game.safeZone.sendToBack();
+    Game.layer.sendToBack();
+    Game.background.sendToBack();*/
+
+    /*Game.background = Game.map.createLayer('Backgroundlayer');
+
+    // safeZoneLayer = map.createLayer('Zonelayer');
+    Game.safeZone = game.add.sprite(3235,3240,'safe_zone');
+    Game.safeZone.width = 1205;
+    Game.safeZone.height = 1205;
+    Game.safeZone.anchor.setTo(0.5,0.5);
+    Game.safeZone.alpha = 0.6;
+    Game.layer = Game.map.createLayer('Groundlayer');
+    Game.map.setCollisionBetween(0, 4000, true, 'Groundlayer');
+    Game.layer.resizeWorld();*/
+
+    if (Game.allPlayersAdded)
+    {
+        // Game.background = map.createLayer('Backgroundlayer');
+        // Game.layer.resizeWorld();
+
+        var cpW = Game.playerMap[Client.id].centerPointer.width;
+        var cpH = Game.playerMap[Client.id].centerPointer.height;
+        Game.playerMap[Client.id].centerPointer.width = game.width*0.2083;
+        Game.playerMap[Client.id].centerPointer.height = Game.playerMap[Client.id].centerPointer.width*(cpH/cpW);
+
+        // console.log('ratio = '+game.width/game.height+' -- resize to '+Game.playerMap[Client.id].centerPointer.width)
+        if (Game.playerMap[Client.id].centerPointer.width > Game.playerMap[Client.id].centerPointer.startWidth)
+        {
+            Game.playerMap[Client.id].centerPointer.width = Game.playerMap[Client.id].centerPointer.startWidth;
+        }
+        else if (Game.playerMap[Client.id].centerPointer.width < 2*Game.playerMap[Client.id].width)
+        {
+            Game.playerMap[Client.id].centerPointer.width = 2*Game.playerMap[Client.id].width
+        }
+    }
 
     // // Make sure camera bounds are maintained
     this.game.camera.bounds = new Phaser.Rectangle(-this.game.world.width,-this.game.world.height,
@@ -1540,8 +1651,6 @@ function burst(x,y){
     burstBig.start(true, 3000, null, 25);
 
 }
-
-
 function shake(){
   //Set shake intensity and duration
     game.camera.shake(0.01, 100);

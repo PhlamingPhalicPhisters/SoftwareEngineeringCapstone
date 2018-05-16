@@ -92,7 +92,7 @@ Client.socket.on('newplayer',function(data){
         //Game.addNewPlayer(data.id,data.x,data.y,data.rotation);
         // console.log('asscream');
         console.log(data.health);
-        Game.addNewPlayer(data.id, data.x, data.y, data.rotation, data.shipName, data.name, data.score, data.color);
+        Game.addNewPlayer(data.id, data.x, data.y, data.rotation, data.shipName, data.name, data.score, data.color, data.size);
         if (data.id === Client.id)
             Game.setDeathBehavior(data.id);
     }
@@ -106,10 +106,21 @@ Client.socket.on('allplayers',function(data){
             console.log("Ship Name of an existing ship being sent to new player" + data[i].shipName);
 
             Game.updateAmmo(data[i].id, data[i].ammo, data[i].weaponId);
-            Game.addNewPlayer(data[i].id, data[i].x, data[i].y, data[i].rotation, data[i].shipName, data[i].name, data[i].score, data[i].color);
+            Game.addNewPlayer(data[i].id, data[i].x, data[i].y, data[i].rotation, data[i].shipName, data[i].name, data[i].score, data[i].color, data[i].size);
         }
     }
     Game.setAllPlayersAdded();
+});
+
+Client.sendResize = function(size)
+{
+    Client.socket.emit('resize', {size: size});
+};
+
+Client.socket.on('updateSize',function(data){
+    if (game.state.current === 'Game') {
+        Game.updateSize(data.id, data.size);
+    }
 });
 
 Client.setClientScores = function(score) {
@@ -204,17 +215,25 @@ Client.socket.on('updateFire', function(data) {
     //Game.updateBullets(data);
 });
 
-Client.socket.on('updateAmmo', function(data) {
-    Game.updateAmmo(data.id, data.ammo, data.weaponId);
-});
-
 Client.changeAmmo = function(ammo) {
     Client.socket.emit('changeAmmo', ammo);
 };
 
 Client.refillAmmo = function(ammo) {
+    Client.ammo = ammo;
     Client.socket.emit('setAmmo', {id: Client.id, ammo: Client.ammo, weaponId: Client.weaponId});
 };
+Client.changeWeapon = function(ammo, weaponId) {
+    Client.ammo = ammo;
+    Client.weaponId = weaponId;
+    console.log(Client.id+' changing to weapon '+Client.weaponId+' w/ '+Client.ammo+' ammo');
+    Client.socket.emit('changeWeapon', {id: Client.id, ammo: Client.ammo, weaponId: Client.weaponId});
+};
+Client.socket.on('updateAmmo', function(data) {
+    Game.updateAmmo(data.id, data.ammo, data.weaponId);
+});
+
+
 
 Client.sendCollect = function(value) {
     Client.score += value;
