@@ -616,7 +616,15 @@ Game.updateBullets = function(x, y, rotation, weaponId, id) {
 };
 
 Game.updateAmmo = function(id, ammo, weaponId) {
-    Game.ammoMap[id] = game.add.group();
+    if (Game.ammoMap[id] === null)
+    {
+        Game.ammoMap[id] = game.add.group();
+    }
+    else
+    {
+        Game.ammoMap[id].removeAll(true);
+    }
+    // Game.ammoMap[id] = game.add.group();
     Game.ammoMap[id].enableBody = true;
     Game.ammoMap[id].physicsBodyType = Phaser.Physics.ARCADE;
     if (weaponId === 0)
