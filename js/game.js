@@ -694,6 +694,11 @@ Game.updateHUD = function(player){
     // }
     player.shield.fontSize = this.game.camera.width * .023;
 
+    player.centerPointer.bringToTop();
+    player.centerPointer.x = player.x;
+    player.centerPointer.y = player.y;
+    player.centerPointer.rotation = game.physics.arcade.angleToXY(player, Game.safeZone.x, Game.safeZone.y);
+
     Game.updateHealthBar(player);
     if (Game.allPlayersAdded)
     {
@@ -928,6 +933,7 @@ function removePlayerNames() {
 }
 
 Game.showBasePrompts = function(){
+    Game.playerMap[Client.id].centerPointer.visible = false;
     Game.playerMap[Client.id].safePromptHover.visible = true;
     Game.playerMap[Client.id].safePromptHover.setText(
         'Store [E]\n'
@@ -987,6 +993,7 @@ Game.calcBoostRefillPrompt = function()
 
 Game.unshowBasePrompts = function(){
     Game.playerMap[Client.id].safePromptHover.visible = false;
+    Game.playerMap[Client.id].centerPointer.visible = true;
 };
 
 Game.reloadWeapon = function(){
@@ -1166,8 +1173,15 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color,size){
     if(shipName === 'unassignedShip'){//} && id === Client.id/*Client.getPlayerID()*/){
         var shipSelectionString = assignShip(id + 1);
         newPlayer = game.add.sprite(x,y,shipSelectionString);
-        //centerPointer = game.add.sprite(x,y,newPlayer'','arrow');
-        //centerPointer.anchor.setTo(0.3,0.5);
+        newPlayer.centerPointer = game.add.sprite(x,y,'arrow');
+        newPlayer.centerPointer.startWidth = newPlayer.centerPointer.width;
+        var cpW = newPlayer.centerPointer.width;
+        var cpH = newPlayer.centerPointer.height;
+        newPlayer.centerPointer.width = game.width*0.2083;
+        newPlayer.centerPointer.height = newPlayer.centerPointer.width*(cpH/cpW);
+        // newPlayer.addChild(newPlayer.centerPointer);
+        // newPlayer.centerPointer.scale.setTo(4);
+        newPlayer.centerPointer.anchor.setTo(0.3,0.5);
 
         if (id === Client.id)
             Client.sendShipChange(shipSelectionString);
@@ -1294,6 +1308,24 @@ function assignShip(amountOfPlayers) {
 Game.rescale = function(){
     console.log('Rescaling game to '+window.innerWidth+'x'+window.innerHeight);
     this.game.scale.setGameSize(window.innerWidth, window.innerHeight);
+
+    if (Game.allPlayersAdded)
+    {
+        var cpW = Game.playerMap[Client.id].centerPointer.width;
+        var cpH = Game.playerMap[Client.id].centerPointer.height;
+        Game.playerMap[Client.id].centerPointer.width = game.width*0.2083;
+        Game.playerMap[Client.id].centerPointer.height = Game.playerMap[Client.id].centerPointer.width*(cpH/cpW);
+
+        // console.log('ratio = '+game.width/game.height+' -- resize to '+Game.playerMap[Client.id].centerPointer.width)
+        if (Game.playerMap[Client.id].centerPointer.width > Game.playerMap[Client.id].centerPointer.startWidth)
+        {
+            Game.playerMap[Client.id].centerPointer.width = Game.playerMap[Client.id].centerPointer.startWidth;
+        }
+        else if (Game.playerMap[Client.id].centerPointer.width < 2*Game.playerMap[Client.id].width)
+        {
+            Game.playerMap[Client.id].centerPointer.width = 2*Game.playerMap[Client.id].width
+        }
+    }
 
     // // Make sure camera bounds are maintained
     this.game.camera.bounds = new Phaser.Rectangle(-this.game.world.width,-this.game.world.height,

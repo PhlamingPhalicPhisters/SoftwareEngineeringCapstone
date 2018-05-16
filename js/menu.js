@@ -167,7 +167,8 @@ Menu.rescale = function(){
 };
 
 var randomTint = function() {
-    return ((Math.random()*0xffffff)|0x0f0f0f);
+    return ((Math.random()*0xffffff)+100)+((Math.random()*0xffffff)+100)+((Math.random()*0xffffff)+100);
+    // return ((Math.random()*0xffffff)|0x0f0f0f);
     //return Math.random() * 0xffffff;
 };
 
