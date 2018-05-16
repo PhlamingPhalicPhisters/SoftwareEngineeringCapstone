@@ -17,8 +17,32 @@ var bulletID = 0;
 var burstLittleEmitter;
 var burstBig;
 
+
 shop = {
     shopMenu: null,
+    shopPadding: 15,
+    Tiers: [],
+    visibleTier: 0,
+    tierText: null,
+    statText: null,
+    nextTierButton: null,
+    prevTierButton: null,
+    tierBox: null,
+    ammoBox: null,
+    ammoBoxHover: false,
+    weaponBox1: null,
+    weaponBox1Hover: false,
+    weaponBox2: null,
+    weaponBox2Hover: false,
+    weaponBox3: null,
+    weaponBox3Hover: false,
+    boostBox: null,
+    boostBoxHover: false,
+    shopCornerX: 0,
+    shopCornerY: 0,
+    shopWidth: 0,
+    shopHeight: 0
+    /*
     scrollBarBackground: null,
     scrollBar: null,
     scrollBarX: 0,
@@ -26,10 +50,14 @@ shop = {
     scrollBarWidth: 0,
     scrollBarHeight: 20,
     scrollBarColor: null,
-    scrollBarHover: false
+    scrollBarHover: false*/
 };
-Game.dragX = 0;
-Game.dragY = 0;
+for (var i = 0; i < 5; i++) {
+    var elements = [];
+    shop.Tiers.push({elements: []});
+}
+//Game.dragX = 0;
+//Game.dragY = 0;
 Game.screenResized = false;
 
 
@@ -94,6 +122,19 @@ Game.preload = function() {
     this.game.load.image('ship13','assets/sprites/neon/Ship13.png');
     this.game.load.image('ship14','assets/sprites/neon/Ship14.png');
     this.game.load.image('ship15','assets/sprites/neon/Ship15.png');
+
+    //placeholder tier list
+    Game.shipTiers = [];
+    Game.shipTiers[0] = ['ship1', 'ship2', 'ship3'];
+    Game.shipTiers[0].stats = {health: 100, boost: 5000, speedMultiplier: 1};
+    Game.shipTiers[1] = ['ship4', 'ship5', 'ship6'];
+    Game.shipTiers[1].stats = {health: 100, boost: 4000, speedMultiplier: 1.5};
+    Game.shipTiers[2] = ['ship7', 'ship8', 'ship9'];
+    Game.shipTiers[2].stats = {health: 150, boost: 5000, speedMultiplier: 1};
+    Game.shipTiers[3] = ['ship10', 'ship11', 'ship12'];
+    Game.shipTiers[3].stats = {health: 120, boost: 7000, speedMultiplier: 1.1};
+    Game.shipTiers[4] = ['ship13', 'ship14', 'ship15'];
+    Game.shipTiers[4].stats = {health: 250, boost: 5000, speedMultiplier: 0.75};
 
     // Load dust asset
     //thsis.game.load.spritesheet('dust', 'assets/sprites/neon/Dust.png',500,500,30);
@@ -235,9 +276,40 @@ Game.create = function(){
     burstBig.makeParticles('sparksmall');
 
 
-    shop.shopMenu = Game.add.graphics(0,0);
-    shop.scrollBarBackground = Game.add.graphics(0,0);
-    shop.scrollBar = Game.add.graphics(0,0);
+    shop.shopMenu = Game.add.graphics(-1000,-1000);
+    shop.scrollBarBackground = Game.add.graphics(-1000,-1000);
+    shop.scrollBar = Game.add.graphics(-1000,-1000);
+    shop.tierText = Game.add.text(-1000, -1000, 'Tier ' + shop.visibleTier + ':', {font: '35px Lucida Console', fill: '#ffffff', align: 'left'});
+    shop.statText = Game.add.text(-1000, -1000, 'Max Health: ' + Game.shipTiers[shop.visibleTier].health + '\n' +
+        'Max Boost: ' + Game.shipTiers[shop.visibleTier].boost + '\n' +
+        'Speed Multiplier: ' + Game.shipTiers[shop.visibleTier].speedMultiplier, {font: '35px Lucida Console', fill: '#ffffff', align: 'left'});
+    shop.nextTierButton = Game.add.button(-1000, -1000, 'ship1');
+    shop.prevTierButton = Game.add.button(-1000, -1000, 'ship1');
+    shop.tierBox = Game.add.graphics(-1000, -1000);
+    shop.ammoBox = Game.add.graphics(-1000, -1000);
+    shop.weaponBox1 = Game.add.graphics(-1000, -1000);
+    shop.weaponBox2 = Game.add.graphics(-1000, -1000);
+    shop.weaponBox3 = Game.add.graphics(-1000, -1000);
+    shop.boostBox = Game.add.graphics(-1000, -1000);
+    for (var i = 0; i < Game.shipTiers.length; i++) {
+        var elements = shop.Tiers[i].elements;
+        // add in each ship in the tier and a background box for it
+        for (var j = 0; j < Game.shipTiers[i].length; j++) {
+            var shipBox = Game.add.graphics(-1000, -1000);
+            elements.push(shipBox);
+            var ship = Game.add.sprite(-1000, -1000, Game.shipTiers[i][j]);
+            elements.push(ship);
+        }
+    }
+    shop.Tiers.forEach(function(tier) {
+        tier.elements.forEach(function(element) {
+            //console.log(element.type);
+            if (element.type === 3)
+                element.clear();
+            else
+                element.exists = false;
+        });
+    });
 };
 
 /*
@@ -417,21 +489,136 @@ window.addEventListener("keypress", function(event) {
 });
 
 Game.updateShop = function() {
+    shop.shopCornerX = window.innerWidth/8;
+    shop.shopCornerY = window.innerHeight/8;
+    shop.shopWidth = window.innerWidth*3/4;
+    shop.shopHeight = window.innerHeight*3/4;
     shop.shopMenu.clear();
     var color = Game.rgbToHex(50, 50, 50);
     shop.shopMenu.beginFill(color, 1);
-    shop.shopMenu.moveTo(0, 0);
-    shop.shopMenu.drawRect(window.innerWidth/8, window.innerHeight/8, window.innerWidth*3/4, window.innerHeight*3/4);
+    shop.shopMenu.drawRect(shop.shopCornerX, shop.shopCornerY, shop.shopWidth, shop.shopHeight);
     shop.shopMenu.endFill();
     shop.shopMenu.x = 0;
     shop.shopMenu.y = 0;
     Game.world.bringToTop(shop.shopMenu);
     shop.shopMenu.fixedToCamera = true;
 
-    var maxBoxDimensions = 250;
-    var minBoxDimensions = 175;
+    // draw the big box behind all the ship display items as a background
+    shop.tierBox.clear();
+    color = Game.rgbToHex(25, 25, 25);
+    shop.tierBox.beginFill(color);
+    shop.tierBox.drawRect(shop.shopCornerX + shop.shopPadding, shop.shopCornerY + shop.shopPadding, shop.shopWidth - 2*shop.shopPadding, (shop.shopHeight * 2/3) - 2*shop.shopPadding);
+    shop.tierBox.endFill();
+    shop.tierBox.x = 0;
+    shop.tierBox.y = 0;
+    Game.world.bringToTop(shop.tierBox);
+    shop.tierBox.fixedToCamera = true;
 
 
+
+    // draw the box behind the ammo refill as a background
+    shop.ammoBox.clear();
+    shop.ammoBox.inputEnabled = true;
+    shop.ammoBox.events.onInputOver.add(function() {
+        shop.ammoBoxHover = true;
+    });
+    shop.ammoBox.events.onInputOut.add(function() {
+        shop.ammoBoxHover = false;
+    });
+    color = Game.rgbToHex(25, 25, 25);
+    if (shop.ammoBoxHover)
+        color = Game.rgbToHex(30, 30, 30);
+    shop.ammoBox.beginFill(color);
+    shop.ammoBox.drawRect(shop.shopCornerX + shop.shopPadding, shop.shopCornerY + (shop.shopHeight * 2/3), (shop.shopWidth - 6*shop.shopPadding) / 5, (shop.shopHeight / 3) - shop.shopPadding);
+    shop.ammoBox.endFill();
+    shop.ammoBox.x = 0;
+    shop.ammoBox.y = 0;
+    Game.world.bringToTop(shop.ammoBox);
+    shop.ammoBox.fixedToCamera = true;
+
+    // draw the box behind the weapon info as a background
+    shop.weaponBox1.clear();
+    shop.weaponBox1.inputEnabled = true;
+    shop.weaponBox1.events.onInputOver.add(function() {
+        shop.weaponBox1Hover = true;
+    });
+    shop.weaponBox1.events.onInputOut.add(function() {
+        shop.weaponBox1Hover = false;
+    });
+    color = Game.rgbToHex(25, 25, 25);
+    if (shop.weaponBox1Hover)
+        color = Game.rgbToHex(30, 30, 30);
+    shop.weaponBox1.beginFill(color);
+    shop.weaponBox1.drawRect(shop.shopCornerX + shop.ammoBox.width + 2*shop.shopPadding, shop.shopCornerY + (shop.shopHeight * 2/3), (shop.shopWidth - 6*shop.shopPadding) / 5, (shop.shopHeight / 3) - shop.shopPadding);
+    shop.weaponBox1.endFill();
+    shop.weaponBox1.x = 0;
+    shop.weaponBox1.y = 0;
+    Game.world.bringToTop(shop.weaponBox1);
+    shop.weaponBox1.fixedToCamera = true;
+
+    // draw the box behind the weapon info as a background
+    shop.weaponBox2.clear();
+    shop.weaponBox2.inputEnabled = true;
+    shop.weaponBox2.events.onInputOver.add(function() {
+        shop.weaponBox2Hover = true;
+    });
+    shop.weaponBox2.events.onInputOut.add(function() {
+        shop.weaponBox2Hover = false;
+    });
+    color = Game.rgbToHex(25, 25, 25);
+    if (shop.weaponBox2Hover)
+        color = Game.rgbToHex(30, 30, 30);
+    shop.weaponBox2.beginFill(color);
+    shop.weaponBox2.drawRect(shop.shopCornerX + 2*shop.ammoBox.width + 3*shop.shopPadding, shop.shopCornerY + (shop.shopHeight * 2/3), (shop.shopWidth - 6*shop.shopPadding) / 5, (shop.shopHeight / 3) - shop.shopPadding);
+    shop.weaponBox2.endFill();
+    shop.weaponBox2.x = 0;
+    shop.weaponBox2.y = 0;
+    Game.world.bringToTop(shop.weaponBox2);
+    shop.weaponBox2.fixedToCamera = true;
+
+    // draw the box behind the weapon info as a background
+    shop.weaponBox3.clear();
+    shop.weaponBox3.inputEnabled = true;
+    shop.weaponBox3.events.onInputOver.add(function() {
+        shop.weaponBox3Hover = true;
+    });
+    shop.weaponBox3.events.onInputOut.add(function() {
+        shop.weaponBox3Hover = false;
+    });
+    color = Game.rgbToHex(25, 25, 25);
+    if (shop.weaponBox3Hover)
+        color = Game.rgbToHex(30, 30, 30);
+    shop.weaponBox3.beginFill(color);
+    shop.weaponBox3.drawRect(shop.shopCornerX + 3*shop.ammoBox.width + 4*shop.shopPadding, shop.shopCornerY + (shop.shopHeight * 2/3), (shop.shopWidth - 6*shop.shopPadding) / 5, (shop.shopHeight / 3) - shop.shopPadding);
+    shop.weaponBox3.endFill();
+    shop.weaponBox3.x = 0;
+    shop.weaponBox3.y = 0;
+    Game.world.bringToTop(shop.weaponBox3);
+    shop.weaponBox3.fixedToCamera = true;
+
+    // draw the box behind the boost refill as a background
+    shop.boostBox.clear();
+    shop.boostBox.inputEnabled = true;
+    shop.boostBox.events.onInputOver.add(function() {
+        shop.boostBoxHover = true;
+    });
+    shop.boostBox.events.onInputOut.add(function() {
+        shop.boostBoxHover = false;
+    });
+    color = Game.rgbToHex(25, 25, 25);
+    if (shop.boostBoxHover)
+        color = Game.rgbToHex(30, 30, 30);
+    shop.boostBox.beginFill(color);
+    shop.boostBox.drawRect(shop.shopCornerX + 4*shop.ammoBox.width + 5*shop.shopPadding, shop.shopCornerY + (shop.shopHeight * 2/3), (shop.shopWidth - 6*shop.shopPadding) / 5, (shop.shopHeight / 3) - shop.shopPadding);
+    shop.boostBox.endFill();
+    shop.boostBox.x = 0;
+    shop.boostBox.y = 0;
+    Game.world.bringToTop(shop.boostBox);
+    shop.boostBox.fixedToCamera = true;
+
+    //var elements = shop.Tiers[shop.visibleTier].elements;
+
+    /*
     shop.scrollBarBackground.clear();
     color = Game.rgbToHex(75, 75, 75);
     shop.scrollBarBackground.beginFill(color, 1);
@@ -470,8 +657,9 @@ Game.updateShop = function() {
     shop.scrollBar.y = 0;
     Game.world.bringToTop(shop.scrollBar);
     shop.scrollBar.fixedToCamera = true;
+    */
 };
-function onDragDown(sprite, pointer) {
+/*function onDragDown(sprite, pointer) {
     Game.dragX = pointer.x - (window.innerWidth/8 + 15 + shop.scrollBarX);
 }
 function onDragUpdate(sprite, pointer) {
@@ -493,23 +681,40 @@ function onDragStop(sprite, pointer) {
         else
             shop.scrollBarX = shop.scrollBarBackground.width - shop.scrollBarWidth;
     }
-}
+}*/
 
 Game.clearShop = function() {
     shop.shopMenu.clear();
-    shop.scrollBarBackground.clear();
-    shop.scrollBar.clear();
+    shop.tierText.visible = false;
+    shop.statText.visible = false;
+    shop.prevTierButton.visible = false;
+    shop.nextTierButton.visible = false;
+    shop.tierBox.clear();
+    shop.ammoBox.clear();
+    shop.weaponBox1.clear();
+    shop.weaponBox2.clear();
+    shop.weaponBox3.clear();
+    shop.boostBox.clear();
+    shop.Tiers[shop.visibleTier].elements.forEach(function(element) {
+        //console.log(element.type);
+        if (element.type === 3)
+            element.clear();
+        else
+            element.visible = false;
+    });
+
+    /*shop.Tiers.forEach(function(tier) {
+        tier.elements.forEach(function(element) {
+            //console.log(element.type);
+            if (element.type === 3)
+                element.clear();
+            else
+                element.exists = false;
+        });
+    });*/
+    //shop.scrollBarBackground.clear();
+    //shop.scrollBar.clear();
 };
-
-
-/*Game.render = function(){
-    if (Game.allPlayersAdded) {
-        game.debug.body(Game.playerMap[Client.getPlayerID()]);
-    }
-    game.debug.body(bullet);
-    game.debug.text(game.time.fps, 2, 14, "#00ff00");
-};*/
-
 
 Game.enterSafeZone = function(safeZone, player){
     Game.isSafe = true;
@@ -526,15 +731,6 @@ Game.updateScore = function(id, value) {
     }
     // Game.playerHUD["currency"] = value;
 };
-
-// Game.render = function(){
-//     if (Game.allPlayersAdded) {
-//         game.debug.body(Game.playerMap[Client.getPlayerID()]);
-//     }
-//     game.debug.body(bullet);
-//     game.debug.text(game.time.fps, 2, 14, "#00ff00");
-// };
-
 
 Game.updateName = function(id, name){  //This never gets called?
     Game.playerMap[id].name = name;
@@ -743,6 +939,19 @@ Game.updateHealthBar = function(player) {
     Game.world.bringToTop(shop.shopMenu);
     Game.world.bringToTop(shop.scrollBarBackground);
     Game.world.bringToTop(shop.scrollBar);
+    Game.world.bringToTop(shop.tierBox);
+    Game.world.bringToTop(shop.ammoBox);
+    Game.world.bringToTop(shop.weaponBox1);
+    Game.world.bringToTop(shop.weaponBox2);
+    Game.world.bringToTop(shop.weaponBox3);
+    Game.world.bringToTop(shop.boostBox);
+    Game.world.bringToTop(shop.prevTierButton);
+    Game.world.bringToTop(shop.nextTierButton);
+    Game.world.bringToTop(shop.tierText);
+    Game.world.bringToTop(shop.statText);
+    shop.Tiers[shop.visibleTier].elements.forEach(function(element) {
+        Game.world.bringToTop(element);
+    });
 };
 
 
@@ -844,6 +1053,19 @@ Game.setLeaderboard = function() {
     Game.world.bringToTop(shop.shopMenu);
     Game.world.bringToTop(shop.scrollBarBackground);
     Game.world.bringToTop(shop.scrollBar);
+    Game.world.bringToTop(shop.tierBox);
+    Game.world.bringToTop(shop.ammoBox);
+    Game.world.bringToTop(shop.weaponBox1);
+    Game.world.bringToTop(shop.weaponBox2);
+    Game.world.bringToTop(shop.weaponBox3);
+    Game.world.bringToTop(shop.boostBox);
+    Game.world.bringToTop(shop.prevTierButton);
+    Game.world.bringToTop(shop.nextTierButton);
+    Game.world.bringToTop(shop.tierText);
+    Game.world.bringToTop(shop.statText);
+    shop.Tiers[shop.visibleTier].elements.forEach(function(element) {
+        Game.world.bringToTop(element);
+    });
 
     Game.playerMap[Client.id].scoreboard.setText(
         '#1 '+ (Game.leaderboard[1] !== null ? Game.leaderboard[1].score+'-'+Game.leaderboard[1].name : '_______')+
@@ -1064,7 +1286,7 @@ Game.removePlayer = function(id){
     Game.playerMap[id].shipTrail.destroy();
     generateDustOnDeath(Game.playerMap[id].x, Game.playerMap[id].y, Game.playerMap[id].score);
 
-    //burst(Game.playerMap[id].x, Game.playerMap[id].y);
+    burst(Game.playerMap[id].x, Game.playerMap[id].y);
     playerMap.delete(id);
     Game.playerMap[id].destroy();
     Game.playerDestroyed = true;
@@ -1250,6 +1472,7 @@ Game.setDeathBehavior = function(id) {
         Game.removeFromLeaderboard(id);
         Game.playerMap[id].shipTrail.destroy();
         generateDustOnDeath(Game.playerMap[id].x, Game.playerMap[id].y, Game.playerMap[id].score);
+        console.log('x: ' + Game.playerMap[id].x + ', y: ' + Game.playerMap[id].y);
         burst(Game.playerMap[id].x, Game.playerMap[id].y);
         playerMap.delete(id);
         var player = Game.playerMap[id];
@@ -1257,6 +1480,10 @@ Game.setDeathBehavior = function(id) {
         Game.playerDestroyed = true;
         delete player;
 
+        shop.Tiers.forEach(function(tier) {
+            tier.elements = [];
+        });
+        shop.Tiers = [];
         Client.setClientScores(Game.playerMap[id].score);
         Client.disconnect();
         game.state.start('Menu');
@@ -1319,4 +1546,5 @@ function shake(){
   //Set shake intensity and duration
     game.camera.shake(0.01, 100);
 }
+
 
