@@ -20,7 +20,7 @@ var burstBig;
 
 shop = {
     shopMenu: null,
-    shopPadding: 15,
+    shopPadding: 12,
     Tiers: [],
     visibleTier: 0,
     tierText: null,
@@ -30,14 +30,19 @@ shop = {
     tierBox: null,
     ammoBox: null,
     ammoBoxHover: false,
+    ammoText: null,
     weaponBox1: null,
     weaponBox1Hover: false,
+    weapon1Text: null,
     weaponBox2: null,
     weaponBox2Hover: false,
+    weapon2Text: null,
     weaponBox3: null,
     weaponBox3Hover: false,
+    weapon3Text: false,
     boostBox: null,
     boostBoxHover: false,
+    boostText: false,
     shopCornerX: 0,
     shopCornerY: 0,
     shopWidth: 0,
@@ -290,6 +295,11 @@ Game.create = function(){
     shop.statText = Game.add.text(-1000, -1000, 'Max Health: ' + Game.shipTiers[shop.visibleTier].health + '\n' +
         'Max Boost: ' + Game.shipTiers[shop.visibleTier].boost + '\n' +
         'Speed Multiplier: ' + Game.shipTiers[shop.visibleTier].speedMultiplier, {font: '35px Lucida Console', fill: '#ffffff', align: 'left'});
+    shop.ammoText = Game.add.text(-1000, -1000, '', {font: '35px Lucida Console', fill: '#ffffff', align: 'center'});
+    shop.weapon1Text = Game.add.text(-1000, -1000, '', {font: '35px Lucida Console', fill: '#ffffff', align: 'left'});
+    shop.weapon2Text = Game.add.text(-1000, -1000, '', {font: '35px Lucida Console', fill: '#ffffff', align: 'left'});
+    shop.weapon3Text = Game.add.text(-1000, -1000, '', {font: '35px Lucida Console', fill: '#ffffff', align: 'left'});
+    shop.boostText = Game.add.text(-1000, -1000, '', {font: '35px Lucida Console', fill: '#ffffff', align: 'left'});
     shop.nextTierButton = Game.add.button(-1000, -1000, 'ship1');
     shop.prevTierButton = Game.add.button(-1000, -1000, 'ship1');
     shop.tierBox = Game.add.graphics(-1000, -1000);
@@ -310,7 +320,6 @@ Game.create = function(){
     }
     shop.Tiers.forEach(function(tier) {
         tier.elements.forEach(function(element) {
-            //console.log(element.type);
             if (element.type === 3)
                 element.clear();
             else
@@ -515,12 +524,16 @@ window.addEventListener("keypress", function(event) {
 });
 
 Game.updateShop = function() {
-    shop.shopCornerX = window.innerWidth/8;
-    shop.shopCornerY = window.innerHeight/8;
-    shop.shopWidth = window.innerWidth*3/4;
-    shop.shopHeight = window.innerHeight*3/4;
+    shop.shopWidth = window.innerWidth * 0.8;
+    shop.shopHeight = shop.shopWidth * 0.5;
+    shop.shopCornerX = (1 - (shop.shopWidth / window.innerWidth)) * window.innerWidth / 2;
+    shop.shopCornerY = (1 - (shop.shopHeight / window.innerHeight)) * window.innerHeight / 2;
+    shop.shopPadding = shop.shopWidth / 128;
+    if (shop.shopCornerY < 0) {
+        shop.shopCornerY = 0;
+    }
     shop.shopMenu.clear();
-    var color = Game.rgbToHex(50, 50, 50);
+    var color = Game.playerMap[Client.id].tint;
     shop.shopMenu.beginFill(color, 1);
     shop.shopMenu.drawRect(shop.shopCornerX, shop.shopCornerY, shop.shopWidth, shop.shopHeight);
     shop.shopMenu.endFill();
@@ -540,7 +553,34 @@ Game.updateShop = function() {
     Game.world.bringToTop(shop.tierBox);
     shop.tierBox.fixedToCamera = true;
 
+    // draw text
+    shop.tierText.setText('Tier ' + shop.visibleTier + ':');
+    shop.tierText.fontSize = shop.shopWidth / 20;
+    shop.tierText.x = shop.shopCornerX + 2*shop.shopPadding;
+    shop.tierText.y = shop.shopCornerY + 2*shop.shopPadding;
+    shop.tierText.fixedToCamera = true;
+    shop.tierText.visible = true;
 
+    shop.statText.setText('Max Health: ' + Game.shipTiers[shop.visibleTier].stats.health +
+        '\nMax Boost: ' + Game.shipTiers[shop.visibleTier].stats.boost +
+        '\nSpeed Multiplier: ' + Game.shipTiers[shop.visibleTier].stats.speedMultiplier + 'x');
+    shop.statText.fontSize = shop.shopWidth / 50;
+    shop.statText.x = shop.shopCornerX + shop.tierText.width + 3*shop.shopPadding;
+    shop.statText.y = shop.shopCornerY + 2*shop.shopPadding;
+    shop.statText.fixedToCamera = true;
+    shop.statText.visible = true;
+
+    /*var elements = shop.Tiers[shop.visibleTier].elements;
+    // draw the background boxes (even indices of array) for the ships in the visible tier
+    for (var i = 0; i < elements.length; i += 2) {
+        elements[i].clear();
+        elements[i].inputEnabled = true;
+
+    }
+    // draw the ship sprites (odd indices of array) for the ships in the visible tier
+    for (var i = 1; i < elements.length; i += 2) {
+
+    }*/
 
     // draw the box behind the ammo refill as a background
     shop.ammoBox.clear();
@@ -551,9 +591,12 @@ Game.updateShop = function() {
     shop.ammoBox.events.onInputOut.add(function() {
         shop.ammoBoxHover = false;
     });
+    shop.ammoBox.events.onInputUp.add(function() {
+        Game.reloadWeapon();
+    });
     color = Game.rgbToHex(25, 25, 25);
     if (shop.ammoBoxHover)
-        color = Game.rgbToHex(30, 30, 30);
+        color = Game.rgbToHex(50, 50, 50);
     shop.ammoBox.beginFill(color);
     shop.ammoBox.drawRect(shop.shopCornerX + shop.shopPadding, shop.shopCornerY + (shop.shopHeight * 2/3), (shop.shopWidth - 6*shop.shopPadding) / 5, (shop.shopHeight / 3) - shop.shopPadding);
     shop.ammoBox.endFill();
@@ -561,6 +604,18 @@ Game.updateShop = function() {
     shop.ammoBox.y = 0;
     Game.world.bringToTop(shop.ammoBox);
     shop.ammoBox.fixedToCamera = true;
+
+    // draw ammo refill text
+    shop.ammoText.setText(Game.calcAmmoRefillPrompt(false));
+    shop.ammoText.fontSize = shop.ammoBox.width / 7.5;
+    shop.ammoText.wordWrap = true;
+    shop.ammoText.wordWrapWidth = shop.ammoBox.width;
+    shop.ammoText.anchor.x = 0.5;
+    shop.ammoText.anchor.y = 0.5;
+    shop.ammoText.x = shop.shopCornerX + 2*shop.shopPadding + (shop.ammoBox.width - 2*shop.shopPadding) / 2;
+    shop.ammoText.y = shop.shopCornerY + (shop.shopHeight * 2/3) + shop.ammoBox.height / 2;
+    shop.ammoText.fixedToCamera = true;
+    shop.ammoText.visible = true;
 
     // draw the box behind the weapon info as a background
     shop.weaponBox1.clear();
@@ -573,7 +628,7 @@ Game.updateShop = function() {
     });
     color = Game.rgbToHex(25, 25, 25);
     if (shop.weaponBox1Hover)
-        color = Game.rgbToHex(30, 30, 30);
+        color = Game.rgbToHex(50, 50, 50);
     shop.weaponBox1.beginFill(color);
     shop.weaponBox1.drawRect(shop.shopCornerX + shop.ammoBox.width + 2*shop.shopPadding, shop.shopCornerY + (shop.shopHeight * 2/3), (shop.shopWidth - 6*shop.shopPadding) / 5, (shop.shopHeight / 3) - shop.shopPadding);
     shop.weaponBox1.endFill();
@@ -593,7 +648,7 @@ Game.updateShop = function() {
     });
     color = Game.rgbToHex(25, 25, 25);
     if (shop.weaponBox2Hover)
-        color = Game.rgbToHex(30, 30, 30);
+        color = Game.rgbToHex(50, 50, 50);
     shop.weaponBox2.beginFill(color);
     shop.weaponBox2.drawRect(shop.shopCornerX + 2*shop.ammoBox.width + 3*shop.shopPadding, shop.shopCornerY + (shop.shopHeight * 2/3), (shop.shopWidth - 6*shop.shopPadding) / 5, (shop.shopHeight / 3) - shop.shopPadding);
     shop.weaponBox2.endFill();
@@ -613,7 +668,7 @@ Game.updateShop = function() {
     });
     color = Game.rgbToHex(25, 25, 25);
     if (shop.weaponBox3Hover)
-        color = Game.rgbToHex(30, 30, 30);
+        color = Game.rgbToHex(50, 50, 50);
     shop.weaponBox3.beginFill(color);
     shop.weaponBox3.drawRect(shop.shopCornerX + 3*shop.ammoBox.width + 4*shop.shopPadding, shop.shopCornerY + (shop.shopHeight * 2/3), (shop.shopWidth - 6*shop.shopPadding) / 5, (shop.shopHeight / 3) - shop.shopPadding);
     shop.weaponBox3.endFill();
@@ -631,9 +686,12 @@ Game.updateShop = function() {
     shop.boostBox.events.onInputOut.add(function() {
         shop.boostBoxHover = false;
     });
+    shop.boostBox.events.onInputUp.add(function() {
+        Game.refillBoost();
+    });
     color = Game.rgbToHex(25, 25, 25);
     if (shop.boostBoxHover)
-        color = Game.rgbToHex(30, 30, 30);
+        color = Game.rgbToHex(50, 50, 50);
     shop.boostBox.beginFill(color);
     shop.boostBox.drawRect(shop.shopCornerX + 4*shop.ammoBox.width + 5*shop.shopPadding, shop.shopCornerY + (shop.shopHeight * 2/3), (shop.shopWidth - 6*shop.shopPadding) / 5, (shop.shopHeight / 3) - shop.shopPadding);
     shop.boostBox.endFill();
@@ -641,6 +699,18 @@ Game.updateShop = function() {
     shop.boostBox.y = 0;
     Game.world.bringToTop(shop.boostBox);
     shop.boostBox.fixedToCamera = true;
+
+    // draw ammo refill text
+    shop.boostText.setText(Game.calcBoostRefillPrompt(false));
+    shop.boostText.fontSize = shop.ammoBox.width / 7.5;
+    shop.boostText.wordWrap = true;
+    shop.boostText.wordWrapWidth = shop.ammoBox.width;
+    shop.boostText.anchor.x = 0.5;
+    shop.boostText.anchor.y = 0.5;
+    shop.boostText.x = shop.shopCornerX + 4*shop.ammoBox.width + 6*shop.shopPadding + (shop.boostBox.width - 2*shop.shopPadding) / 2;
+    shop.boostText.y = shop.shopCornerY + (shop.shopHeight * 2/3) + shop.boostBox.height / 2;
+    shop.boostText.fixedToCamera = true;
+    shop.boostText.visible = true;
 
     //var elements = shop.Tiers[shop.visibleTier].elements;
 
@@ -715,6 +785,11 @@ Game.clearShop = function() {
     shop.statText.visible = false;
     shop.prevTierButton.visible = false;
     shop.nextTierButton.visible = false;
+    shop.ammoText.visible = false;
+    shop.weapon1Text.visible = false;
+    shop.weapon2Text.visible = false;
+    shop.weapon3Text.visible = false;
+    shop.boostText.visible = false;
     shop.tierBox.clear();
     shop.ammoBox.clear();
     shop.weaponBox1.clear();
@@ -988,6 +1063,11 @@ Game.updateHealthBar = function(player) {
     Game.world.bringToTop(shop.nextTierButton);
     Game.world.bringToTop(shop.tierText);
     Game.world.bringToTop(shop.statText);
+    Game.world.bringToTop(shop.ammoText);
+    Game.world.bringToTop(shop.weapon1Text);
+    Game.world.bringToTop(shop.weapon2Text);
+    Game.world.bringToTop(shop.weapon3Text);
+    Game.world.bringToTop(shop.boostText);
     shop.Tiers[shop.visibleTier].elements.forEach(function(element) {
         Game.world.bringToTop(element);
     });
@@ -1102,6 +1182,11 @@ Game.setLeaderboard = function() {
     Game.world.bringToTop(shop.nextTierButton);
     Game.world.bringToTop(shop.tierText);
     Game.world.bringToTop(shop.statText);
+    Game.world.bringToTop(shop.ammoText);
+    Game.world.bringToTop(shop.weapon1Text);
+    Game.world.bringToTop(shop.weapon2Text);
+    Game.world.bringToTop(shop.weapon3Text);
+    Game.world.bringToTop(shop.boostText);
     shop.Tiers[shop.visibleTier].elements.forEach(function(element) {
         Game.world.bringToTop(element);
     });
@@ -1178,8 +1263,8 @@ Game.showBasePrompts = function(){
     Game.playerMap[Client.id].safePromptHover.visible = true;
     Game.playerMap[Client.id].safePromptHover.setText(
         'Store [E]\n'
-        + Game.calcAmmoRefillPrompt()
-        + Game.calcBoostRefillPrompt());
+        + Game.calcAmmoRefillPrompt(true)
+        + Game.calcBoostRefillPrompt(true));
        /* + 'Refill ammo: '+(Game.bulletReloadCostList[Client.weaponId]*Game.maxWeaponAmmo[Client.weaponId]
         * ((Game.maxWeaponAmmo[Client.weaponId]-Client.ammo)/Game.maxWeaponAmmo[Client.weaponId]))+'[R]\n'*/
         /*+ 'Refill 1 boost: '+Game.boostRefillCost+'[B]');*/
@@ -1188,33 +1273,48 @@ Game.showBasePrompts = function(){
     Game.playerMap[Client.id].safePromptHover.fixedToCamera = true;
 };
 
-Game.calcAmmoRefillPrompt = function()
+Game.calcAmmoRefillPrompt = function(hover)
 {
     if (Client.ammo >= Game.maxWeaponAmmo[Client.weaponId])
     {
-        return 'Ammo full!\n';
+        if (hover)
+            return 'Ammo full!\n';
+        else
+            return 'Ammo full!';
     }
     else if (Client.score <= 0)
     {
-        return 'No money for ammo!\n';
+        if (hover)
+            return 'No money for ammo!\n';
+        else
+            return 'No money for ammo!';
     }
     else if (Client.score >= Math.ceil(Game.bulletReloadCostList[Client.weaponId]*Game.maxWeaponAmmo[Client.weaponId]
             * ((Game.maxWeaponAmmo[Client.weaponId]-Client.ammo)/Game.maxWeaponAmmo[Client.weaponId])))
     {
-        return 'Refill all ammo: '+Math.ceil(Game.bulletReloadCostList[Client.weaponId]*Game.maxWeaponAmmo[Client.weaponId]
+        if (hover)
+            return 'Refill all ammo: '+Math.ceil(Game.bulletReloadCostList[Client.weaponId]*Game.maxWeaponAmmo[Client.weaponId]
             * ((Game.maxWeaponAmmo[Client.weaponId]-Client.ammo)/Game.maxWeaponAmmo[Client.weaponId]))+' [R]\n';
+        else
+            return 'Refill all ammo: '+Math.ceil(Game.bulletReloadCostList[Client.weaponId]*Game.maxWeaponAmmo[Client.weaponId]
+                * ((Game.maxWeaponAmmo[Client.weaponId]-Client.ammo)/Game.maxWeaponAmmo[Client.weaponId]));
     }
     else
     {
-        return 'Refill '+Math.ceil(Client.score/Game.bulletReloadCostList[Client.weaponId])+' ammo: '+Client.score+' [R]\n';
+        if (hover)
+            return 'Refill '+Math.ceil(Client.score/Game.bulletReloadCostList[Client.weaponId])+' ammo: '+Client.score+' [R]\n';
+        return 'Refill '+Math.ceil(Client.score/Game.bulletReloadCostList[Client.weaponId])+' ammo: '+Client.score;
     }
 };
 
-Game.calcBoostRefillPrompt = function()
+Game.calcBoostRefillPrompt = function(hover)
 {
     if (Game.playerMap[Client.id].boost >= Game.maxBoost)
     {
-        return 'Boost full!\n';
+        if (hover)
+            return 'Boost full!\n';
+        else
+            return 'Boost full!';
     }
     else if (Client.score <= 0)
     {
@@ -1223,12 +1323,19 @@ Game.calcBoostRefillPrompt = function()
     else if (Client.score >= Math.ceil(Game.boostRefillCost*Game.maxBoost
             * ((Game.maxBoost-Game.playerMap[Client.id].boost)/Game.maxBoost)))
     {
-        return 'Refill all boost: '+Math.ceil(Game.boostRefillCost*Game.maxBoost
+        if (hover)
+            return 'Refill all boost: '+Math.ceil(Game.boostRefillCost*Game.maxBoost
             * ((Game.maxBoost-Game.playerMap[Client.id].boost)/Game.maxBoost))+' [B]\n';
+        else
+            return 'Refill all boost: '+Math.ceil(Game.boostRefillCost*Game.maxBoost
+                * ((Game.maxBoost-Game.playerMap[Client.id].boost)/Game.maxBoost));
     }
     else
     {
-        return 'Refill '+Math.ceil(Client.score/Game.boostRefillCost)+' boost: '+Client.score+' [B]\n';
+        if (hover)
+            return 'Refill '+Math.ceil(Client.score/Game.boostRefillCost)+' boost: '+Client.score+' [B]\n';
+        else
+            return 'Refill '+Math.ceil(Client.score/Game.boostRefillCost)+' boost: '+Client.score;
     }
 };
 
@@ -1404,7 +1511,7 @@ Game.setPlayerRotation = function(id, angVelocity){
 Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color,size){
     console.log('Game.addNewPlayer '+id+'--'+name+'--'+shipName);
 
-    Game.shipTrails[id] = game.add.emitter(x, y + size/2, 400);
+    Game.shipTrails[id] = game.add.emitter(x, y + size/2, 10);
 
     var newPlayer;
     // Create player sprite and assign the player a unique ship
@@ -1474,7 +1581,7 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color,size){
     newPlayer.shipTrail.setYSpeed(30, -30);
     newPlayer.shipTrail.setAlpha(1, 0.01, 800);
     newPlayer.shipTrail.setScale(0.05, 0.4, 0.05, 0.4, 2000, Phaser.Easing.Quintic.Out);
-    newPlayer.shipTrail.start(false, 2000, 10);
+    newPlayer.shipTrail.start(false, 175, 10);
 
     // Set player sprite and trail color
     newPlayer.tint = color;
@@ -1641,7 +1748,7 @@ function burstLittle(x,y){
     //generating burst
     burstLittleEmitter.x = x;
     burstLittleEmitter.y = y;
-    burstLittleEmitter.start(true, 1000, null, 2);
+    burstLittleEmitter.start(true, 500, null, 2);
 }
 //called on player death
 function burst(x,y){

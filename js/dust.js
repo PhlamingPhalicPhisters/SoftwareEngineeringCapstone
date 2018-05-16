@@ -45,8 +45,10 @@ function dustCollision(dustObject, player) {
     moveDust(dustObject);
 }
 
-function dustCollisionDeath(dustObject) {
-    Client.sendCollect(dustObject.value);
+function dustCollisionDeath(dustObject, player) {
+    if(player.id === Client.id) {
+        Client.sendCollect(dustObject.value);
+    }
     deathDustMap.delete(dustObject.id);
     dustObject.destroy();
     delete dustObject;
@@ -253,8 +255,8 @@ function moveDust(dustObject){
             y = randomInt(halfWorldSize - halfSpawnSize - 9*bandWidth, halfWorldSize + halfSpawnSize + 9*bandWidth);
         }
     }
-    dustObject.x = x;
-    dustObject.y = y;
+    dustObject.x = randomInt(0, worldBoudndX);//x;
+    dustObject.y = randomInt(0, worldBoundY);//y;
 }
 
 function generateDustForClient(){
