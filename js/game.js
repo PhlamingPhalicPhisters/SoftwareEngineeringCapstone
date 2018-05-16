@@ -667,11 +667,42 @@ Game.sendTransform = function() {
 
         Game.updateHUD(player);
 
-        Client.sendTransform(player.x, player.y, player.rotation, player.health);
+        Client.sendTransform(player.x, player.y, player.rotation, player.health, player.isBoosting);
     }
 };
 
 
+// Update the position and rotation of a given remote player
+Game.updateTransform = function(id, x, y, rotation, health, isBoosting) {
+    if (Game.allPlayersAdded) {
+        var player = Game.playerMap[id];
+        player.x = x;
+        player.y = y;
+        player.rotation = rotation;
+        player.health = health;
+
+        // Update player's trail emitter
+        player.shipTrail.x = x - (Game.playerMap[id].width/2 * Math.cos(Game.playerMap[id].rotation));
+        player.shipTrail.y = y - (Game.playerMap[id].height/2 * Math.sin(Game.playerMap[id].rotation));
+        // player.shipTrail.rotation = rotation;
+
+        if (player.shipTrail.isBoosting !== isBoosting) {
+            if (isBoosting) {
+                player.shipTrail.setScale(0.5, 0.8, 0.5, 0.8, 1000, Phaser.Easing.Quintic.Out);
+            }
+            else {
+                player.shipTrail.setScale(0.05, 0.4, 0.05, 0.4, 2000, Phaser.Easing.Quintic.Out);
+            }
+            player.shipTrail.isBoosting = isBoosting;
+        }
+
+        Game.playerMap[id] = player;
+        // console.log('player name='+Game.playerMap[id].name);
+        if (id === Client.id && player.health <= 0) {
+            Game.playerMap[id].destroy();
+        }
+    }
+};
 
 Game.updateHUD = function(player){
     //player.shield.x = player.x - ((window.innerWidth / 2) - 20);
@@ -894,28 +925,6 @@ Game.setLeaderboard = function() {
     Game.playerMap[Client.id].scoreboard.fontSize = this.game.camera.width * .023;
 };
 
-// Update the position and rotation of a given remote player
-Game.updateTransform = function(id, x, y, rotation, health) {
-    if (Game.allPlayersAdded) {
-        var player = Game.playerMap[id];
-        player.x = x;
-        player.y = y;
-        player.rotation = rotation;
-        player.health = health;
-
-        // Update player's trail emitter
-        player.shipTrail.x = x - (Game.playerMap[id].width/2 * Math.cos(Game.playerMap[id].rotation));
-        player.shipTrail.y = y - (Game.playerMap[id].height/2 * Math.sin(Game.playerMap[id].rotation));
-        // player.shipTrail.rotation = rotation;
-
-        Game.playerMap[id] = player;
-        // console.log('player name='+Game.playerMap[id].name);
-        if (id === Client.id && player.health <= 0) {
-            Game.playerMap[id].destroy();
-        }
-    }
-};
-
 Game.updateSize = function(id, size)
 {
     Game.playerMap[id].width = size;
@@ -923,8 +932,10 @@ Game.updateSize = function(id, size)
 };
 
 Game.setTrail = function(id, trailSet) {
-    var player = Game.playerMap[id];
-    player.shipTrail.visible = trailSet;
+    if (Game.allPlayersAdded) {
+        var player = Game.playerMap[id];
+        player.shipTrail.visible = trailSet;
+    }
 };
 
 function showPlayerNames() {
@@ -1136,6 +1147,7 @@ Game.getCoordinates = function(layer, pointer) {
 Game.setPlayerAcceleration = function(acceleration, isBoost){
     if (Game.allPlayersAdded && Game.playerMap[Client.getPlayerID()].body !== null) {
         if (isBoost && Game.playerMap[Client.id].boost >= Game.boostCost) {
+            Game.playerMap[Client.id].isBoosting = true;
             Game.playerMap[Client.id].shipTrail.setScale(0.5, 0.8, 0.5, 0.8, 1000, Phaser.Easing.Quintic.Out);
 
             Game.playerMap[Client.id].body.maxVelocity.set(Game.maxBoostVelocity);
@@ -1151,6 +1163,7 @@ Game.setPlayerAcceleration = function(acceleration, isBoost){
             //    acceleration, parallax);
         }
         else {
+            Game.playerMap[Client.id].isBoosting = false;
             Game.playerMap[Client.id].shipTrail.setScale(0.05, 0.4, 0.05, 0.4, 2000, Phaser.Easing.Quintic.Out);
 
             Game.playerMap[Client.id].body.maxVelocity.set(Game.maxNormVelocity);
@@ -1245,7 +1258,7 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color,size){
     //  Add an emitter for the ship's trail
     newPlayer.shipTrail = Game.shipTrails[id];
     newPlayer.shipTrail.gravity = 0;
-    newPlayer.shipTrail.z = -1000;
+    // newPlayer.shipTrail.z = -1000;
     newPlayer.shipTrail.width = 10;
     newPlayer.shipTrail.makeParticles('trail');
     newPlayer.shipTrail.setXSpeed(30, -30);
@@ -1253,6 +1266,7 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color,size){
     newPlayer.shipTrail.setAlpha(1, 0.01, 800);
     newPlayer.shipTrail.setScale(0.05, 0.4, 0.05, 0.4, 2000, Phaser.Easing.Quintic.Out);
     newPlayer.shipTrail.start(false, 2000, 10);
+    newPlayer.shipTrail.isBoosting = false;
 
     // Set player sprite and trail color
     newPlayer.tint = color;
@@ -1271,6 +1285,7 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color,size){
     // Set the player's score
     // Game.playerHUD["currency"] = score;
     newPlayer.boost = Game.maxBoost;
+    newPlayer.isBoosting = false;
     newPlayer.score = score;
     // newPlayer.isSafe = true;
     newPlayer.isMoving = false;

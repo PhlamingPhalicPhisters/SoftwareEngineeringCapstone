@@ -153,15 +153,15 @@ Client.socket.on('move', function(data) {
     Game.movePlayer(data.id, data.x, data.y);
 });
 
-Client.sendTransform = function(x, y, rotation, health) {
+Client.sendTransform = function(x, y, rotation, health, isBoosting) {
     //console.log('Client sendTransform');
     //console.log(x+','+y+','+rotation);
-    Client.socket.emit('transform', {x: x, y: y, rotation: rotation, health: health});
+    Client.socket.emit('transform', {x: x, y: y, rotation: rotation, health: health, isBoosting: isBoosting});
 };
 
 Client.socket.on('updateTransform', function(data) {
     //console.log('Client updateTransform');
-    Game.updateTransform(data.id, data.x, data.y, data.rotation, data.health);
+    Game.updateTransform(data.id, data.x, data.y, data.rotation, data.health, data.isBoosting);
 });
 
 Client.sendAcceleration = function(direction) {
@@ -226,11 +226,13 @@ Client.refillAmmo = function(ammo) {
 Client.changeWeapon = function(ammo, weaponId) {
     Client.ammo = ammo;
     Client.weaponId = weaponId;
-    console.log(Client.id+' changing to weapon '+Client.weaponId+' w/ '+Client.ammo+' ammo');
+    // console.log(Client.id+' changing to weapon '+Client.weaponId+' w/ '+Client.ammo+' ammo');
     Client.socket.emit('changeWeapon', {id: Client.id, ammo: Client.ammo, weaponId: Client.weaponId});
 };
 Client.socket.on('updateAmmo', function(data) {
-    Game.updateAmmo(data.id, data.ammo, data.weaponId);
+    if (game.state.current === 'Game') {
+        Game.updateAmmo(data.id, data.ammo, data.weaponId);
+    }
 });
 
 
