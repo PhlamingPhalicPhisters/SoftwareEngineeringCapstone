@@ -5,12 +5,14 @@
 
 var deathDustMap = new Map();
 var deathDustID = 0;
-var worldBoudndX = 6336;
+var worldBoundX = 6336;
 var worldBoundY = 6336;
 var dust = function (id, startx, starty, value) {
 
     //draw dust
     var dustObject = game.add.sprite(startx, starty, 'dust');
+    // console.log('dust = '+dustObject.x+','+dustObject.y);
+
     //dustObject.animations.add('float');
     //dustObject.animations.play('float', 10, true);
     //dustObject.scale.set(4);
@@ -27,7 +29,7 @@ var dust = function (id, startx, starty, value) {
     Game.physics.enable(dustObject, Phaser.Physics.ARCADE);
     dustObject.body.velocity.set(randomInt(-15,15), randomInt(-15,15));
     dustObject.body.angle = randomInt(-5,5);
-    dustObject.body.collideWorldBounds = true;
+    // dustObject.body.collideWorldBounds = true;
     dustObject.body.bounce.setTo(1, 1);
     return dustObject;
 };
@@ -45,15 +47,18 @@ function dustCollision(dustObject, player) {
     moveDust(dustObject);
 }
 
-function dustCollisionDeath(dustObject) {
-    Client.sendCollect(dustObject.value);
+function dustCollisionDeath(dustObject, player) {
+    if(player.id === Client.id) {
+        Client.sendCollect(dustObject.value);
+    }
     deathDustMap.delete(dustObject.id);
     dustObject.destroy();
     delete dustObject;
+
 }
 
 function moveDust(dustObject){
-    dustObject.x = randomInt(0,worldBoudndX);
+    dustObject.x = randomInt(0,worldBoundX);
     dustObject.y = randomInt(0,worldBoundY);
 }
 
@@ -270,9 +275,11 @@ function generateDustForClient(){
 
 function generateDustOnDeath(x,y, amount) {
     var dropAmount = amount / 100;
+    // console.log("x: " + x + ", y: " + y);
     for(var i = 0;  i < dropAmount; i++){
         deathDustMap.set(deathDustID,
             new dust(deathDustID++, randomInt(x - 10, x + 10), randomInt(y - 10, y + 10), 70));
+        // deathDustMap.push(new dust(deathDustID++, x, y, amount));
     }
 }
 
