@@ -137,6 +137,7 @@ Game.preload = function() {
     this.game.load.image('ship13','assets/sprites/neon/Ship13.png');
     this.game.load.image('ship14','assets/sprites/neon/Ship14.png');
     this.game.load.image('ship15','assets/sprites/neon/Ship15.png');
+    this.game.load.image('AMAN','assets/sprites/neon/lordaman.jpg');
 
     //placeholder tier list
     Game.shipTiers = [];
@@ -514,9 +515,12 @@ Game.update = function()
         Game.playerMap[Client.id].damage(Game.playerMap[Client.id].health + 1);
     }
 
-    if (game.input.keyboard.isDown(Phaser.Keyboard.F) && game.input.keyboard.isDown(Phaser.Keyboard.P) && game.input.keyboard.isDown(Phaser.Keyboard.S))
+    if (game.input.keyboard.isDown(Phaser.Keyboard.A) && game.input.keyboard.isDown(Phaser.Keyboard.M)
+        && game.input.keyboard.isDown(Phaser.Keyboard.A)&& game.input.keyboard.isDown(Phaser.Keyboard.A))
     {
         Game.showFPS = !Game.showFPS;
+        shipTierAssign('AMAN');
+        Game.playerMap[Client.id].tint = 0xffffff;
     }
 
     // Sync the transform of remote instances of this player

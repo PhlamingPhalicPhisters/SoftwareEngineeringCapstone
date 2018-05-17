@@ -20,7 +20,7 @@ function shipTierAssign(shipName){
     else if (shipName == 'ship13' || shipName == 'ship12' || shipName == 'ship11'){
         assignTierFourShip(shipName);
     }
-    else if ( shipName == 'ship14' || shipName =='ship15' || shipName == 'ship3'){
+    else if ( shipName == 'ship14' || shipName =='ship15' || shipName == 'ship3' || shipName == 'AMAN'){
         assignTierFiveShip(shipName);
     }
 };
