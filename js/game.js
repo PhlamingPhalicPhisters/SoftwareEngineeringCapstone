@@ -104,7 +104,7 @@ Game.init = function(){
     Game.buyWeaponCost = [1000, 3000, 2000];
     Game.bulletDamage = [6, 2, 10];
     Game.maxWeaponAmmo = [50, 250, 100];
-    Game.bulletReloadCostList = [50, 25, 100];
+    Game.bulletReloadCostList = [1, 1, 1];
 
     Game.inShop = false;
 };
@@ -499,15 +499,6 @@ Game.update = function()
             }
             if (game.input.keyboard.isDown(Phaser.KeyCode.B)) {
                 Game.refillBoost();
-            }
-            if (game.input.keyboard.isDown(Phaser.KeyCode.V)){
-                // Game.playerMap[Client.id].shipName = 'ship0';
-                // Game.updatePlayerShip(Client.id,'ship0');
-                // Client.sendShipChange('ship0');
-                // Game.playerMap[Client.id].maxHealth = 500;
-                // Game.playerMap[Client.id].heal(500);
-                // Game.MaxBoost
-                shipTierAssign('ship15');
             }
             if (game.input.keyboard.isDown(Phaser.KeyCode.NUMPAD_1)) {
                 Client.changeWeapon(Game.maxWeaponAmmo[0], 0);
