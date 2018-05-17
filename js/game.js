@@ -100,9 +100,8 @@ Game.init = function(){
     Game.prevDust = -1;
     Game.boostRefillCost = 1;
 
-    Game.tierShipCosts = [5000, 10000, 20000, 30000, 40000];
-    Game.buyWeaponCost = [1000, 3000, 2000];
-    Game.bulletDamage = [6, 2, 10];
+    Game.buyWeaponCost = [1000, 3000, 5000];
+    Game.bulletDamage = [6, 4, 13];
     Game.maxWeaponAmmo = [50, 250, 100];
     Game.bulletReloadCostList = [1, 1, 1];
 
@@ -145,16 +144,16 @@ Game.preload = function() {
     Game.shipTiers[0].cost = 0;
     Game.shipTiers[0].stats = {health: 100, boost: 5000, speedMultiplier: 1};
     Game.shipTiers[1] = ['ship8', 'ship9', 'ship10'];
-    Game.shipTiers[1].cost = 1000;
+    Game.shipTiers[1].cost = 5000;
     Game.shipTiers[1].stats = {health: 100, boost: 4000, speedMultiplier: 1.5};
     Game.shipTiers[2] = ['ship5', 'ship6', 'ship4'];
-    Game.shipTiers[2].cost = 2000;
+    Game.shipTiers[2].cost = 10000;
     Game.shipTiers[2].stats = {health: 150, boost: 5000, speedMultiplier: 1};
     Game.shipTiers[3] = ['ship13', 'ship12', 'ship11'];
-    Game.shipTiers[3].cost = 3500;
+    Game.shipTiers[3].cost = 15000;
     Game.shipTiers[3].stats = {health: 120, boost: 7000, speedMultiplier: 1.1};
     Game.shipTiers[4] = ['ship14', 'ship15', 'ship3'];
-    Game.shipTiers[4].cost = 5000;
+    Game.shipTiers[4].cost = 20000;
     Game.shipTiers[4].stats = {health: 250, boost: 5000, speedMultiplier: 0.75};
 
     // Load dust asset
@@ -499,15 +498,6 @@ Game.update = function()
             }
             if (game.input.keyboard.isDown(Phaser.KeyCode.B)) {
                 Game.refillBoost();
-            }
-            if (game.input.keyboard.isDown(Phaser.KeyCode.NUMPAD_1)) {
-                Client.changeWeapon(Game.maxWeaponAmmo[0], 0);
-            }
-            if (game.input.keyboard.isDown(Phaser.KeyCode.NUMPAD_2)) {
-                Client.changeWeapon(Game.maxWeaponAmmo[1], 1);
-            }
-            if (game.input.keyboard.isDown(Phaser.KeyCode.NUMPAD_3)) {
-                Client.changeWeapon(Game.maxWeaponAmmo[2], 2);
             }
         }
         else {

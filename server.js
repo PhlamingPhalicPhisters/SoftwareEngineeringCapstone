@@ -33,7 +33,7 @@ io.on('connection',function(socket){
             rotation: (-90) * (3.14 / 180), // start upward -- convert degrees to radians??
             health: 100,
             score: 0,
-            weaponId: randomInt(0, 3),
+            weaponId: 0,
             ammo: 0,
             shipName: 'unassignedShip',
             color: randomTint(),
