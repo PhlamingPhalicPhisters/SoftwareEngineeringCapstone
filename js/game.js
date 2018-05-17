@@ -104,7 +104,7 @@ Game.init = function(){
     Game.buyWeaponCost = [1000, 3000, 2000];
     Game.bulletDamage = [6, 2, 10];
     Game.maxWeaponAmmo = [50, 250, 100];
-    Game.bulletReloadCostList = [50, 25, 100];
+    Game.bulletReloadCostList = [1, 1, 1];
 
     Game.inShop = false;
 };
