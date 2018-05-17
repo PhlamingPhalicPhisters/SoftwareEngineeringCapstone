@@ -137,7 +137,7 @@ Game.preload = function() {
     this.game.load.image('ship13','assets/sprites/neon/Ship13.png');
     this.game.load.image('ship14','assets/sprites/neon/Ship14.png');
     this.game.load.image('ship15','assets/sprites/neon/Ship15.png');
-    this.game.load.image('AMAN','assets/sprites/neon/lordaman.jpg');
+    this.game.load.image('AMAN','assets/sprites/lordaman.jpg');
 
     //placeholder tier list
     Game.shipTiers = [];
@@ -1926,6 +1926,7 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color,size){
 Game.setDeathBehavior = function(id) {
     Game.playerMap[id].events.onKilled.add(function() {
         Game.playerMap[id].shipTrail.destroy();
+        generateDustOnDeath(Game.playerMap[id].x, Game.playerMap[id].y, Game.playerMap[id].score);
         burst(Game.playerMap[id].x, Game.playerMap[id].y);
         Game.removeFromLeaderboard(id);
         Client.disconnect();
