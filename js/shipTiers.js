@@ -83,9 +83,9 @@ function tierMultiplier(multiplier){
     Game.playerMap[Client.id].maxHealth *= multiplier;
     Game.playerMap[Client.id].heal(600); //fill to max health
     Game.maxWeaponAmmo = [250 * multiplier, 500 * multiplier, 100 * multiplier];
-    Game.playerMap[Client.id].ammo = Game.maxWeaponAmmo;
+    //Game.playerMap[Client.id].ammo = Game.maxWeaponAmmo;
     Game.maxBoost = 5000 * multiplier;
-    Game.playerMap[Client.id].boost = Game.maxBoost;
+    //Game.playerMap[Client.id].boost = Game.maxBoost;
 };
 
 function handleShipUpdate(shipName){

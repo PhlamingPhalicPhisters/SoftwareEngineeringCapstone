@@ -741,11 +741,14 @@ Game.updateShop = function() {
     for (var i = 0; i < elements.length; i += 2) {
         if (elements[i] === shop.shipSelect) {
             if (Game.unlockedTiers >= shop.visibleTier || Game.shipTiers[shop.visibleTier].cost <= Client.score) {
+                shipTierAssign(Game.shipTiers[shop.visibleTier][i / 2]);
                 if (Game.unlockedTiers < shop.visibleTier) {
                     Client.sendCollect(-Game.shipTiers[shop.visibleTier].cost);
+                    Game.unlockedTiers = shop.visibleTier;
+                    Client.refillAmmo(Game.maxWeaponAmmo[Client.weaponId]);
+                    Game.playerMap[Client.id].boost = Game.maxBoost;
+                    console.log('fuck me daddy');
                 }
-                Game.unlockedTiers = shop.visibleTier;
-                shipTierAssign(Game.shipTiers[shop.visibleTier][i / 2]);
             }
             shop.shipSelect = null;
         }
