@@ -485,14 +485,7 @@ Game.update = function()
         if (Game.isSafe) {
             Game.showBasePrompts();
 
-            if (game.input.keyboard.isDown(Phaser.KeyCode.E)) {
-                //Game.requestShipUpgrade();
-                Game.holdingE = true;
-            }
-            else {
-                Game.holdingE = false;
-            }
-            if (Game.inShop && !Game.holdingE) {
+            if (Game.inShop) {
                 Game.updateShop();
                 Game.playerMap[Client.id].body.maxVelocity.set(0);
             }
@@ -537,8 +530,12 @@ Game.update = function()
 
     if (game.input.keyboard.isDown(Phaser.Keyboard.ESC) && Game.playerMap[Client.id] !== undefined)
     {
-        Game.clearShop();
-        Game.playerMap[Client.id].kill();
+        if (Game.inShop) {
+            Game.clearShop();
+        }
+        else {
+            Game.playerMap[Client.id].kill();
+        }
     }
 
     if (game.input.keyboard.isDown(Phaser.Keyboard.F) && game.input.keyboard.isDown(Phaser.Keyboard.P) && game.input.keyboard.isDown(Phaser.Keyboard.S))
@@ -552,7 +549,7 @@ Game.update = function()
     Game.sendTransform();
 };
 
-window.addEventListener("keypress", function(event) {
+window.addEventListener("keyup", function(event) {
     if (event.code === 'KeyE' && Game.isSafe) {
         Game.inShop = !Game.inShop;
     }
@@ -748,9 +745,11 @@ Game.updateShop = function() {
     var elements = shop.Tiers[shop.visibleTier].elements;
     for (var i = 0; i < elements.length; i += 2) {
         if (elements[i] === shop.shipSelect) {
-            if (Game.unlockedTiers < shop.visibleTier && Game.shipTiers[shop.visibleTier].cost <= Client.score) {
+            if (Game.unlockedTiers >= shop.visibleTier || Game.shipTiers[shop.visibleTier].cost <= Client.score) {
+                if (Game.unlockedTiers < shop.visibleTier) {
+                    Client.sendCollect(-Game.shipTiers[shop.visibleTier].cost);
+                }
                 Game.unlockedTiers = shop.visibleTier;
-                Client.sendCollect(-Game.shipTiers[shop.visibleTier].cost);
                 shipTierAssign(Game.shipTiers[shop.visibleTier][i / 2]);
             }
             shop.shipSelect = null;
