@@ -5,12 +5,14 @@
 
 var deathDustMap = new Map();
 var deathDustID = 0;
-var worldBoudndX = 6336;
+var worldBoundX = 6336;
 var worldBoundY = 6336;
 var dust = function (id, startx, starty, value) {
 
     //draw dust
     var dustObject = game.add.sprite(startx, starty, 'dust');
+    // console.log('dust = '+dustObject.x+','+dustObject.y);
+
     //dustObject.animations.add('float');
     //dustObject.animations.play('float', 10, true);
     //dustObject.scale.set(4);
@@ -27,7 +29,7 @@ var dust = function (id, startx, starty, value) {
     Game.physics.enable(dustObject, Phaser.Physics.ARCADE);
     dustObject.body.velocity.set(randomInt(-15,15), randomInt(-15,15));
     dustObject.body.angle = randomInt(-5,5);
-    dustObject.body.collideWorldBounds = true;
+    // dustObject.body.collideWorldBounds = true;
     dustObject.body.bounce.setTo(1, 1);
     return dustObject;
 };
@@ -55,6 +57,8 @@ function dustCollisionDeath(dustObject, player) {
 }
 
 function moveDust(dustObject){
+    dustObject.x = randomInt(0,worldBoundX);
+    dustObject.y = randomInt(0,worldBoundY);
     var randNum = randomInt(0, 2560);
     var rand = randomInt(0, 4);
     //var randY = randomInt(0, 4);
@@ -255,7 +259,7 @@ function moveDust(dustObject){
             y = randomInt(halfWorldSize - halfSpawnSize - 9*bandWidth, halfWorldSize + halfSpawnSize + 9*bandWidth);
         }
     }
-    dustObject.x = randomInt(0, worldBoudndX);//x;
+    dustObject.x = randomInt(0, worldBoundX);//x;
     dustObject.y = randomInt(0, worldBoundY);//y;
 }
 
@@ -471,10 +475,13 @@ function generateDustForClient(){
 }
 
 function generateDustOnDeath(x,y, amount) {
+    console.log("coordinates of dust in generateDustOnDeath: " + x + " " + y);
     var dropAmount = amount / 100;
+    // console.log("x: " + x + ", y: " + y);
     for(var i = 0;  i < dropAmount; i++){
         deathDustMap.set(deathDustID,
             new dust(deathDustID++, randomInt(x - 10, x + 10), randomInt(y - 10, y + 10), 70));
+        // deathDustMap.push(new dust(deathDustID++, x, y, amount));
     }
 }
 
