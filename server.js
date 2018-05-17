@@ -210,7 +210,7 @@ function randomInt (low, high) {
 }
 
 var randomTint = function() {
-    return ((Math.random()*0xffffff)+150)+((Math.random()*0xffffff)+150)+((Math.random()*0xffffff)+150);
+    return ((Math.random()*0xffffff)+200)+((Math.random()*0xffffff)+200)+((Math.random()*0xffffff)+200);
     // return ((Math.random()*0xffffff)|0x0f0f0f);
     //return Math.random() * 0xffffff;
 };
