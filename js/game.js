@@ -334,27 +334,31 @@ Game.create = function(){
     shop.weapon1Sprite.visible = false;
     shop.weapon2Sprite.visible = false;
     shop.weapon3Sprite.visible = false;
-    for (var i = 0; i < Game.shipTiers.length; i++) {
-        if (shop.Tiers[i] !== undefined && shop.Tiers[shop.visibleTier].elements !== undefined) {
-            var elements = shop.Tiers[i].elements;
-            // add in each ship in the tier and a background box for it
-            for (var j = 0; j < Game.shipTiers[i].length; j++) {
-                var shipBox = Game.add.graphics(-1000, -1000);
-                elements.push(shipBox);
-                var ship = Game.add.sprite(-1000, -1000, Game.shipTiers[i][j]);
-                elements.push(ship);
+    if (Game.shipTiers !== undefined) {
+        for (var i = 0; i < Game.shipTiers.length; i++) {
+            if (shop.Tiers[i] !== undefined && shop.Tiers[i].elements !== undefined) {
+                var elements = shop.Tiers[i].elements;
+                // add in each ship in the tier and a background box for it
+                for (var j = 0; j < Game.shipTiers[i].length; j++) {
+                    var shipBox = Game.add.graphics(-1000, -1000);
+                    elements.push(shipBox);
+                    var ship = Game.add.sprite(-1000, -1000, Game.shipTiers[i][j]);
+                    elements.push(ship);
+                }
             }
         }
     }
-    shop.Tiers.forEach(function(tier) {
-        tier.elements.forEach(function(element) {
-            element.hover = false;
-            if (element.type === 3)
-                element.clear();
-            else
-                element.visible = false;
+    if (shop.Tiers !== null) {
+        shop.Tiers.forEach(function (tier) {
+            tier.elements.forEach(function (element) {
+                element.hover = false;
+                if (element.type === 3)
+                    element.clear();
+                else
+                    element.visible = false;
+            });
         });
-    });
+    }
 };
 
 /*
@@ -649,12 +653,14 @@ Game.updateShop = function() {
     });
     shop.nextTierButton.events.onInputDown.add(function () {
         shop.nextTierButtonDown = true;
-        shop.Tiers[shop.visibleTier].elements.forEach(function (element) {
-            if (element.type === 3)
-                element.clear();
-            else
-                element.visible = false;
-        });
+        if (shop.Tiers[shop.visibleTier] !== undefined && shop.Tiers[shop.visibleTier].elements !== undefined) {
+            shop.Tiers[shop.visibleTier].elements.forEach(function (element) {
+                if (element.type === 3)
+                    element.clear();
+                else
+                    element.visible = false;
+            });
+        }
     });
     if (shop.nextTierButtonDown) {
         if (shop.visibleTier === 4)
@@ -688,13 +694,15 @@ Game.updateShop = function() {
     });
     shop.prevTierButton.events.onInputDown.add(function () {
         shop.prevTierButtonDown = true;
-        shop.Tiers[shop.visibleTier].elements.forEach(function (element) {
-            //console.log(element.type);
-            if (element.type === 3)
-                element.clear();
-            else
-                element.visible = false;
-        });
+        if (shop.Tiers[shop.visibleTier] !== undefined && shop.Tiers[shop.visibleTier].elements !== undefined) {
+            shop.Tiers[shop.visibleTier].elements.forEach(function (element) {
+                //console.log(element.type);
+                if (element.type === 3)
+                    element.clear();
+                else
+                    element.visible = false;
+            });
+        }
         /*if (shop.visibleTier === 0)
             shop.visibleTier = 4;
         else
@@ -722,61 +730,64 @@ Game.updateShop = function() {
     shop.prevTierButton.visible = true;
 
     // draw the background boxes (even indices of array) for the ships in the visible tier
-    var elements = shop.Tiers[shop.visibleTier].elements;
-    for (var i = 0; i < elements.length; i += 2) {
-        if (elements[i] === shop.shipSelect) {
-            if (Game.unlockedTiers >= shop.visibleTier || Game.shipTiers[shop.visibleTier].cost <= Client.score) {
-                shipTierAssign(Game.shipTiers[shop.visibleTier][i / 2]);
-                if (Game.unlockedTiers < shop.visibleTier) {
-                    Client.sendCollect(-Game.shipTiers[shop.visibleTier].cost);
-                    Game.unlockedTiers = shop.visibleTier;
-                    Client.refillAmmo(Game.maxWeaponAmmo[Client.weaponId]);
-                    Game.playerMap[Client.id].boost = Game.maxBoost;
-                    console.log('fuck me daddy');
+    if (shop.Tiers[shop.visibleTier] !== undefined && shop.Tiers[shop.visibleTier].elements !== undefined) {
+        var elements = shop.Tiers[shop.visibleTier].elements;
+        for (var i = 0; i < elements.length; i += 2) {
+            if (elements[i] === shop.shipSelect) {
+                if (Game.unlockedTiers >= shop.visibleTier || Game.shipTiers[shop.visibleTier].cost <= Client.score) {
+                    shipTierAssign(Game.shipTiers[shop.visibleTier][i / 2]);
+                    if (Game.unlockedTiers < shop.visibleTier) {
+                        Client.sendCollect(-Game.shipTiers[shop.visibleTier].cost);
+                        Game.unlockedTiers = shop.visibleTier;
+                        Client.refillAmmo(Game.maxWeaponAmmo[Client.weaponId]);
+                        Game.playerMap[Client.id].boost = Game.maxBoost;
+                    }
                 }
+                shop.shipSelect = null;
             }
-            shop.shipSelect = null;
+            elements[i].clear();
+            elements[i].inputEnabled = true;
+            elements[i].events.onInputOver.add(function (element) {
+                element.hover = true;
+            });
+            elements[i].events.onInputOut.add(function (element) {
+                element.hover = false;
+            });
+            elements[i].events.onInputUp.add(function (element) {
+                shop.shipSelect = element;
+            });
+            if (elements[i].hover)
+                color = Game.rgbToHex(30, 30, 30);
+            else
+                color = Game.rgbToHex(50, 50, 50);
+            elements[i].beginFill(color);
+            var width = (shop.tierBox.width - shop.prevTierButton.width - shop.nextTierButton.width - 4 * shop.shopPadding) / (elements.length / 2) - shop.shopPadding;
+            var height = shop.tierBox.height - shop.statText.height - 4 * shop.shopPadding;
+            elements[i].drawRect(shop.shopCornerX + shop.prevTierButton.width + 3.5 * shop.shopPadding + (i / 2) * width + (i / 2) * shop.shopPadding, shop.shopCornerY + shop.statText.height + 3 * shop.shopPadding,
+                width, height);
+            elements[i].endFill();
+            elements[i].x = 0;
+            elements[i].y = 0;
+            Game.world.bringToTop(elements[i]);
+            elements[i].fixedToCamera = true;
         }
-        elements[i].clear();
-        elements[i].inputEnabled = true;
-        elements[i].events.onInputOver.add(function (element) {
-            element.hover = true;
-        });
-        elements[i].events.onInputOut.add(function (element) {
-            element.hover = false;
-        });
-        elements[i].events.onInputUp.add(function (element) {
-            shop.shipSelect = element;
-        });
-        if (elements[i].hover)
-            color = Game.rgbToHex(30, 30, 30);
-        else
-            color = Game.rgbToHex(50, 50, 50);
-        elements[i].beginFill(color);
-        var width = (shop.tierBox.width - shop.prevTierButton.width - shop.nextTierButton.width - 4 * shop.shopPadding) / (elements.length / 2) - shop.shopPadding;
-        var height = shop.tierBox.height - shop.statText.height - 4 * shop.shopPadding;
-        elements[i].drawRect(shop.shopCornerX + shop.prevTierButton.width + 3.5 * shop.shopPadding + (i / 2) * width + (i / 2) * shop.shopPadding, shop.shopCornerY + shop.statText.height + 3 * shop.shopPadding,
-            width, height);
-        elements[i].endFill();
-        elements[i].x = 0;
-        elements[i].y = 0;
-        Game.world.bringToTop(elements[i]);
-        elements[i].fixedToCamera = true;
-    }
-    // draw the ship sprites (odd indices of array) for the ships in the visible tier
-    for (var i = 1; i < elements.length; i += 2) {
-        elements[i].scale.setTo(1, 1);
-        elements[i].anchor.x = 0.5;
-        elements[i].anchor.y = 0.5;
-        var width = (shop.tierBox.width - shop.prevTierButton.width - shop.nextTierButton.width - 4 * shop.shopPadding) / (elements.length / 2) - shop.shopPadding;
-        var height = shop.tierBox.height - shop.statText.height - 4 * shop.shopPadding;
-        var scale = (width / 2) / elements[i].width;
-        elements[i].scale.setTo(scale, scale);
-        elements[i].x = shop.shopCornerX + shop.prevTierButton.width + 3.5 * shop.shopPadding + Math.floor(i / 2) * width + (i / 2) * shop.shopPadding + width / 2;
-        elements[i].y = shop.shopCornerY + shop.statText.height + 3 * shop.shopPadding + height / 2;
-        Game.world.bringToTop(elements[i]);
-        elements[i].fixedToCamera = true;
-        elements[i].visible = true;
+
+        // draw the ship sprites (odd indices of array) for the ships in the visible tier
+
+        for (var i = 1; i < elements.length; i += 2) {
+            elements[i].scale.setTo(1, 1);
+            elements[i].anchor.x = 0.5;
+            elements[i].anchor.y = 0.5;
+            var width = (shop.tierBox.width - shop.prevTierButton.width - shop.nextTierButton.width - 4 * shop.shopPadding) / (elements.length / 2) - shop.shopPadding;
+            var height = shop.tierBox.height - shop.statText.height - 4 * shop.shopPadding;
+            var scale = (width / 2) / elements[i].width;
+            elements[i].scale.setTo(scale, scale);
+            elements[i].x = shop.shopCornerX + shop.prevTierButton.width + 3.5 * shop.shopPadding + Math.floor(i / 2) * width + (i / 2) * shop.shopPadding + width / 2;
+            elements[i].y = shop.shopCornerY + shop.statText.height + 3 * shop.shopPadding + height / 2;
+            Game.world.bringToTop(elements[i]);
+            elements[i].fixedToCamera = true;
+            elements[i].visible = true;
+        }
     }
 
     // draw the box behind the ammo refill as a background
