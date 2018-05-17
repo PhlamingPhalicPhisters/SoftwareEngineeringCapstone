@@ -82,6 +82,9 @@ Game.init = function(){
     // Run game in background
     this.game.stage.disableVisibilityChange = true;
 
+    Game.playerMap = {};
+    Game.ammoMap = {};
+
     Game.screenResized = true;
     Game.showFPS = false;
 
@@ -207,8 +210,8 @@ Game.create = function(){
 
     // Create reference list of all players in game
     Game.shipTrails = game.add.group();
-    Game.playerMap = {};
-    Game.ammoMap = {};
+    // Game.playerMap = {};
+    // Game.ammoMap = {};
     Game.allPlayersAdded = false;
     Game.localPlayerInstantiated = false;
     Game.bulletsCreated = false;
@@ -530,6 +533,7 @@ Game.update = function()
 
     if (game.input.keyboard.isDown(Phaser.Keyboard.ESC) && Game.playerMap[Client.id] !== undefined)
     {
+        Game.clearShop();
         Game.playerMap[Client.id].kill();
     }
 
