@@ -34,10 +34,10 @@ var dust = function (id, startx, starty, value) {
 var deathDust = function (id, startx, starty, value) {
 
     var dustObject = game.add.sprite(0, 0, 'dust');
-    console.log("dust location before move: " + dustObject.x + " " + dustObject.y);
+    // console.log("dust location before move: " + dustObject.x + " " + dustObject.y);
     dustObject.x = startx;
     dustObject.y = starty;
-    console.log("dust location before move: " + dustObject.x + " " + dustObject.y);
+    // console.log("dust location before move: " + dustObject.x + " " + dustObject.y);
     //draw dust
 
     // console.log('dust = '+dustObject.x+','+dustObject.y);

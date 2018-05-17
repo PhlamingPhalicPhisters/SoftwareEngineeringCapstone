@@ -329,13 +329,15 @@ Game.create = function(){
     shop.weapon2Sprite.visible = false;
     shop.weapon3Sprite.visible = false;
     for (var i = 0; i < Game.shipTiers.length; i++) {
-        var elements = shop.Tiers[i].elements;
-        // add in each ship in the tier and a background box for it
-        for (var j = 0; j < Game.shipTiers[i].length; j++) {
-            var shipBox = Game.add.graphics(-1000, -1000);
-            elements.push(shipBox);
-            var ship = Game.add.sprite(-1000, -1000, Game.shipTiers[i][j]);
-            elements.push(ship);
+        if (shop.Tiers[i] !== undefined && shop.Tiers[shop.visibleTier].elements !== undefined) {
+            var elements = shop.Tiers[i].elements;
+            // add in each ship in the tier and a background box for it
+            for (var j = 0; j < Game.shipTiers[i].length; j++) {
+                var shipBox = Game.add.graphics(-1000, -1000);
+                elements.push(shipBox);
+                var ship = Game.add.sprite(-1000, -1000, Game.shipTiers[i][j]);
+                elements.push(ship);
+            }
         }
     }
     shop.Tiers.forEach(function(tier) {
@@ -929,13 +931,15 @@ Game.clearShop = function() {
     shop.weapon1Sprite.visible = false;
     shop.weapon2Sprite.visible = false;
     shop.weapon3Sprite.visible = false;
-    shop.Tiers[shop.visibleTier].elements.forEach(function(element) {
-        //console.log(element.type);
-        if (element.type === 3)
-            element.clear();
-        else
-            element.visible = false;
-    });
+    if (shop.Tiers[shop.visibleTier] !== undefined && shop.Tiers[shop.visibleTier].elements !== undefined) {
+        shop.Tiers[shop.visibleTier].elements.forEach(function (element) {
+            //console.log(element.type);
+            if (element.type === 3)
+                element.clear();
+            else
+                element.visible = false;
+        });
+    }
 
 
 Game.render = function(){
@@ -1266,9 +1270,11 @@ Game.updateHealthBar = function(player) {
     Game.world.bringToTop(shop.weapon1Sprite);
     Game.world.bringToTop(shop.weapon2Sprite);
     Game.world.bringToTop(shop.weapon3Sprite);
-    shop.Tiers[shop.visibleTier].elements.forEach(function(element) {
-        Game.world.bringToTop(element);
-    });
+    if (shop.Tiers[shop.visibleTier] !== undefined && shop.Tiers[shop.visibleTier].elements !== undefined) {
+        shop.Tiers[shop.visibleTier].elements.forEach(function (element) {
+            Game.world.bringToTop(element);
+        });
+    }
 };
 
 
@@ -1388,9 +1394,11 @@ Game.setLeaderboard = function() {
     Game.world.bringToTop(shop.weapon1Sprite);
     Game.world.bringToTop(shop.weapon2Sprite);
     Game.world.bringToTop(shop.weapon3Sprite);
-    shop.Tiers[shop.visibleTier].elements.forEach(function(element) {
-        Game.world.bringToTop(element);
-    });
+    if (shop.Tiers[shop.visibleTier] !== undefined && shop.Tiers[shop.visibleTier].elements !== undefined) {
+        shop.Tiers[shop.visibleTier].elements.forEach(function (element) {
+            Game.world.bringToTop(element);
+        });
+    }
 
     Game.playerMap[Client.id].scoreboard.setText(
         '#1 '+ (Game.leaderboard[1] !== null ? Game.leaderboard[1].score+'-'+Game.leaderboard[1].name : '_______')+
@@ -1821,13 +1829,16 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color,size){
 
 Game.setDeathBehavior = function(id) {
     Game.playerMap[id].events.onKilled.add(function() {
+        Game.playerMap[id].shipTrail.destroy();
         burst(Game.playerMap[id].x, Game.playerMap[id].y);
         Game.removeFromLeaderboard(id);
         Client.disconnect();
         setTimeout(
             function(){
-                Game.playerMap[id].shipTrail.destroy();
-                // generateDustOnDeath(Game.playerMap[id].x, Game.playerMap[id].y, Game.playerMap[id].score);
+
+                Client.setClientScores(Game.playerMap[id].score);
+
+        // generateDustOnDeath(Game.playerMap[id].x, Game.playerMap[id].y, Game.playerMap[id].score);
                 playerMap.delete(id);
                 var player = Game.playerMap[id];
                 player.destroy();
@@ -1838,9 +1849,10 @@ Game.setDeathBehavior = function(id) {
                     tier.elements = [];
                 });
                 shop.Tiers = [];
-                Client.setClientScores(Game.playerMap[id].score);
 
                 console.log('Switching to menu state');
+
+
                 game.state.start('Menu');
                 game.state.clearCurrentState();
             }, 3000);
