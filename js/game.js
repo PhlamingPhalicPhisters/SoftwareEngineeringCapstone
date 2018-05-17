@@ -661,6 +661,19 @@ Game.updateShop = function() {
                     element.visible = false;
             });
         }
+        else {
+            if (shop.Tiers !== null) {
+                shop.Tiers.forEach(function (tier) {
+                    tier.elements.forEach(function (element) {
+                        element.hover = false;
+                        if (element.type === 3)
+                            element.clear();
+                        else
+                            element.visible = false;
+                    });
+                });
+            }
+        }
     });
     if (shop.nextTierButtonDown) {
         if (shop.visibleTier === 4)
@@ -787,6 +800,19 @@ Game.updateShop = function() {
             Game.world.bringToTop(elements[i]);
             elements[i].fixedToCamera = true;
             elements[i].visible = true;
+        }
+    }
+    else {
+        if (shop.Tiers !== null) {
+            shop.Tiers.forEach(function (tier) {
+                tier.elements.forEach(function (element) {
+                    element.hover = false;
+                    if (element.type === 3)
+                        element.clear();
+                    else
+                        element.visible = false;
+                });
+            });
         }
     }
 
@@ -1060,6 +1086,19 @@ Game.clearShop = function() {
             else
                 element.visible = false;
         });
+    }
+    else {
+        if (shop.Tiers !== null) {
+            shop.Tiers.forEach(function (tier) {
+                tier.elements.forEach(function (element) {
+                    element.hover = false;
+                    if (element.type === 3)
+                        element.clear();
+                    else
+                        element.visible = false;
+                });
+            });
+        }
     }
 };
 
@@ -1382,6 +1421,19 @@ Game.updateHealthBar = function(player) {
             Game.world.bringToTop(element);
         });
     }
+    else {
+        if (shop.Tiers !== null) {
+            shop.Tiers.forEach(function (tier) {
+                tier.elements.forEach(function (element) {
+                    element.hover = false;
+                    if (element.type === 3)
+                        element.clear();
+                    else
+                        element.visible = false;
+                });
+            });
+        }
+    }
 };
 
 
@@ -1505,6 +1557,19 @@ Game.setLeaderboard = function() {
         shop.Tiers[shop.visibleTier].elements.forEach(function (element) {
             Game.world.bringToTop(element);
         });
+    }
+    else {
+        if (shop.Tiers !== null) {
+            shop.Tiers.forEach(function (tier) {
+                tier.elements.forEach(function (element) {
+                    element.hover = false;
+                    if (element.type === 3)
+                        element.clear();
+                    else
+                        element.visible = false;
+                });
+            });
+        }
     }
 
     Game.playerMap[Client.id].scoreboard.setText(
