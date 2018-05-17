@@ -485,14 +485,7 @@ Game.update = function()
         if (Game.isSafe) {
             Game.showBasePrompts();
 
-            if (game.input.keyboard.isDown(Phaser.KeyCode.E)) {
-                //Game.requestShipUpgrade();
-                Game.holdingE = true;
-            }
-            else {
-                Game.holdingE = false;
-            }
-            if (Game.inShop && !Game.holdingE) {
+            if (Game.inShop) {
                 Game.updateShop();
                 Game.playerMap[Client.id].body.maxVelocity.set(0);
             }
@@ -552,7 +545,7 @@ Game.update = function()
     Game.sendTransform();
 };
 
-window.addEventListener("keypress", function(event) {
+window.addEventListener("keyup", function(event) {
     if (event.code === 'KeyE' && Game.isSafe) {
         Game.inShop = !Game.inShop;
     }
