@@ -6,9 +6,9 @@ var weaponArray = [];
 function addWeapon(lifespan, velocity, bulletTime, damage) {
     weaponArray.push({lifespan: lifespan, velocity: velocity, bulletTime: bulletTime, damage: damage});
 }
-addWeapon(2000, 900, 100, Game.bulletDamage[0]);
-addWeapon(2000, 900, 50, Game.bulletDamage[1]);
-addWeapon(2000, 900, 150, Game.bulletDamage[2]);
+// addWeapon(2000, 900, 100, Game.bulletDamage[0]);
+// addWeapon(2000, 900, 50, Game.bulletDamage[1]);
+// addWeapon(2000, 900, 150, Game.bulletDamage[2]);
 
 
 var firedBullets = new Map();
@@ -205,6 +205,10 @@ Game.create = function(){
     Game.allPlayersAdded = false;
     Game.localPlayerInstantiated = false;
     Game.bulletsCreated = false;
+
+    addWeapon(2000, 900, 100, Game.bulletDamage[0]);
+    addWeapon(2000, 900, 50, Game.bulletDamage[1]);
+    addWeapon(2000, 900, 150, Game.bulletDamage[2]);
 
     // Set up scaling management
     this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
