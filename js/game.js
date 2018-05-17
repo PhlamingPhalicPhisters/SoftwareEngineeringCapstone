@@ -601,9 +601,21 @@ Game.updateShop = function() {
     shop.tierText.fixedToCamera = true;
     shop.tierText.visible = true;
 
-    shop.statText.setText('Max Health: ' + Game.shipTiers[shop.visibleTier].stats.health +
-        '\nMax Boost: ' + Game.shipTiers[shop.visibleTier].stats.boost +
-        '\nSpeed Multiplier: ' + Game.shipTiers[shop.visibleTier].stats.speedMultiplier + 'x');
+    if (shop.visibleTier === 0)
+        shop.statText.setText('Max Health, Ammo, and Boost Multiplier: ' + 1 + 'x\n'
+            + 'Speed: 300');
+    else if (shop.visibleTier === 1)
+        shop.statText.setText('Max Health, Ammo, and Boost Multiplier: ' + tierTwoMultiplier + 'x\n'
+            + 'Speed: 300');
+    else if (shop.visibleTier === 2)
+        shop.statText.setText('Max Health, Ammo, and Boost Multiplier: ' + tierThreeMultiplier + 'x\n'
+            + 'Speed: 350');
+    else if (shop.visibleTier === 3)
+        shop.statText.setText('Max Health, Ammo, and Boost Multiplier: ' + tierFourMultiplier + 'x\n'
+            + 'Speed: 400');
+    else
+        shop.statText.setText('Max Health, Ammo, and Boost Multiplier: ' + tierFiveMultiplier + 'x\n'
+            + 'Speed: 400');
     shop.statText.fontSize = shop.shopWidth / 50;
     shop.statText.x = shop.shopCornerX + shop.tierText.width + 3*shop.shopPadding;
     shop.statText.y = shop.shopCornerY + 2*shop.shopPadding;
