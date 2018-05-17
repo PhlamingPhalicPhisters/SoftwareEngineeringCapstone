@@ -25,7 +25,11 @@ shop = {
     tierText: null,
     statText: null,
     nextTierButton: null,
+    nextTierButtonHover: false,
+    nextTierButtonDown: false,
     prevTierButton: null,
+    prevTierButtonHover: false,
+    prevTierButtonDown: false,
     tierBox: null,
     ammoBox: null,
     ammoBoxHover: false,
@@ -48,7 +52,8 @@ shop = {
     shopCornerX: 0,
     shopCornerY: 0,
     shopWidth: 0,
-    shopHeight: 0
+    shopHeight: 0,
+    shipSelect: null
     /*
     scrollBarBackground: null,
     scrollBar: null,
@@ -139,15 +144,15 @@ Game.preload = function() {
 
     //placeholder tier list
     Game.shipTiers = [];
-    Game.shipTiers[0] = ['ship1', 'ship2', 'ship3'];
+    Game.shipTiers[0] = ['ship1', 'ship2', 'ship7'];
     Game.shipTiers[0].stats = {health: 100, boost: 5000, speedMultiplier: 1};
-    Game.shipTiers[1] = ['ship4', 'ship5', 'ship6'];
+    Game.shipTiers[1] = ['ship8', 'ship9', 'ship10'];
     Game.shipTiers[1].stats = {health: 100, boost: 4000, speedMultiplier: 1.5};
-    Game.shipTiers[2] = ['ship7', 'ship8', 'ship9'];
+    Game.shipTiers[2] = ['ship5', 'ship6', 'ship4'];
     Game.shipTiers[2].stats = {health: 150, boost: 5000, speedMultiplier: 1};
-    Game.shipTiers[3] = ['ship10', 'ship11', 'ship12'];
+    Game.shipTiers[3] = ['ship13', 'ship12', 'ship11'];
     Game.shipTiers[3].stats = {health: 120, boost: 7000, speedMultiplier: 1.1};
-    Game.shipTiers[4] = ['ship13', 'ship14', 'ship15'];
+    Game.shipTiers[4] = ['ship14', 'ship15', 'ship3'];
     Game.shipTiers[4].stats = {health: 250, boost: 5000, speedMultiplier: 0.75};
 
     // Load dust asset
@@ -164,6 +169,9 @@ Game.preload = function() {
     this.game.load.image('bullet', 'assets/sprites/neon/GreenShot.png');
     this.game.load.image('bullet1', 'assets/sprites/neon/RedShot.png');
     this.game.load.image('bullet2', 'assets/sprites/neon/BlueShot.png');
+
+    // Load arrow asset
+    this.game.load.image('arrow', 'assets/sprites/neon/clickArrow.png');
 
     this.game.load.image('ship0', 'assets/sprites/neon/squaresquare.png');
 
@@ -310,8 +318,8 @@ Game.create = function(){
     shop.weapon2Text = Game.add.text(-1000, -1000, '', {font: '35px Lucida Console', fill: '#ffffff', align: 'center'});
     shop.weapon3Text = Game.add.text(-1000, -1000, '', {font: '35px Lucida Console', fill: '#ffffff', align: 'center'});
     shop.boostText = Game.add.text(-1000, -1000, '', {font: '35px Lucida Console', fill: '#ffffff', align: 'center'});
-    shop.nextTierButton = Game.add.button(-1000, -1000, 'ship1');
-    shop.prevTierButton = Game.add.button(-1000, -1000, 'ship1');
+    shop.nextTierButton = Game.add.sprite(-1000, -1000, 'arrow');
+    shop.prevTierButton = Game.add.sprite(-1000, -1000, 'arrow');
     shop.tierBox = Game.add.graphics(-1000, -1000);
     shop.ammoBox = Game.add.graphics(-1000, -1000);
     shop.weaponBox1 = Game.add.graphics(-1000, -1000);
@@ -336,6 +344,7 @@ Game.create = function(){
     }
     shop.Tiers.forEach(function(tier) {
         tier.elements.forEach(function(element) {
+            element.hover = false;
             if (element.type === 3)
                 element.clear();
             else
@@ -575,7 +584,7 @@ Game.updateShop = function() {
     shop.tierBox.fixedToCamera = true;
 
     // draw text
-    shop.tierText.setText('Tier ' + shop.visibleTier + ':');
+    shop.tierText.setText('Tier ' + (shop.visibleTier + 1) + ':');
     shop.tierText.fontSize = shop.shopWidth / 20;
     shop.tierText.x = shop.shopCornerX + 2*shop.shopPadding;
     shop.tierText.y = shop.shopCornerY + 2*shop.shopPadding;
@@ -591,17 +600,142 @@ Game.updateShop = function() {
     shop.statText.fixedToCamera = true;
     shop.statText.visible = true;
 
-    /*var elements = shop.Tiers[shop.visibleTier].elements;
+    // create the next tier button
+    shop.nextTierButton.inputEnabled = true;
+    shop.nextTierButton.events.onInputOver.add(function() {
+        shop.nextTierButtonHover = true;
+    });
+    shop.nextTierButton.events.onInputOut.add(function() {
+        shop.nextTierButtonHover = false;
+    });
+    shop.nextTierButton.events.onInputDown.add(function() {
+        shop.nextTierButtonDown = true;
+        shop.Tiers[shop.visibleTier].elements.forEach(function(element) {
+            //console.log(element.type);
+            if (element.type === 3)
+                element.clear();
+            else
+                element.visible = false;
+        });
+        /*if (shop.visibleTier === 4)
+            shop.visibleTier = 0;
+        else
+            shop.visibleTier++;*/
+    });
+    if (shop.nextTierButtonDown) {
+        if (shop.visibleTier === 4)
+            shop.visibleTier = 0;
+        else
+            shop.visibleTier++;
+        shop.nextTierButtonDown = false;
+    }
+    if(shop.nextTierButtonHover)
+        shop.nextTierButton.tint = 2*Game.playerMap[Client.id].tint;
+    else
+        shop.nextTierButton.tint = Game.playerMap[Client.id].tint;
+    shop.nextTierButton.scale.setTo(1.0, 1.0);
+    var scale = (shop.shopPadding*3.5) / shop.nextTierButton.width;
+    shop.nextTierButton.scale.setTo(scale, scale);
+    shop.nextTierButton.anchor.x = 0.5;
+    shop.nextTierButton.anchor.y = 0.5;
+    shop.nextTierButton.x = shop.shopCornerX + shop.tierBox.width - shop.nextTierButton.width / 2;
+    shop.nextTierButton.y = shop.shopCornerY + shop.shopPadding + (shop.tierBox.height + shop.statText.height) / 2;
+    shop.nextTierButton.fixedToCamera = true;
+    shop.nextTierButton.visible = true;
+
+    // create the previous tier button
+    shop.prevTierButton.angle = 180;
+    shop.prevTierButton.inputEnabled = true;
+    shop.prevTierButton.events.onInputOver.add(function() {
+        shop.prevTierButtonHover = true;
+    });
+    shop.prevTierButton.events.onInputOut.add(function() {
+        shop.prevTierButtonHover = false;
+    });
+    shop.prevTierButton.events.onInputDown.add(function() {
+        shop.prevTierButtonDown = true;
+        shop.Tiers[shop.visibleTier].elements.forEach(function(element) {
+            //console.log(element.type);
+            if (element.type === 3)
+                element.clear();
+            else
+                element.visible = false;
+        });
+        /*if (shop.visibleTier === 0)
+            shop.visibleTier = 4;
+        else
+            shop.visibleTier--;*/
+    });
+    if (shop.prevTierButtonDown) {
+        if (shop.visibleTier === 0)
+            shop.visibleTier = 4;
+        else
+            shop.visibleTier--;
+        shop.prevTierButtonDown = false;
+    }
+    if(shop.prevTierButtonHover)
+        shop.prevTierButton.tint = 2*Game.playerMap[Client.id].tint;
+    else
+        shop.prevTierButton.tint = Game.playerMap[Client.id].tint;
+    shop.prevTierButton.scale.setTo(1.0, 1.0);
+    var scale = (shop.shopPadding*3.5) / shop.prevTierButton.width;
+    shop.prevTierButton.scale.setTo(scale, scale);
+    shop.prevTierButton.anchor.x = 0.5;
+    shop.prevTierButton.anchor.y = 0.5;
+    shop.prevTierButton.x = shop.shopCornerX + 2*shop.shopPadding + shop.nextTierButton.width / 2;
+    shop.prevTierButton.y = shop.shopCornerY + shop.shopPadding + (shop.tierBox.height + shop.statText.height) / 2;
+    shop.prevTierButton.fixedToCamera = true;
+    shop.prevTierButton.visible = true;
+
     // draw the background boxes (even indices of array) for the ships in the visible tier
+    var elements = shop.Tiers[shop.visibleTier].elements;
     for (var i = 0; i < elements.length; i += 2) {
+        if (elements[i] === shop.shipSelect) {
+            shipTierAssign(Game.shipTiers[shop.visibleTier][i/2]);
+            console.log(Game.shipTiers[shop.visibleTier][i/2]);
+            shop.shipSelect = null;
+        }
         elements[i].clear();
         elements[i].inputEnabled = true;
-
+        elements[i].events.onInputOver.add(function(element) {
+            element.hover = true;
+        });
+        elements[i].events.onInputOut.add(function(element) {
+            element.hover = false;
+        });
+        elements[i].events.onInputUp.add(function(element) {
+            shop.shipSelect = element;
+        });
+        if (elements[i].hover)
+            color = Game.rgbToHex(30, 30, 30);
+        else
+            color = Game.rgbToHex(50, 50, 50);
+        elements[i].beginFill(color);
+        var width = (shop.tierBox.width - shop.prevTierButton.width - shop.nextTierButton.width - 4*shop.shopPadding) / (elements.length / 2) - shop.shopPadding;
+        var height = shop.tierBox.height - shop.statText.height - 4*shop.shopPadding;
+        elements[i].drawRect(shop.shopCornerX + shop.prevTierButton.width + 3.5*shop.shopPadding + (i/2)*width + (i/2)*shop.shopPadding, shop.shopCornerY + shop.statText.height + 3*shop.shopPadding,
+            width, height);
+        elements[i].endFill();
+        elements[i].x = 0;
+        elements[i].y = 0;
+        Game.world.bringToTop(elements[i]);
+        elements[i].fixedToCamera = true;
     }
     // draw the ship sprites (odd indices of array) for the ships in the visible tier
     for (var i = 1; i < elements.length; i += 2) {
-
-    }*/
+        elements[i].scale.setTo(1, 1);
+        elements[i].anchor.x = 0.5;
+        elements[i].anchor.y = 0.5;
+        var width = (shop.tierBox.width - shop.prevTierButton.width - shop.nextTierButton.width - 4*shop.shopPadding) / (elements.length / 2) - shop.shopPadding;
+        var height = shop.tierBox.height - shop.statText.height - 4*shop.shopPadding;
+        var scale = (width/2) / elements[i].width;
+        elements[i].scale.setTo(scale, scale);
+        elements[i].x = shop.shopCornerX + shop.prevTierButton.width + 3.5*shop.shopPadding + Math.floor(i/2)*width + (i/2)*shop.shopPadding + width/2;
+        elements[i].y = shop.shopCornerY + shop.statText.height + 3*shop.shopPadding + height/2;
+        Game.world.bringToTop(elements[i]);
+        elements[i].fixedToCamera = true;
+        elements[i].visible = true;
+    }
 
     // draw the box behind the ammo refill as a background
     shop.ammoBox.clear();
@@ -665,7 +799,9 @@ Game.updateShop = function() {
     shop.weaponBox1.fixedToCamera = true;
 
     // draw the first weapon sprite
-    shop.weapon1Sprite.scale.setTo(4.0, 4.0);
+    shop.weapon1Sprite.scale.setTo(1.0, 1.0);
+    var scale = (shop.shopPadding*5) / shop.weapon1Sprite.width;
+    shop.weapon1Sprite.scale.setTo(scale, scale);
     shop.weapon1Sprite.anchor.x = 0.5;
     shop.weapon1Sprite.x = shop.shopCornerX + 1.5*shop.ammoBox.width + 2*shop.shopPadding;
     shop.weapon1Sprite.y = shop.shopCornerY + (shop.shopHeight * 2/3) + shop.shopPadding;
@@ -720,7 +856,9 @@ Game.updateShop = function() {
     shop.weaponBox2.fixedToCamera = true;
 
     // draw the second weapon sprite
-    shop.weapon2Sprite.scale.setTo(4.0, 4.0);
+    shop.weapon2Sprite.scale.setTo(1.0, 1.0);
+    var scale = (shop.shopPadding*5) / shop.weapon2Sprite.width;
+    shop.weapon2Sprite.scale.setTo(scale, scale);
     shop.weapon2Sprite.anchor.x = 0.5;
     shop.weapon2Sprite.x = shop.shopCornerX + 2.5*shop.ammoBox.width + 3*shop.shopPadding;
     shop.weapon2Sprite.y = shop.shopCornerY + (shop.shopHeight * 2/3) + shop.shopPadding;
@@ -775,7 +913,9 @@ Game.updateShop = function() {
     shop.weaponBox3.fixedToCamera = true;
 
     // draw the third weapon sprite
-    shop.weapon3Sprite.scale.setTo(4.0, 4.0);
+    shop.weapon3Sprite.scale.setTo(1.0, 1.0);
+    var scale = (shop.shopPadding*5) / shop.weapon3Sprite.width;
+    shop.weapon3Sprite.scale.setTo(scale, scale);
     shop.weapon3Sprite.anchor.x = 0.5;
     shop.weapon3Sprite.x = shop.shopCornerX + 3.5*shop.ammoBox.width + 4*shop.shopPadding;
     shop.weapon3Sprite.y = shop.shopCornerY + (shop.shopHeight * 2/3) + shop.shopPadding;

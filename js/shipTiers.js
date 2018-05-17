@@ -30,6 +30,8 @@ function assignTierOneShip(shipName){
     //Ship1
     //Ship2 //Assigned in assignShip in game.js
     //Ship7
+    handleShipUpdate(shipName);
+    tierMultiplier(1);
 };
 
 function assignTierTwoShip(shipName){ //
