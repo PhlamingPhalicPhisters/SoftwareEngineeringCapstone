@@ -11,16 +11,16 @@ function shipTierAssign(shipName){
     if(shipName == 'ship1' || shipName == 'ship2' || shipName == 'ship7'){
       assignTierOneShip(shipName);
     }
-    else if (shipName == 'ship8' || shipName == 'ship9' || shipName == 'ship10' || shipName == 'ship4'){
+    else if (shipName == 'ship8' || shipName == 'ship9' || shipName == 'ship10' ){
         assignTierTwoShip(shipName);
     }
-    else if (shipName == 'ship5' || shipName == 'ship6'){
+    else if (shipName == 'ship5' || shipName == 'ship6'|| shipName == 'ship4'){
         assignTierThreeShip(shipName);
     }
     else if (shipName == 'ship13' || shipName == 'ship12' || shipName == 'ship11'){
         assignTierFourShip(shipName);
     }
-    else if ( shipName == 'ship14' || shipName =='ship15'){
+    else if ( shipName == 'ship14' || shipName =='ship15' || shipName == 'ship3'){
         assignTierFiveShip(shipName);
     }
 };
@@ -30,6 +30,9 @@ function assignTierOneShip(shipName){
     //Ship1
     //Ship2 //Assigned in assignShip in game.js
     //Ship7
+    handleShipUpdate(shipName);
+    tierMultiplier(1);
+    Client.sendResize(64);
 };
 
 function assignTierTwoShip(shipName){ //
@@ -39,6 +42,7 @@ function assignTierTwoShip(shipName){ //
     //Ship10
     //Ship4
     handleShipUpdate(shipName);
+    Client.sendResize(70);
     tierMultiplier(tierTwoMultiplier);
 };
 
@@ -59,7 +63,7 @@ function assignTierFourShip(shipName) {
     //Ship11
     handleShipUpdate(shipName);
     tierMultiplier(tierFourMultiplier);
-    Client.sendResize(100);
+    Client.sendResize(90);
     Game.playerMap[Client.id].normalAccel = 400;
 };
 
@@ -69,7 +73,7 @@ function assignTierFiveShip(shipName) {
     //Ship15
     handleShipUpdate(shipName);
     tierMultiplier(tierFiveMultiplier);
-    Client.sendResize(120);
+    Client.sendResize(100);
     Game.playerMap[Client.id].normalAccel = 400;
 };
 
