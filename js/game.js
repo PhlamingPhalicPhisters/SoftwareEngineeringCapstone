@@ -500,15 +500,6 @@ Game.update = function()
             if (game.input.keyboard.isDown(Phaser.KeyCode.B)) {
                 Game.refillBoost();
             }
-            if (game.input.keyboard.isDown(Phaser.KeyCode.V)){
-                // Game.playerMap[Client.id].shipName = 'ship0';
-                // Game.updatePlayerShip(Client.id,'ship0');
-                // Client.sendShipChange('ship0');
-                // Game.playerMap[Client.id].maxHealth = 500;
-                // Game.playerMap[Client.id].heal(500);
-                // Game.MaxBoost
-                shipTierAssign('ship15');
-            }
             if (game.input.keyboard.isDown(Phaser.KeyCode.NUMPAD_1)) {
                 Client.changeWeapon(Game.maxWeaponAmmo[0], 0);
             }
