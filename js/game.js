@@ -748,7 +748,7 @@ Game.updateShop = function() {
     var elements = shop.Tiers[shop.visibleTier].elements;
     for (var i = 0; i < elements.length; i += 2) {
         if (elements[i] === shop.shipSelect) {
-            if (Game.unlockedTiers < shop.visibleTier && Game.shipTiers[shop.visibleTier].cost <= Client.score) {
+            if (Game.unlockedTiers <= shop.visibleTier || Game.shipTiers[shop.visibleTier].cost <= Client.score) {
                 Game.unlockedTiers = shop.visibleTier;
                 Client.sendCollect(-Game.shipTiers[shop.visibleTier].cost);
                 shipTierAssign(Game.shipTiers[shop.visibleTier][i / 2]);
