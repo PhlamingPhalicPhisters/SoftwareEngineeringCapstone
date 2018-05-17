@@ -537,8 +537,12 @@ Game.update = function()
 
     if (game.input.keyboard.isDown(Phaser.Keyboard.ESC) && Game.playerMap[Client.id] !== undefined)
     {
-        Game.clearShop();
-        Game.playerMap[Client.id].kill();
+        if (Game.inShop) {
+            Game.clearShop();
+        }
+        else {
+            Game.playerMap[Client.id].kill();
+        }
     }
 
     if (game.input.keyboard.isDown(Phaser.Keyboard.F) && game.input.keyboard.isDown(Phaser.Keyboard.P) && game.input.keyboard.isDown(Phaser.Keyboard.S))
