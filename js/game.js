@@ -17,6 +17,7 @@ var bulletID = 0;
 var burstLittleEmitter;
 var burstBig;
 
+
 shop = {
     shopMenu: null,
     shopPadding: 12,
@@ -96,6 +97,9 @@ Game.init = function(){
     Game.normalAngVel = 300;        // normal player rotation speed
     Game.boostRotMult = 0.5;        // boost rotation mutliplier
     Game.boostCost = 1;             // how much boost costs when active
+    Game.prevBoost = -1;
+    Game.prevBullets = -1;
+    Game.prevDust = -1;
     Game.boostRefillCost = 1;
 
     Game.tierShipCosts = [5000, 10000, 20000, 30000, 40000];
@@ -1121,6 +1125,7 @@ Game.updateHUD = function(player){
 
     //player.shield.destroy();
     //player.shield = Game.add.text(0, 0, '', {font: 'Lucida Console', fontSize: this.game.camera.width * .01, fill: '#fff' });
+    var changeFlag = false;
     player.shield.x = (this.game.camera.width / 2) - ((this.game.camera.width / 2) - 20);
     player.shield.y = (this.game.camera.height / 2) - ((this.game.camera.height / 2) - 20);
     Game.world.bringToTop(player.shield);
@@ -1142,18 +1147,37 @@ Game.updateHUD = function(player){
     player.scoreHover.fixedToCamera = true;
 
     // if(player.prevHealth != player.health || player.prevAmmo != Client.ammo) {
-    Game.playerHUD["boost"] = player.boost;
-    Game.playerHUD["bullets"] = Client.ammo;
+    if(Game.prevBoost !== player.boost) {
+        Game.playerHUD["boost"] = player.boost;
+
+        changeFlag = true;
+    }
+    Game.prevBoost = player.boost;
+
+    if(Game.prevBullets !== Client.ammo){
+        Game.playerHUD["bullets"] = Client.ammo;
+
+        changeFlag = true;
+    }
+    Game.prevBullets = Client.ammo;
     player.prevAmmo = Client.ammo;
-    Game.playerHUD["currency"] = player.score;
 
+    if(Game.prevDust !== player.score){
+        Game.playerHUD["currency"] = player.score;
+        changeFlag = true;
+    }
+    Game.prevDust = player.score;
 
-    player.shield.setText('Shield:\n' +
-        'Bullets: ' + Game.playerHUD["bullets"] + '/' + Game.maxWeaponAmmo[Client.weaponId] +'\n' +
-        'Boost: ' + Game.playerHUD["boost"] + '/' + Game.maxBoost +'\n' +
-        'Dust: ' + Game.playerHUD["currency"]);
+    if(changeFlag) {
+        player.shield.setText('Shield:\n' +
+            'Bullets: ' + Game.playerHUD["bullets"] + '/' + Game.maxWeaponAmmo[Client.weaponId] + '\n' +
+            'Boost: ' + Game.playerHUD["boost"] + '/' + Game.maxBoost + '\n' +
+            'Dust: ' + Game.playerHUD["currency"]);
+    }
     // }
+    player.nameHover.fontSize = this.game.camera.width * .013;
     player.shield.fontSize = this.game.camera.width * .023;
+    player.scoreHover.fontSize = this.game.camera.width * .013;
 
     player.centerPointer.bringToTop();
     player.centerPointer.x = player.x;
@@ -1194,7 +1218,7 @@ Game.updateHealthBar = function(player) {
         player.healthBar.lineTo((this.game.camera.width * .001) * xHealth, 0);
         player.healthBar.endFill();
     }
-    else if (player.prevHealth != player.health || player.healthBar.safe || Game.screenResized){
+    else if (player.prevHealth !== player.health || player.healthBar.safe || Game.screenResized){
         player.healthBar.safe = false;
         player.healthBar.clear();
         var x = player.health / 100;
@@ -1427,6 +1451,7 @@ Game.showBasePrompts = function(){
         /*+ 'Refill 1 boost: '+Game.boostRefillCost+'[B]');*/
     Game.playerMap[Client.id].safePromptHover.x = (this.game.camera.width / 2);
     Game.playerMap[Client.id].safePromptHover.y = (this.game.camera.height / 2) + .1*this.game.camera.height;
+    Game.playerMap[Client.id].safePromptHover.fontSize = this.game.camera.width * .013;
     Game.playerMap[Client.id].safePromptHover.fixedToCamera = true;
 };
 
@@ -1793,29 +1818,35 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color,size){
     this.game.renderer.renderSession.roundPixels = true;
 };
 
+
 Game.setDeathBehavior = function(id) {
     Game.playerMap[id].events.onKilled.add(function() {
-        Game.removeFromLeaderboard(id);
-        Game.playerMap[id].shipTrail.destroy();
-        // generateDustOnDeath(Game.playerMap[id].x, Game.playerMap[id].y, Game.playerMap[id].score);
         burst(Game.playerMap[id].x, Game.playerMap[id].y);
-        playerMap.delete(id);
-        var player = Game.playerMap[id];
-        player.destroy();
-        Game.playerDestroyed = true;
-        delete player;
-
-        shop.Tiers.forEach(function(tier) {
-            tier.elements = [];
-        });
-        shop.Tiers = [];
-        Client.setClientScores(Game.playerMap[id].score);
+        Game.removeFromLeaderboard(id);
         Client.disconnect();
-        console.log('Switching to menu state');
-        game.state.start('Menu');
-        game.state.clearCurrentState();
+        setTimeout(
+            function(){
+                Game.playerMap[id].shipTrail.destroy();
+                // generateDustOnDeath(Game.playerMap[id].x, Game.playerMap[id].y, Game.playerMap[id].score);
+                playerMap.delete(id);
+                var player = Game.playerMap[id];
+                player.destroy();
+                Game.playerDestroyed = true;
+                delete player;
+
+                shop.Tiers.forEach(function(tier) {
+                    tier.elements = [];
+                });
+                shop.Tiers = [];
+                Client.setClientScores(Game.playerMap[id].score);
+
+                console.log('Switching to menu state');
+                game.state.start('Menu');
+                game.state.clearCurrentState();
+            }, 3000);
     });
 };
+
 
 
 Game.setAllPlayersAdded = function(){
@@ -1920,4 +1951,5 @@ function shake(){
   //Set shake intensity and duration
     game.camera.shake(0.01, 100);
 }
+
 

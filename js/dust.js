@@ -9,8 +9,37 @@ var worldBoundX = 6336;
 var worldBoundY = 6336;
 var dust = function (id, startx, starty, value) {
 
+    var dustObject = game.add.sprite(0, 0, 'dust');
+
+    dustObject.x = startx;
+    dustObject.y = starty;
+
+    //define properties
+    dustObject.id = id;
+    dustObject.positionx = startx;
+    dustObject.positiony = starty;
+    dustObject.value = value;
+    dustObject.width = 40;
+    dustObject.height = 60;
+    dustObject.enableBody = true;
+
+    Game.physics.enable(dustObject, Phaser.Physics.ARCADE);
+    dustObject.body.velocity.set(randomInt(-15,15), randomInt(-15,15));
+    dustObject.body.angle = randomInt(-5,5);
+    dustObject.body.collideWorldBounds = true;
+    dustObject.body.bounce.setTo(1, 1);
+    return dustObject;
+}
+
+var deathDust = function (id, startx, starty, value) {
+
+    var dustObject = game.add.sprite(0, 0, 'dust');
+    console.log("dust location before move: " + dustObject.x + " " + dustObject.y);
+    dustObject.x = startx;
+    dustObject.y = starty;
+    console.log("dust location before move: " + dustObject.x + " " + dustObject.y);
     //draw dust
-    var dustObject = game.add.sprite(startx, starty, 'dust');
+
     // console.log('dust = '+dustObject.x+','+dustObject.y);
 
     //dustObject.animations.add('float');
@@ -475,14 +504,21 @@ function generateDustForClient(){
 }
 
 function generateDustOnDeath(x,y, amount) {
-    console.log("coordinates of dust in generateDustOnDeath: " + x + " " + y);
     var dropAmount = amount / 100;
     // console.log("x: " + x + ", y: " + y);
     for(var i = 0;  i < dropAmount; i++){
         deathDustMap.set(deathDustID,
-            new dust(deathDustID++, randomInt(x - 10, x + 10), randomInt(y - 10, y + 10), 70));
-        // deathDustMap.push(new dust(deathDustID++, x, y, amount));
+            new deathDust(deathDustID++, randomInt(x - 10, x + 10), randomInt(y - 10, y + 10), 70));
     }
+    setTimeout(function () {
+        deathDustMap.forEach(function(d){
+            deathDustMap.delete(d.id);
+            d.destroy();
+            delete d;
+            }
+        );
+        deathDustMap.clear();
+    }, 5000);
 }
 
 function randomInt (low, high) {
