@@ -65,6 +65,7 @@ shop = {
     scrollBarColor: null,
     scrollBarHover: false*/
 };
+Game.unlockedTiers = 0;
 for (var i = 0; i < 5; i++) {
     var elements = [];
     shop.Tiers.push({elements: []});
@@ -152,14 +153,19 @@ Game.preload = function() {
     //placeholder tier list
     Game.shipTiers = [];
     Game.shipTiers[0] = ['ship1', 'ship2', 'ship7'];
+    Game.shipTiers[0].cost = 0;
     Game.shipTiers[0].stats = {health: 100, boost: 5000, speedMultiplier: 1};
     Game.shipTiers[1] = ['ship8', 'ship9', 'ship10'];
+    Game.shipTiers[1].cost = 1000;
     Game.shipTiers[1].stats = {health: 100, boost: 4000, speedMultiplier: 1.5};
     Game.shipTiers[2] = ['ship5', 'ship6', 'ship4'];
+    Game.shipTiers[2].cost = 2000;
     Game.shipTiers[2].stats = {health: 150, boost: 5000, speedMultiplier: 1};
     Game.shipTiers[3] = ['ship13', 'ship12', 'ship11'];
+    Game.shipTiers[3].cost = 3500;
     Game.shipTiers[3].stats = {health: 120, boost: 7000, speedMultiplier: 1.1};
     Game.shipTiers[4] = ['ship14', 'ship15', 'ship3'];
+    Game.shipTiers[4].cost = 5000;
     Game.shipTiers[4].stats = {health: 250, boost: 5000, speedMultiplier: 0.75};
 
     // Load dust asset
@@ -603,19 +609,64 @@ Game.updateShop = function() {
 
     if (shop.visibleTier === 0)
         shop.statText.setText('Max Health, Ammo, and Boost Multiplier: ' + 1 + 'x\n'
-            + 'Speed: 300');
-    else if (shop.visibleTier === 1)
-        shop.statText.setText('Max Health, Ammo, and Boost Multiplier: ' + tierTwoMultiplier + 'x\n'
-            + 'Speed: 300');
-    else if (shop.visibleTier === 2)
-        shop.statText.setText('Max Health, Ammo, and Boost Multiplier: ' + tierThreeMultiplier + 'x\n'
-            + 'Speed: 350');
-    else if (shop.visibleTier === 3)
-        shop.statText.setText('Max Health, Ammo, and Boost Multiplier: ' + tierFourMultiplier + 'x\n'
-            + 'Speed: 400');
-    else
-        shop.statText.setText('Max Health, Ammo, and Boost Multiplier: ' + tierFiveMultiplier + 'x\n'
-            + 'Speed: 400');
+            + 'Speed: 300\n'
+            + 'Unlock Tier: Unlocked');
+    else if (shop.visibleTier === 1) {
+        if (Game.unlockedTiers < shop.visibleTier && Client.score < Game.shipTiers[shop.visibleTier].cost)
+            shop.statText.setText('Max Health, Ammo, and Boost Multiplier: ' + tierTwoMultiplier + 'x\n'
+                + 'Speed: 300\n'
+                + 'Unlock Tier: ' + Game.shipTiers[shop.visibleTier].cost + ' dust (You don\'t have enough dust!)');
+        else if (Game.unlockedTiers < shop.visibleTier)
+            shop.statText.setText('Max Health, Ammo, and Boost Multiplier: ' + tierTwoMultiplier + 'x\n'
+                + 'Speed: 300\n'
+                + 'Unlock Tier: ' + Game.shipTiers[shop.visibleTier].cost + ' dust');
+        else
+            shop.statText.setText('Max Health, Ammo, and Boost Multiplier: ' + tierTwoMultiplier + 'x\n'
+                + 'Speed: 300\n'
+                + 'Unlock Tier: Unlocked');
+    }
+    else if (shop.visibleTier === 2) {
+        if (Game.unlockedTiers < shop.visibleTier && Client.score < Game.shipTiers[shop.visibleTier].cost)
+            shop.statText.setText('Max Health, Ammo, and Boost Multiplier: ' + tierThreeMultiplier + 'x\n'
+                + 'Speed: 350\n'
+                + 'Unlock Tier: ' + Game.shipTiers[shop.visibleTier].cost + ' dust (You don\'t have enough dust!)');
+        else if (Game.unlockedTiers < shop.visibleTier)
+            shop.statText.setText('Max Health, Ammo, and Boost Multiplier: ' + tierThreeMultiplier + 'x\n'
+                + 'Speed: 350\n'
+                + 'Unlock Tier: ' + Game.shipTiers[shop.visibleTier].cost + ' dust');
+        else
+            shop.statText.setText('Max Health, Ammo, and Boost Multiplier: ' + tierThreeMultiplier + 'x\n'
+                + 'Speed: 350\n'
+                + 'Unlock Tier: Unlocked');
+    }
+    else if (shop.visibleTier === 3) {
+        if (Game.unlockedTiers < shop.visibleTier && Client.score < Game.shipTiers[shop.visibleTier].cost)
+            shop.statText.setText('Max Health, Ammo, and Boost Multiplier: ' + tierFourMultiplier + 'x\n'
+                + 'Speed: 400\n'
+                + 'Unlock Tier: ' + Game.shipTiers[shop.visibleTier].cost + ' dust (You don\'t have enough dust!)');
+        else if (Game.unlockedTiers < shop.visibleTier)
+            shop.statText.setText('Max Health, Ammo, and Boost Multiplier: ' + tierFourMultiplier + 'x\n'
+                + 'Speed: 400\n'
+                + 'Unlock Tier: ' + Game.shipTiers[shop.visibleTier].cost + ' dust');
+        else
+            shop.statText.setText('Max Health, Ammo, and Boost Multiplier: ' + tierFourMultiplier + 'x\n'
+                + 'Speed: 400\n'
+                + 'Unlock Tier: Unlocked');
+    }
+    else {
+        if (Game.unlockedTiers < shop.visibleTier && Client.score < Game.shipTiers[shop.visibleTier].cost)
+            shop.statText.setText('Max Health, Ammo, and Boost Multiplier: ' + tierFiveMultiplier + 'x\n'
+                + 'Speed: 400\n'
+                + 'Unlock Tier: ' + Game.shipTiers[shop.visibleTier].cost + ' dust (You don\'t have enough dust!)');
+        else if (Game.unlockedTiers < shop.visibleTier)
+            shop.statText.setText('Max Health, Ammo, and Boost Multiplier: ' + tierFiveMultiplier + 'x\n'
+                + 'Speed: 400\n'
+                + 'Unlock Tier: ' + Game.shipTiers[shop.visibleTier].cost + ' dust');
+        else
+            shop.statText.setText('Max Health, Ammo, and Boost Multiplier: ' + tierFiveMultiplier + 'x\n'
+                + 'Speed: 400\n'
+                + 'Unlock Tier: Unlocked');
+    }
     shop.statText.fontSize = shop.shopWidth / 50;
     shop.statText.x = shop.shopCornerX + shop.tierText.width + 3*shop.shopPadding;
     shop.statText.y = shop.shopCornerY + 2*shop.shopPadding;
@@ -713,8 +764,11 @@ Game.updateShop = function() {
     var elements = shop.Tiers[shop.visibleTier].elements;
     for (var i = 0; i < elements.length; i += 2) {
         if (elements[i] === shop.shipSelect) {
-            shipTierAssign(Game.shipTiers[shop.visibleTier][i/2]);
-            console.log(Game.shipTiers[shop.visibleTier][i/2]);
+            if (Game.unlockedTiers < shop.visibleTier && Game.shipTiers[shop.visibleTier].cost <= Client.score) {
+                Game.unlockedTiers = shop.visibleTier;
+                Client.sendCollect(-Game.shipTiers[shop.visibleTier].cost);
+                shipTierAssign(Game.shipTiers[shop.visibleTier][i/2]);
+            }
             shop.shipSelect = null;
         }
         elements[i].clear();
