@@ -528,14 +528,9 @@ Game.update = function()
         }
     }
 
-    if (game.input.keyboard.isDown(Phaser.Keyboard.ESC) && Game.playerMap[Client.id] !== undefined)
+    if (game.input.keyboard.isDown(Phaser.Keyboard.ESC) && Game.playerMap[Client.id] !== undefined && !Game.inShop)
     {
-        if (Game.inShop) {
-            Game.clearShop();
-        }
-        else {
-            Game.playerMap[Client.id].kill();
-        }
+        Game.playerMap[Client.id].damage(Game.playerMap[Client.id].health + 1);
     }
 
     if (game.input.keyboard.isDown(Phaser.Keyboard.F) && game.input.keyboard.isDown(Phaser.Keyboard.P) && game.input.keyboard.isDown(Phaser.Keyboard.S))
