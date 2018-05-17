@@ -6,9 +6,9 @@ var weaponArray = [];
 function addWeapon(lifespan, velocity, bulletTime, damage) {
     weaponArray.push({lifespan: lifespan, velocity: velocity, bulletTime: bulletTime, damage: damage});
 }
-addWeapon(2000, 900, 100, 6);
-addWeapon(2000, 900, 50, 2);
-addWeapon(2000, 900, 150, 10);
+// addWeapon(2000, 900, 100, Game.bulletDamage[0]);
+// addWeapon(2000, 900, 50, Game.bulletDamage[1]);
+// addWeapon(2000, 900, 150, Game.bulletDamage[2]);
 
 
 var firedBullets = new Map();
@@ -16,7 +16,6 @@ var playerMap = new Map();
 var bulletID = 0;
 var burstLittleEmitter;
 var burstBig;
-
 
 shop = {
     shopMenu: null,
@@ -33,12 +32,15 @@ shop = {
     ammoText: null,
     weaponBox1: null,
     weaponBox1Hover: false,
+    weapon1Sprite: null,
     weapon1Text: null,
     weaponBox2: null,
     weaponBox2Hover: false,
+    weapon2Sprite: null,
     weapon2Text: null,
     weaponBox3: null,
     weaponBox3Hover: false,
+    weapon3Sprite: null,
     weapon3Text: false,
     boostBox: null,
     boostBoxHover: false,
@@ -80,6 +82,7 @@ Game.init = function(){
     this.game.stage.disableVisibilityChange = true;
 
     Game.screenResized = true;
+    Game.showFPS = false;
 
     Game.leaderboard = [null, null, null, null, null, null];
 
@@ -93,11 +96,14 @@ Game.init = function(){
     Game.normalAngVel = 300;        // normal player rotation speed
     Game.boostRotMult = 0.5;        // boost rotation mutliplier
     Game.boostCost = 1;             // how much boost costs when active
-
-    Game.buyWeaponCost = [2000, 3000, 4000];
-    Game.maxWeaponAmmo = [250, 500, 100];
-    Game.bulletReloadCostList = [50, 25, 100];
     Game.boostRefillCost = 1;
+
+    Game.tierShipCosts = [5000, 10000, 20000, 30000, 40000];
+    Game.buyWeaponCost = [1000, 3000, 2000];
+    Game.bulletDamage = [6, 2, 10];
+    Game.maxWeaponAmmo = [50, 250, 100];
+    Game.bulletReloadCostList = [50, 25, 100];
+
     Game.inShop = false;
 };
 
@@ -203,6 +209,10 @@ Game.create = function(){
     Game.localPlayerInstantiated = false;
     Game.bulletsCreated = false;
 
+    addWeapon(2000, 900, 100, Game.bulletDamage[0]);
+    addWeapon(2000, 900, 50, Game.bulletDamage[1]);
+    addWeapon(2000, 900, 150, Game.bulletDamage[2]);
+
     // Set up scaling management
     this.game.scale.scaleMode = Phaser.ScaleManager.SHOW_ALL;
     this.game.scale.pageAlignHorizontally = true;
@@ -272,14 +282,14 @@ Game.create = function(){
     // Input
     /*cursors = game.input.keyboard.createCursorKeys();
     game.input.keyboard.addKeyCapture([Phaser.Keyboard.SPACEBAR]);*/
-    console.log("Got to creation");
+    // console.log("Got to creation");
     Game.playerDestroyed = false;
 
     //generate dust for the player
     generateDustForClient(Client.getPlayerID());
-    console.log("DustList size: " + dustList.length);
-    console.log("Testing the dust list to verify that it loaded correctly, " +
-        "dust x position: " + dustList[100].positionx);
+    // console.log("DustList size: " + dustList.length);
+    // console.log("Testing the dust list to verify that it loaded correctly, " +
+    //     "dust x position: " + dustList[100].positionx);
     Game.playerDestroyed = false;
 
     burstLittleEmitter = game.add.emitter(0, 0,100);
@@ -296,10 +306,10 @@ Game.create = function(){
         'Max Boost: ' + Game.shipTiers[shop.visibleTier].boost + '\n' +
         'Speed Multiplier: ' + Game.shipTiers[shop.visibleTier].speedMultiplier, {font: '35px Lucida Console', fill: '#ffffff', align: 'left'});
     shop.ammoText = Game.add.text(-1000, -1000, '', {font: '35px Lucida Console', fill: '#ffffff', align: 'center'});
-    shop.weapon1Text = Game.add.text(-1000, -1000, '', {font: '35px Lucida Console', fill: '#ffffff', align: 'left'});
-    shop.weapon2Text = Game.add.text(-1000, -1000, '', {font: '35px Lucida Console', fill: '#ffffff', align: 'left'});
-    shop.weapon3Text = Game.add.text(-1000, -1000, '', {font: '35px Lucida Console', fill: '#ffffff', align: 'left'});
-    shop.boostText = Game.add.text(-1000, -1000, '', {font: '35px Lucida Console', fill: '#ffffff', align: 'left'});
+    shop.weapon1Text = Game.add.text(-1000, -1000, '', {font: '35px Lucida Console', fill: '#ffffff', align: 'center'});
+    shop.weapon2Text = Game.add.text(-1000, -1000, '', {font: '35px Lucida Console', fill: '#ffffff', align: 'center'});
+    shop.weapon3Text = Game.add.text(-1000, -1000, '', {font: '35px Lucida Console', fill: '#ffffff', align: 'center'});
+    shop.boostText = Game.add.text(-1000, -1000, '', {font: '35px Lucida Console', fill: '#ffffff', align: 'center'});
     shop.nextTierButton = Game.add.button(-1000, -1000, 'ship1');
     shop.prevTierButton = Game.add.button(-1000, -1000, 'ship1');
     shop.tierBox = Game.add.graphics(-1000, -1000);
@@ -308,6 +318,12 @@ Game.create = function(){
     shop.weaponBox2 = Game.add.graphics(-1000, -1000);
     shop.weaponBox3 = Game.add.graphics(-1000, -1000);
     shop.boostBox = Game.add.graphics(-1000, -1000);
+    shop.weapon1Sprite = Game.add.sprite(-1000, -1000, 'bullet');
+    shop.weapon2Sprite = Game.add.sprite(-1000, -1000, 'bullet1');
+    shop.weapon3Sprite = Game.add.sprite(-1000, -1000, 'bullet2');
+    shop.weapon1Sprite.visible = false;
+    shop.weapon2Sprite.visible = false;
+    shop.weapon3Sprite.visible = false;
     for (var i = 0; i < Game.shipTiers.length; i++) {
         var elements = shop.Tiers[i].elements;
         // add in each ship in the tier and a background box for it
@@ -323,7 +339,7 @@ Game.create = function(){
             if (element.type === 3)
                 element.clear();
             else
-                element.exists = false;
+                element.visible = false;
         });
     });
 };
@@ -506,9 +522,14 @@ Game.update = function()
         }
     }
 
-    if (game.input.keyboard.isDown(Phaser.Keyboard.ESC))
+    if (game.input.keyboard.isDown(Phaser.Keyboard.ESC) && Game.playerMap[Client.id] !== undefined)
     {
         Game.playerMap[Client.id].kill();
+    }
+
+    if (game.input.keyboard.isDown(Phaser.Keyboard.F) && game.input.keyboard.isDown(Phaser.Keyboard.P) && game.input.keyboard.isDown(Phaser.Keyboard.S))
+    {
+        Game.showFPS = !Game.showFPS;
     }
 
     // Sync the transform of remote instances of this player
@@ -626,6 +647,12 @@ Game.updateShop = function() {
     shop.weaponBox1.events.onInputOut.add(function() {
         shop.weaponBox1Hover = false;
     });
+    shop.weaponBox1.events.onInputUp.add(function() {
+        if (Game.buyWeaponCost[0] <= Client.score) {
+            Client.sendCollect(-Game.buyWeaponCost[0]);
+            Client.changeWeapon(Game.maxWeaponAmmo[0], 0);
+        }
+    });
     color = Game.rgbToHex(25, 25, 25);
     if (shop.weaponBox1Hover)
         color = Game.rgbToHex(50, 50, 50);
@@ -637,6 +664,35 @@ Game.updateShop = function() {
     Game.world.bringToTop(shop.weaponBox1);
     shop.weaponBox1.fixedToCamera = true;
 
+    // draw the first weapon sprite
+    shop.weapon1Sprite.scale.setTo(4.0, 4.0);
+    shop.weapon1Sprite.anchor.x = 0.5;
+    shop.weapon1Sprite.x = shop.shopCornerX + 1.5*shop.ammoBox.width + 2*shop.shopPadding;
+    shop.weapon1Sprite.y = shop.shopCornerY + (shop.shopHeight * 2/3) + shop.shopPadding;
+    Game.world.bringToTop(shop.weapon1Sprite);
+    shop.weapon1Sprite.visible = true;
+    shop.weapon1Sprite.fixedToCamera = true;
+
+    // draw the text for the first weapon
+    if (Client.weaponId === 0) {
+        shop.weapon1Text.setText('Weapon 1:\nDamage: ' + weaponArray[0].damage + '\nMax Ammo: ' + Game.maxWeaponAmmo[0]);
+        shop.weapon1Text.tint = Game.rgbToHex(255, 255, 0);
+    }
+    else {
+        shop.weapon1Text.setText('Weapon 1:\nDamage: ' + weaponArray[0].damage + '\nMax Ammo: ' + Game.maxWeaponAmmo[0] + '\n(' + Game.buyWeaponCost[0] + ' dust)');
+        if (Game.buyWeaponCost[0] > Client.score)
+            shop.weapon1Text.tint = Game.rgbToHex(100, 100, 100);
+        else
+            shop.weapon1Text.tint = Game.rgbToHex(255, 255, 255);
+    }
+    shop.weapon1Text.fontSize = shop.weaponBox1.width / 10;
+    shop.weapon1Text.anchor.x = 0.5;
+    shop.weapon1Text.anchor.y = 1.0;
+    shop.weapon1Text.x = shop.weapon1Sprite.x;
+    shop.weapon1Text.y = shop.shopCornerY + (shop.shopHeight * 2/3) + shop.weaponBox1.height - shop.shopPadding;
+    shop.weapon1Text.fixedToCamera = true;
+    shop.weapon1Text.visible = true;
+
     // draw the box behind the weapon info as a background
     shop.weaponBox2.clear();
     shop.weaponBox2.inputEnabled = true;
@@ -645,6 +701,12 @@ Game.updateShop = function() {
     });
     shop.weaponBox2.events.onInputOut.add(function() {
         shop.weaponBox2Hover = false;
+    });
+    shop.weaponBox2.events.onInputUp.add(function() {
+        if (Game.buyWeaponCost[1] <= Client.score) {
+            Client.sendCollect(-Game.buyWeaponCost[1]);
+            Client.changeWeapon(Game.maxWeaponAmmo[1], 1);
+        }
     });
     color = Game.rgbToHex(25, 25, 25);
     if (shop.weaponBox2Hover)
@@ -657,6 +719,35 @@ Game.updateShop = function() {
     Game.world.bringToTop(shop.weaponBox2);
     shop.weaponBox2.fixedToCamera = true;
 
+    // draw the second weapon sprite
+    shop.weapon2Sprite.scale.setTo(4.0, 4.0);
+    shop.weapon2Sprite.anchor.x = 0.5;
+    shop.weapon2Sprite.x = shop.shopCornerX + 2.5*shop.ammoBox.width + 3*shop.shopPadding;
+    shop.weapon2Sprite.y = shop.shopCornerY + (shop.shopHeight * 2/3) + shop.shopPadding;
+    Game.world.bringToTop(shop.weapon2Sprite);
+    shop.weapon2Sprite.visible = true;
+    shop.weapon2Sprite.fixedToCamera = true;
+
+    // draw the text for the second weapon
+    if (Client.weaponId === 1) {
+        shop.weapon2Text.setText('Weapon 2:\nDamage: ' + weaponArray[1].damage + '\nMax Ammo: ' + Game.maxWeaponAmmo[1]);
+        shop.weapon2Text.tint = Game.rgbToHex(255, 255, 0);
+    }
+    else {
+        shop.weapon2Text.setText('Weapon 2:\nDamage: ' + weaponArray[1].damage + '\nMax Ammo: ' + Game.maxWeaponAmmo[1] + '\n(' + Game.buyWeaponCost[1] + ' dust)');
+        if (Game.buyWeaponCost[1] > Client.score)
+            shop.weapon2Text.tint = Game.rgbToHex(100, 100, 100);
+        else
+            shop.weapon2Text.tint = Game.rgbToHex(255, 255, 255);
+    }
+    shop.weapon2Text.fontSize = shop.weaponBox2.width / 10;
+    shop.weapon2Text.anchor.x = 0.5;
+    shop.weapon2Text.anchor.y = 1.0;
+    shop.weapon2Text.x = shop.weapon2Sprite.x;
+    shop.weapon2Text.y = shop.shopCornerY + (shop.shopHeight * 2/3) + shop.weaponBox2.height - shop.shopPadding;
+    shop.weapon2Text.fixedToCamera = true;
+    shop.weapon2Text.visible = true;
+
     // draw the box behind the weapon info as a background
     shop.weaponBox3.clear();
     shop.weaponBox3.inputEnabled = true;
@@ -665,6 +756,12 @@ Game.updateShop = function() {
     });
     shop.weaponBox3.events.onInputOut.add(function() {
         shop.weaponBox3Hover = false;
+    });
+    shop.weaponBox3.events.onInputUp.add(function() {
+        if (Game.buyWeaponCost[2] <= Client.score) {
+            Client.sendCollect(-Game.buyWeaponCost[2]);
+            Client.changeWeapon(Game.maxWeaponAmmo[2], 2);
+        }
     });
     color = Game.rgbToHex(25, 25, 25);
     if (shop.weaponBox3Hover)
@@ -676,6 +773,35 @@ Game.updateShop = function() {
     shop.weaponBox3.y = 0;
     Game.world.bringToTop(shop.weaponBox3);
     shop.weaponBox3.fixedToCamera = true;
+
+    // draw the third weapon sprite
+    shop.weapon3Sprite.scale.setTo(4.0, 4.0);
+    shop.weapon3Sprite.anchor.x = 0.5;
+    shop.weapon3Sprite.x = shop.shopCornerX + 3.5*shop.ammoBox.width + 4*shop.shopPadding;
+    shop.weapon3Sprite.y = shop.shopCornerY + (shop.shopHeight * 2/3) + shop.shopPadding;
+    Game.world.bringToTop(shop.weapon3Sprite);
+    shop.weapon3Sprite.visible = true;
+    shop.weapon3Sprite.fixedToCamera = true;
+
+    // draw the text for the third weapon
+    if (Client.weaponId === 2) {
+        shop.weapon3Text.setText('Weapon 1:\nDamage: ' + weaponArray[2].damage + '\nMax Ammo: ' + Game.maxWeaponAmmo[2]);
+        shop.weapon3Text.tint = Game.rgbToHex(255, 255, 0);
+    }
+    else {
+        shop.weapon3Text.setText('Weapon 1:\nDamage: ' + weaponArray[2].damage + '\nMax Ammo: ' + Game.maxWeaponAmmo[2] + '\n(' + Game.buyWeaponCost[2] + ' dust)');
+        if (Game.buyWeaponCost[2] > Client.score)
+            shop.weapon3Text.tint = Game.rgbToHex(100, 100, 100);
+        else
+            shop.weapon3Text.tint = Game.rgbToHex(255, 255, 255);
+    }
+    shop.weapon3Text.fontSize = shop.weaponBox1.width / 10;
+    shop.weapon3Text.anchor.x = 0.5;
+    shop.weapon3Text.anchor.y = 1.0;
+    shop.weapon3Text.x = shop.weapon3Sprite.x;
+    shop.weapon3Text.y = shop.shopCornerY + (shop.shopHeight * 2/3) + shop.weaponBox3.height - shop.shopPadding;
+    shop.weapon3Text.fixedToCamera = true;
+    shop.weapon3Text.visible = true;
 
     // draw the box behind the boost refill as a background
     shop.boostBox.clear();
@@ -700,7 +826,7 @@ Game.updateShop = function() {
     Game.world.bringToTop(shop.boostBox);
     shop.boostBox.fixedToCamera = true;
 
-    // draw ammo refill text
+    // draw boost refill text
     shop.boostText.setText(Game.calcBoostRefillPrompt(false));
     shop.boostText.fontSize = shop.ammoBox.width / 7.5;
     shop.boostText.wordWrap = true;
@@ -796,6 +922,9 @@ Game.clearShop = function() {
     shop.weaponBox2.clear();
     shop.weaponBox3.clear();
     shop.boostBox.clear();
+    shop.weapon1Sprite.visible = false;
+    shop.weapon2Sprite.visible = false;
+    shop.weapon3Sprite.visible = false;
     shop.Tiers[shop.visibleTier].elements.forEach(function(element) {
         //console.log(element.type);
         if (element.type === 3)
@@ -803,6 +932,17 @@ Game.clearShop = function() {
         else
             element.visible = false;
     });
+
+
+Game.render = function(){
+    /*if (Game.allPlayersAdded) {
+        game.debug.body(Game.playerMap[Client.getPlayerID()]);
+    }*/
+    if (Game.showFPS)
+    {
+        game.debug.text(game.time.fps, 2, 14, "#00ff00");
+    }
+};
 
     /*shop.Tiers.forEach(function(tier) {
         tier.elements.forEach(function(element) {
@@ -827,7 +967,7 @@ Game.exitSafeZone = function() {
 };
 
 Game.updateScore = function(id, value) {
-    if (Game.playerMap[id].score !== null) {
+    if (Game.playerMap[id] !== undefined) {
         Game.playerMap[id].score = value;
     }
     // Game.playerHUD["currency"] = value;
@@ -842,7 +982,7 @@ function fireBullet(id) {
     if (game.time.now > Game.ammoMap[Client.id].bulletTime && Client.weaponId !== -1) {
         var bullet = Game.ammoMap[Client.id].getFirstExists(false);
 
-        if (bullet && Client.ammo > 0) {
+        if (Game.playerMap[Client.id] !== undefined && bullet && Client.ammo > 0) {
             Client.ammo--;
             bullet.reset(Game.playerMap[Client.getPlayerID()].body.x + Game.playerMap[Client.player.id].width/2 + (Game.playerMap[Client.player.id].width/2 * Math.cos(Game.playerMap[Client.player.id].rotation)), Game.playerMap[Client.player.id].body.y + Game.playerMap[Client.player.id].height/2 + (Game.playerMap[Client.player.id].height/2 * Math.sin(Game.playerMap[Client.player.id].rotation)));
             bullet.lifespan = weaponArray[Client.weaponId].lifespan;
@@ -945,7 +1085,7 @@ Game.sendTransform = function() {
 
 // Update the position and rotation of a given remote player
 Game.updateTransform = function(id, x, y, rotation, health, isBoosting) {
-    if (Game.allPlayersAdded) {
+    if (Game.allPlayersAdded && Game.playerMap[id] !== undefined) {
         var player = Game.playerMap[id];
         player.x = x;
         player.y = y;
@@ -1028,7 +1168,7 @@ Game.updateHUD = function(player){
 };
 var healthTime = true;
 Game.updateHealthBar = function(player) {
-    if(healthTime) {
+    if(healthTime && player !== undefined) {
         setTimeout(function () {
             player.heal(5);
             healthTime = true;
@@ -1099,6 +1239,9 @@ Game.updateHealthBar = function(player) {
     Game.world.bringToTop(shop.weapon2Text);
     Game.world.bringToTop(shop.weapon3Text);
     Game.world.bringToTop(shop.boostText);
+    Game.world.bringToTop(shop.weapon1Sprite);
+    Game.world.bringToTop(shop.weapon2Sprite);
+    Game.world.bringToTop(shop.weapon3Sprite);
     shop.Tiers[shop.visibleTier].elements.forEach(function(element) {
         Game.world.bringToTop(element);
     });
@@ -1116,7 +1259,7 @@ Game.checkLeaderboard = function() {
             (Game.playerMap[p].score > Game.leaderboard[1].score
                 && Game.leaderboard[1] !== Game.playerMap[p]))
         {
-            console.log('#1 = '+Game.playerMap[p].name);
+            // console.log('#1 = '+Game.playerMap[p].name);
             Game.removeFromLeaderboard(p);
             Game.leaderboard[5] = Game.leaderboard[4];
             Game.leaderboard[4] = Game.leaderboard[3];
@@ -1130,7 +1273,7 @@ Game.checkLeaderboard = function() {
         {
             if (Game.leaderboard[1] !== Game.playerMap[p])
             {
-                console.log('#2 = ' + Game.playerMap[p].name);
+                // console.log('#2 = ' + Game.playerMap[p].name);
                 Game.removeFromLeaderboard(p);
                 Game.leaderboard[5] = Game.leaderboard[4];
                 Game.leaderboard[4] = Game.leaderboard[3];
@@ -1145,7 +1288,7 @@ Game.checkLeaderboard = function() {
             if (Game.leaderboard[1] !== Game.playerMap[p]
                 && Game.leaderboard[2] !== Game.playerMap[p])
             {
-                console.log('#3 = ' + Game.playerMap[p].name);
+                // console.log('#3 = ' + Game.playerMap[p].name);
                 Game.removeFromLeaderboard(p);
                 Game.leaderboard[5] = Game.leaderboard[4];
                 Game.leaderboard[4] = Game.leaderboard[3];
@@ -1160,7 +1303,7 @@ Game.checkLeaderboard = function() {
                 && Game.leaderboard[2] !== Game.playerMap[p]
                 && Game.leaderboard[3] !== Game.playerMap[p])
             {
-                console.log('#4 = ' + Game.playerMap[p].name);
+                // console.log('#4 = ' + Game.playerMap[p].name);
                 Game.removeFromLeaderboard(p);
                 Game.leaderboard[5] = Game.leaderboard[4];
                 Game.leaderboard[4] = Game.playerMap[p];
@@ -1218,6 +1361,9 @@ Game.setLeaderboard = function() {
     Game.world.bringToTop(shop.weapon2Text);
     Game.world.bringToTop(shop.weapon3Text);
     Game.world.bringToTop(shop.boostText);
+    Game.world.bringToTop(shop.weapon1Sprite);
+    Game.world.bringToTop(shop.weapon2Sprite);
+    Game.world.bringToTop(shop.weapon3Sprite);
     shop.Tiers[shop.visibleTier].elements.forEach(function(element) {
         Game.world.bringToTop(element);
     });
@@ -1445,12 +1591,15 @@ Game.updatePlayerShip = function(id, shipName){
 };
 
 Game.removePlayer = function(id){
-    console.log('Game.removePlayer '+id+'--'+Game.playerMap[id].name);
+    // console.log('Game.removePlayer '+id+'--'+Game.playerMap[id].name);
     Game.removeFromLeaderboard(id);
-    Game.playerMap[id].shipTrail.destroy();
-    generateDustOnDeath(Game.playerMap[id].x, Game.playerMap[id].y, Game.playerMap[id].score);
+    Game.ammoMap[id].removeAll(true);
 
+    Game.playerMap[id].shipTrail.destroy();
+
+    generateDustOnDeath(Game.playerMap[id].x, Game.playerMap[id].y, Game.playerMap[id].score);
     burst(Game.playerMap[id].x, Game.playerMap[id].y);
+
     playerMap.delete(id);
     Game.playerMap[id].destroy();
     Game.playerDestroyed = true;
@@ -1474,10 +1623,12 @@ Game.getCoordinates = function(layer, pointer) {
 };
 
 Game.setPlayerAcceleration = function(acceleration, isBoost){
-    if (Game.allPlayersAdded && Game.playerMap[Client.getPlayerID()].body !== null) {
+    if (Game.allPlayersAdded && Game.playerMap[Client.id] !== undefined && Game.playerMap[Client.getPlayerID()].body !== undefined && Game.playerMap[Client.getPlayerID()].health > 0) {
         if (isBoost && Game.playerMap[Client.id].boost >= Game.boostCost) {
             Game.playerMap[Client.id].isBoosting = true;
-            Game.playerMap[Client.id].shipTrail.setScale(0.5, 0.8, 0.5, 0.8, 1000, Phaser.Easing.Quintic.Out);
+            if (Game.playerMap[Client.id] !== undefined) {
+                Game.playerMap[Client.id].shipTrail.setScale(0.5, 0.8, 0.5, 0.8, 1000, Phaser.Easing.Quintic.Out);
+            }
 
             Game.playerMap[Client.id].body.maxVelocity.set(Game.maxBoostVelocity);
             // Game.playBoostPFX();
@@ -1493,7 +1644,10 @@ Game.setPlayerAcceleration = function(acceleration, isBoost){
         }
         else {
             Game.playerMap[Client.id].isBoosting = false;
-            Game.playerMap[Client.id].shipTrail.setScale(0.05, 0.4, 0.05, 0.4, 2000, Phaser.Easing.Quintic.Out);
+
+            if (Game.playerMap[Client.id] !== undefined) {
+                Game.playerMap[Client.id].shipTrail.setScale(0.05, 0.4, 0.05, 0.4, 2000, Phaser.Easing.Quintic.Out);
+            }
 
             Game.playerMap[Client.id].body.maxVelocity.set(Game.maxNormVelocity);
             // Game.stopBoostPFX();
@@ -1532,17 +1686,6 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color,size){
     if(shipName === 'unassignedShip'){//} && id === Client.id/*Client.getPlayerID()*/){
         var shipSelectionString = assignShip(id + 1);
         newPlayer = game.add.sprite(x,y,shipSelectionString);
-
-        /*newPlayer.centerPointer = game.add.sprite(x,y,'arrow');
-        newPlayer.centerPointer.startWidth = newPlayer.centerPointer.width;
-        var cpW = newPlayer.centerPointer.width;
-        var cpH = newPlayer.centerPointer.height;
-        newPlayer.centerPointer.width = game.width*0.2083;
-        newPlayer.centerPointer.height = newPlayer.centerPointer.width*(cpH/cpW);
-        // newPlayer.addChild(newPlayer.centerPointer);
-        // newPlayer.centerPointer.scale.setTo(4);
-        newPlayer.centerPointer.anchor.setTo(0.3,0.5);
-        newPlayer.centerPointer.alpha = 0.75;*/
 
         if (id === Client.id) {
             Client.sendShipChange(shipSelectionString);
@@ -1594,7 +1737,8 @@ Game.addNewPlayer = function(id,x,y,rotation,shipName,name,score,color,size){
     newPlayer.shipTrail.setYSpeed(30, -30);
     newPlayer.shipTrail.setAlpha(1, 0.01, 800);
     newPlayer.shipTrail.setScale(0.05, 0.4, 0.05, 0.4, 2000, Phaser.Easing.Quintic.Out);
-    newPlayer.shipTrail.start(false, 175, 10);
+    newPlayer.shipTrail.start(false, 150, 10);
+    newPlayer.shipTrail.isBoosting = false;
 
     // Set player sprite and trail color
     newPlayer.tint = color;
@@ -1653,8 +1797,7 @@ Game.setDeathBehavior = function(id) {
     Game.playerMap[id].events.onKilled.add(function() {
         Game.removeFromLeaderboard(id);
         Game.playerMap[id].shipTrail.destroy();
-        generateDustOnDeath(Game.playerMap[id].x, Game.playerMap[id].y, Game.playerMap[id].score);
-        console.log('x: ' + Game.playerMap[id].x + ', y: ' + Game.playerMap[id].y);
+        // generateDustOnDeath(Game.playerMap[id].x, Game.playerMap[id].y, Game.playerMap[id].score);
         burst(Game.playerMap[id].x, Game.playerMap[id].y);
         playerMap.delete(id);
         var player = Game.playerMap[id];
@@ -1668,6 +1811,7 @@ Game.setDeathBehavior = function(id) {
         shop.Tiers = [];
         Client.setClientScores(Game.playerMap[id].score);
         Client.disconnect();
+        console.log('Switching to menu state');
         game.state.start('Menu');
         game.state.clearCurrentState();
     });
@@ -1776,5 +1920,4 @@ function shake(){
   //Set shake intensity and duration
     game.camera.shake(0.01, 100);
 }
-
 
