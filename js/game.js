@@ -173,7 +173,7 @@ Game.preload = function() {
     this.game.load.image('bullet2', 'assets/sprites/neon/BlueShot.png');
 
     // Load arrow asset
-    this.game.load.image('arrow', 'assets/sprites/neon/clickArrow.png');
+    this.game.load.image('arrowButton', 'assets/sprites/neon/clickArrow.png');
 
     this.game.load.image('ship0', 'assets/sprites/neon/squaresquare.png');
 
@@ -320,8 +320,8 @@ Game.create = function(){
     shop.weapon2Text = Game.add.text(-1000, -1000, '', {font: '35px Lucida Console', fill: '#ffffff', align: 'center'});
     shop.weapon3Text = Game.add.text(-1000, -1000, '', {font: '35px Lucida Console', fill: '#ffffff', align: 'center'});
     shop.boostText = Game.add.text(-1000, -1000, '', {font: '35px Lucida Console', fill: '#ffffff', align: 'center'});
-    shop.nextTierButton = Game.add.sprite(-1000, -1000, 'arrow');
-    shop.prevTierButton = Game.add.sprite(-1000, -1000, 'arrow');
+    shop.nextTierButton = Game.add.sprite(-1000, -1000, 'arrowButton');
+    shop.prevTierButton = Game.add.sprite(-1000, -1000, 'arrowButton');
     shop.tierBox = Game.add.graphics(-1000, -1000);
     shop.ammoBox = Game.add.graphics(-1000, -1000);
     shop.weaponBox1 = Game.add.graphics(-1000, -1000);
@@ -2033,10 +2033,10 @@ Game.rescale = function(){
         {
             Game.playerMap[Client.id].centerPointer.width = Game.playerMap[Client.id].centerPointer.startWidth;
         }
-        else if (Game.playerMap[Client.id].centerPointer.width < 2*Game.playerMap[Client.id].width)
+       /*else if (Game.playerMap[Client.id].centerPointer.width < 2*Game.playerMap[Client.id].width)
         {
             Game.playerMap[Client.id].centerPointer.width = 2*Game.playerMap[Client.id].width
-        }
+        }*/
     }
 
     // // Make sure camera bounds are maintained
