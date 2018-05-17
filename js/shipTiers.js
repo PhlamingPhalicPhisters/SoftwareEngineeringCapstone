@@ -30,6 +30,9 @@ function assignTierOneShip(shipName){
     //Ship1
     //Ship2 //Assigned in assignShip in game.js
     //Ship7
+    handleShipUpdate(shipName);
+    tierMultiplier(1);
+    Client.sendResize(64);
 };
 
 function assignTierTwoShip(shipName){ //
@@ -39,6 +42,7 @@ function assignTierTwoShip(shipName){ //
     //Ship10
     //Ship4
     handleShipUpdate(shipName);
+    Client.sendResize(70);
     tierMultiplier(tierTwoMultiplier);
 };
 
@@ -59,7 +63,7 @@ function assignTierFourShip(shipName) {
     //Ship11
     handleShipUpdate(shipName);
     tierMultiplier(tierFourMultiplier);
-    Client.sendResize(100);
+    Client.sendResize(90);
     Game.playerMap[Client.id].normalAccel = 400;
 };
 
@@ -69,7 +73,7 @@ function assignTierFiveShip(shipName) {
     //Ship15
     handleShipUpdate(shipName);
     tierMultiplier(tierFiveMultiplier);
-    Client.sendResize(120);
+    Client.sendResize(100);
     Game.playerMap[Client.id].normalAccel = 400;
 };
 
